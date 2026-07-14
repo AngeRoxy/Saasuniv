@@ -1,17 +1,20 @@
-# GestUniv — État du projet (14 juillet 2026)
-
-> Ce document remplace la version du 25 juin, devenue fausse : elle décrivait des dashboards
-> « tout en mock » alors que la quasi-totalité des modules est désormais branchée sur Firebase,
-> et mentionnait des composants (Spline 3D, hero WebGL) qui n'existent plus.
+# GestUniv — État du projet (14 juillet 2026, après la passe de 8 correctifs)
 
 ---
 
 ## Résumé en une ligne
 
-L'application est **fonctionnelle de bout en bout** sur les 5 rôles : les données affichées viennent
-réellement de Firebase. Ce qui reste tient en trois familles : **quelques faux succès résiduels**
-(3 `alert()` dans les paramètres admin), **des fonctionnalités vendues dans les plans mais non
-implémentées** (PDF, emails, API, multi-campus), et **le paiement réel**.
+L'application est **fonctionnelle de bout en bout** sur les 5 rôles, les données viennent réellement
+de Firebase, et **il ne reste plus aucun faux succès**. Ce qui reste : **des fonctionnalités vendues
+dans les plans mais non implémentées** (PDF, emails, API, multi-campus) et **le paiement réel**.
+
+## ⚠️ À faire avant / après le prochain déploiement
+
+1. **Redéployer les règles RTDB** — `firebase deploy --only database`
+   (validation 0-20 ajoutée sur `interro1` / `interro2` / `examen` ; sans ça les évaluations sont rejetées).
+2. **Activer Firebase Storage** sur le projet, puis **déployer ses règles** —
+   `firebase deploy --only storage` (nouveau fichier `storage.rules`, enregistré dans `firebase.json`).
+3. Décider si l'import CSV reste inclus dans le plan Standard (cf. « Écarts plans » plus bas).
 
 ---
 
@@ -99,62 +102,66 @@ Tableau de bord à KPI réels (étudiants, MRR, taux de conversion, alertes), li
 
 ---
 
+## Fait dans la passe du 14 juillet (8 correctifs)
+
+| # | Correctif | Effet |
+|---|---|---|
+| 1 | Erreur ESLint `react-hooks/refs` | `npm run lint` repasse à **0 erreur** |
+| 2 | Faux succès de `/admin/settings` | Frais + calendrier **réellement persistés** (`config/frais`, `config/calendrier`) ; fausse clôture remplacée par un lien vers `/admin/closing` |
+| 3 | `ComingSoon` périmés des accueils | Vrais KPI étudiant / enseignant / parent (`useStudentSummary`, `useTeacherSummary`, `KpiCard`) |
+| 4 | Fuite de fonctionnalité payante | `PlanGate` sur la messagerie interne et l'import CSV |
+| 5 | Firebase Storage | Upload de fichiers pour les ressources (20 Mo, progression réelle), `storage.rules` |
+| 6 | Notes | 3 évaluations par matière : (I1 + I2 + 2×E) / 4 |
+| 7 | Photos de profil | Upload avatar (500×500, 5 Mo), affiché profils / sidebars / listes admin |
+| 8 | Import CSV enseignants | Colonne `filieres` multi-valuée (séparateur `;`), résolution par nom |
+
+Bonus trouvés en chemin et corrigés : le bouton « Sauvegarder » du sous-domaine n'avait **aucun handler**,
+et le lien « Changer de plan » pointait vers `/pricing`, **route inexistante** (404).
+
+---
+
 ## Ce qu'il reste à faire
 
-### 1. Bloquants — faux succès encore en place
-
-| Endroit | Problème |
-|---|---|
-| [settings/page.tsx:99](src/app/dashboard/admin/settings/page.tsx#L99) | `handleSaveFrais` → `alert()`, **rien n'est écrit en base** |
-| [settings/page.tsx:100](src/app/dashboard/admin/settings/page.tsx#L100) | `handleSaveCalendrier` → idem |
-| [settings/page.tsx:102-107](src/app/dashboard/admin/settings/page.tsx#L102-L107) | `handleCloture` → annonce une clôture qui n'a pas lieu (le vrai module est `/admin/closing`) |
-
-C'est le chantier identifié de longue date : ces trois boutons mentent à l'utilisateur. Le reste de la
-page (informations générales) est correctement persisté via `updateUniversity`.
-
-### 2. Incohérence visible : les pages d'accueil des rôles sont périmées
-
-`student/page.tsx`, `teacher/page.tsx` et `parent/page.tsx` affichent encore un bloc `ComingSoon`
-« Notes, absences et paiements… ce module n'est pas encore connecté » — **alors que ces modules sont
-branchés et accessibles depuis la sidebar**. L'utilisateur lit un message qui contredit ce qu'il voit
-juste à côté. Il faut remplacer ces `ComingSoon` par de vrais KPI (moyenne, absences, prochain cours,
-solde), les données étant déjà toutes disponibles dans `db.ts`.
-
-### 3. Écarts entre les plans vendus et le code
+### 1. Écarts entre les plans vendus et le code
 
 Fonctionnalités **annoncées dans la grille tarifaire** (landing + `/admin/billing`) mais **inexistantes** :
 
-- `exportPDF` et `bulletinsPDF` — aucune génération de PDF nulle part ;
+- `exportPDF` et `bulletinsPDF` — aucune génération de PDF nulle part (probablement le plus attendu des clients) ;
 - `notificationsEmail` — les annonces sont in-app uniquement, aucun email n'est envoyé ;
 - `multiCampus`, `apiAccess`, `supportPrioritaire` — aucun code correspondant ;
-- `sousDomainePerso` — le `PlanGate` existe dans les paramètres, mais la valeur saisie n'est pas exploitée.
+- `sousDomainePerso` — la valeur est désormais **persistée** (`config/sousDomaine`) mais **pas exploitée** :
+  aucun routage par sous-domaine n'existe.
 
-Inversement, **deux fonctionnalités payantes ne sont pas protégées** : la messagerie interne
-(`messagerieInterne`, Premium) et l'import CSV (`importCSV`) sont accessibles sans vérification de plan.
-Un client Standard y accède alors qu'il ne les a pas achetées.
+Pour chacune : la construire, ou la retirer de la grille tarifaire. Vendre ce qui n'existe pas est le
+risque commercial le plus concret du produit aujourd'hui.
 
-### 4. Modules encore vides
+**Décision tarifaire en attente** : `importCSV` vaut `true` sur **les trois plans**, Standard compris.
+Le `PlanGate` est posé mais laisse donc passer. Si l'import doit devenir payant, basculer le booléen
+dans [plans.ts](src/lib/plans.ts) — c'est un choix commercial, pas un correctif (il retirerait une
+fonctionnalité à des clients qui l'ont déjà).
 
-- [teacher/classes](src/app/dashboard/teacher/classes/page.tsx) — `ComingSoon` (l'affectation
-  enseignant↔classe existe pourtant via les créneaux).
-- [super-admin/settings](src/app/dashboard/super-admin/settings/page.tsx) — `ComingSoon`.
-- **Ressources enseignant** : uniquement des **liens URL** saisis à la main. Pas d'upload de fichier
-  (Firebase Storage n'est pas branché).
-
-### 5. Paiement réel
+### 2. Paiement réel
 
 La conversion de plan dans `/admin/billing` est **simulée** (le dialogue le dit explicitement).
-Il n'y a aucun prestataire de paiement intégré — pour le marché visé, ce sera vraisemblablement
-CinetPay / Wave / Orange Money plutôt que Stripe.
+Aucun prestataire intégré — pour le marché visé, plutôt CinetPay / Wave / Orange Money que Stripe.
 
-### 6. Qualité
+### 3. Modules encore vides
 
-- **1 erreur ESLint** qui fait échouer `npm run lint` :
-  [video-demo-modal.tsx:17](src/components/ui/video-demo-modal.tsx#L17) — écriture dans
-  `onCloseRef.current` pendant le rendu (règle `react-hooks/refs`). Le build passe malgré tout, mais
-  cette famille de règles a déjà cassé `next build` sur ce projet : à corriger (déplacer l'affectation
-  dans un `useEffect`).
-- 5 avertissements (variables inutilisées, dépendances de hooks).
+- [teacher/classes](src/app/dashboard/teacher/classes/page.tsx) — `ComingSoon` (l'affectation
+  enseignant↔classe existe pourtant via les créneaux : `useTeacherSummary` la calcule déjà).
+- [super-admin/settings](src/app/dashboard/super-admin/settings/page.tsx) — `ComingSoon`.
+
+### 4. Limite de sécurité assumée (Storage)
+
+Les règles Firebase Storage **ne peuvent pas lire la RTDB** : « écriture réservée aux enseignants de
+cette université » n'est pas exprimable sans custom claim, donc sans `firebase-admin`. Les règles
+vérifient ce qui l'est (authentification, propriétaire d'un avatar, type MIME, taille) ; le contrôle
+de rôle reste applicatif. Détail et voie de sortie en tête de [storage.rules](storage.rules).
+Même nature de risque résiduel que le proxy optimiste (cf. [SECURITY_AUDIT.md](SECURITY_AUDIT.md)).
+
+### 5. Qualité
+
+- `npm run lint` : **0 erreur**, 4 avertissements (variables inutilisées, dépendances de hooks).
 - **Aucun test, aucune CI.**
 
 ---
@@ -177,18 +184,9 @@ NEXT_PUBLIC_FIREBASE_*       # 8 clés client (API_KEY, AUTH_DOMAIN, DATABASE_UR
    `globals.css` — ne jamais faire de rechercher/remplacer sur les noms de couleur.
 2. **Next.js 16 ≠ Next.js que vous connaissez.** Consulter `node_modules/next/dist/docs/` avant
    d'écrire du code (cf. `AGENTS.md`). Le middleware s'appelle `proxy.ts`.
-3. Un module « déjà là mais différent du cahier des charges » se complète, il ne se réécrit pas.
-4. Jamais de `catch {}` silencieux ni de mise à jour locale optimiste sur une écriture Firebase.
-
----
-
-## Ordre de traitement suggéré
-
-1. Corriger l'erreur ESLint (5 min, débloque `npm run lint`).
-2. Supprimer les 3 `alert()` de `/admin/settings` — persister frais et calendrier, retirer la
-   fausse clôture (le vrai module existe déjà).
-3. Remplacer les `ComingSoon` des accueils étudiant / enseignant / parent par de vrais KPI.
-4. Gater `messagerieInterne` et `importCSV` (fuite de fonctionnalités payantes).
-5. Décider, pour chaque feature vendue non implémentée : la construire ou la retirer de la grille
-   tarifaire. Les bulletins PDF sont probablement le plus attendu par les clients.
-6. Intégrer un paiement réel.
+3. **`react-hooks` casse le build.** Deux règles mordent régulièrement : pas de `setState` synchrone
+   dans un effet (`set-state-in-effect`), et pas de hook après un retour anticipé (`rules-of-hooks`).
+4. **`note.note` est la note de la matière**, désormais dérivée des 3 évaluations. Ne pas la
+   contourner : `getNoteRetenue()` reste la source unique (rattrapage prioritaire).
+5. Un module « déjà là mais différent du cahier des charges » se complète, il ne se réécrit pas.
+6. Jamais de `catch {}` silencieux ni de mise à jour locale optimiste sur une écriture Firebase.
