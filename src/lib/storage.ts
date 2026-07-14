@@ -88,6 +88,34 @@ export interface UploadResult {
 }
 
 /**
+ * Traduit un code d'erreur Firebase Storage en message actionnable.
+ *
+ * `retry-limit-exceeded` mérite un traitement à part : il ne veut PAS dire
+ * « réseau lent ». Le SDK a réessayé jusqu'à abandonner parce que la requête
+ * n'aboutit pas du tout — dans ce projet, la cause de très loin la plus probable
+ * est que **Cloud Storage n'est pas activé** sur le projet Firebase (le bucket
+ * n'existe pas → 404 à chaque tentative). Le message générique « échec de
+ * l'envoi » envoyait l'utilisateur chercher un problème de fichier ou de réseau
+ * qui n'existe pas.
+ */
+function messageErreurUpload(code: string): string {
+  switch (code) {
+    case 'storage/unauthorized':
+      return "Envoi refusé par les règles de sécurité — vérifiez vos droits, ou que les règles Storage ont bien été déployées."
+    case 'storage/unauthenticated':
+      return 'Session expirée — reconnectez-vous puis réessayez.'
+    case 'storage/retry-limit-exceeded':
+      return "Le service de fichiers est injoignable. Si le problème touche tous les envois, c'est que Cloud Storage n'est pas activé sur le projet Firebase (ou que le bucket configuré n'existe pas) — contactez l'administrateur technique."
+    case 'storage/quota-exceeded':
+      return "L'espace de stockage de l'établissement est saturé — contactez l'administration."
+    case 'storage/canceled':
+      return 'Envoi annulé.'
+    default:
+      return `Échec de l'envoi du fichier (${code}).`
+  }
+}
+
+/**
  * Envoie un fichier et rapporte la progression réelle (0-100).
  * Résout uniquement quand le fichier est effectivement écrit ET que l'URL de
  * téléchargement est obtenue : aucun succès n'est annoncé avant.
@@ -111,15 +139,7 @@ function uploadAvecProgression(
         onProgress?.(pourcent)
       },
       (error) => {
-        // Message explicite : la cause la plus fréquente est une règle Storage
-        // qui refuse, ou un bucket non activé sur le projet Firebase.
-        reject(
-          new UploadError(
-            error.code === 'storage/unauthorized'
-              ? "Envoi refusé par les règles de sécurité — vérifiez vos droits."
-              : `Échec de l'envoi du fichier (${error.code}).`
-          )
-        )
+        reject(new UploadError(messageErreurUpload(error.code)))
       },
       async () => {
         try {
