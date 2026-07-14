@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, X } from 'lucide-react'
 
@@ -13,20 +13,24 @@ export function VideoDemoModal({ open, onClose }: VideoDemoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // onClose toujours à jour pour les listeners (popstate) sans recréer l'effet.
+  // La synchronisation se fait après le rendu : écrire dans une ref pendant le
+  // rendu est interdit (react-hooks/refs).
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   // Demande de fermeture : on dépile l'entrée d'historique ajoutée à
   // l'ouverture, ce qui déclenche `popstate` → fermeture effective. Ainsi le
   // bouton « Retour » du navigateur et nos boutons ont le même comportement et
   // ne font jamais quitter le site.
-  const requestClose = () => {
+  const requestClose = useCallback(() => {
     if (typeof window !== 'undefined' && window.history.state?.videoModal) {
       window.history.back()
     } else {
       onClose()
     }
-  }
+  }, [onClose])
 
   // À l'ouverture : empiler une entrée d'historique et écouter le retour
   // navigateur pour fermer la modale au lieu de sortir du site.
@@ -46,7 +50,7 @@ export function VideoDemoModal({ open, onClose }: VideoDemoModalProps) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
+  }, [open, requestClose])
 
   // Bloquer le scroll du body tant que la modale est ouverte.
   useEffect(() => {
