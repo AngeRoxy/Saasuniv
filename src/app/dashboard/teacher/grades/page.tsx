@@ -26,8 +26,8 @@ export default function TeacherGradesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Saisie des notes</h1>
-        <p className="text-orange-200/40 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Saisie des notes</h1>
+        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
           {mode === 'normales'
             ? 'Saisissez les notes par filière, niveau, semestre et matière.'
             : 'Rattrapage : notes des étudiants n’ayant pas validé en session normale.'}
@@ -35,11 +35,11 @@ export default function TeacherGradesPage() {
       </div>
 
       {/* Bascule Notes normales / Rattrapage — sections clairement distinctes. */}
-      <div className="inline-flex rounded-xl border border-white/10 bg-zinc-950 p-1">
+      <div className="inline-flex rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 p-1">
         <button
           onClick={() => setMode('normales')}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'normales' ? 'bg-orange-500 text-black' : 'text-orange-200/60 hover:text-white'
+            mode === 'normales' ? 'bg-orange-500 text-white' : 'text-orange-200/60 hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <BookOpen size={15} /> Notes normales
@@ -47,7 +47,7 @@ export default function TeacherGradesPage() {
         <button
           onClick={() => setMode('rattrapage')}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'rattrapage' ? 'bg-amber-500 text-black' : 'text-amber-200/60 hover:text-white'
+            mode === 'rattrapage' ? 'bg-amber-500 text-white' : 'text-amber-200/60 hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <RotateCcw size={15} /> Rattrapage
@@ -64,7 +64,7 @@ export default function TeacherGradesPage() {
 }
 
 const selectCls =
-  'w-full bg-zinc-900 border border-amber-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-400/60 disabled:opacity-50 disabled:cursor-not-allowed'
+  'w-full bg-white dark:bg-zinc-900 border border-amber-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-amber-400/60 disabled:opacity-50 disabled:cursor-not-allowed'
 
 /** Sélecteurs propres au rattrapage (la saisie normale a les siens dans GradeEntry). */
 function RattrapageSection({ universityId }: { universityId: string }) {
@@ -128,7 +128,7 @@ function RattrapageSection({ universityId }: { universityId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 bg-zinc-950 border border-amber-500/15 rounded-xl p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 bg-white dark:bg-zinc-950 border border-amber-500/15 rounded-xl p-4">
         <Field label="Filière">
           <select value={filiereId} onChange={(e) => handleFiliereChange(e.target.value)} className={selectCls}>
             <option value="">Choisir…</option>
@@ -170,7 +170,7 @@ function RattrapageSection({ universityId }: { universityId: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-amber-200/60 text-xs font-medium block mb-1.5">{label}</label>
+      <label className="text-zinc-600 dark:text-amber-200/60 text-xs font-medium block mb-1.5">{label}</label>
       {children}
     </div>
   )

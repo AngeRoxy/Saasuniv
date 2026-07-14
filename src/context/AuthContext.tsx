@@ -24,20 +24,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Garde anti-course : chaque événement d'auth reçoit un numéro de séquence.
+    // Si un getUserProfile lent se résout APRÈS un événement plus récent
+    // (ex. logout→login rapide dans le même onglet), on l'ignore — sinon le
+    // profil d'un compte précédent pourrait écraser celui du compte courant.
+    let latestRequest = 0
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      const requestId = ++latestRequest
       setUser(firebaseUser)
 
       if (firebaseUser) {
         const userProfile = await getUserProfile(firebaseUser.uid)
+        if (requestId !== latestRequest) return
         setProfile(userProfile)
       } else {
+        if (requestId !== latestRequest) return
         setProfile(null)
       }
 
-      setLoading(false)
+      if (requestId === latestRequest) setLoading(false)
     })
 
-    return unsubscribe
+    return () => {
+      latestRequest = Infinity
+      unsubscribe()
+    }
   }, [])
 
   // Synchronise le cookie de session httpOnly lu par le proxy (src/proxy.ts).

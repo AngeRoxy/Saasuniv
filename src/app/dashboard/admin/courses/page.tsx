@@ -41,9 +41,9 @@ function autoCode(filiere: string, existingCodes: string[]): string {
   return `${prefix}-${String(n).padStart(3, '0')}`
 }
 
-const inputCls = 'w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60'
-const labelCls = 'text-orange-200/60 text-xs font-medium block mb-1.5'
+const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
+const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
+const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
 
 export default function CoursesPage() {
   const { profile } = useAuth()
@@ -138,12 +138,12 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Catalogue des cours</h1>
-          <p className="text-orange-200/40 text-sm mt-1">{courses.length} cours enregistrés</p>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Catalogue des cours</h1>
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">{courses.length} cours enregistrés</p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
         >
           <Plus size={16} /> Ajouter un cours
         </button>
@@ -152,18 +152,18 @@ export default function CoursesPage() {
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400/50" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-orange-400/50" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher un cours…"
-            className="bg-black/40 border border-orange-500/20 rounded-xl pl-9 pr-4 py-2.5 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 w-64 text-sm"
+            className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl pl-9 pr-4 py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 w-64 text-sm"
           />
         </div>
         <select
           value={filterFiliere}
           onChange={e => setFilterFiliere(e.target.value)}
-          className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-400/60"
+          className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-orange-400/60"
         >
           <option value="">Toutes les filières</option>
           {filieres.map(f => <option key={f.id} value={f.nom}>{f.nom}</option>)}
@@ -171,7 +171,7 @@ export default function CoursesPage() {
         <select
           value={filterEnseignant}
           onChange={e => setFilterEnseignant(e.target.value)}
-          className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-400/60"
+          className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-orange-400/60"
         >
           <option value="">Tous les enseignants</option>
           {enseignants.map(e => <option key={e} value={e}>{e}</option>)}
@@ -179,34 +179,34 @@ export default function CoursesPage() {
         {(search || filterFiliere || filterEnseignant) && (
           <button
             onClick={() => { setSearch(''); setFilterFiliere(''); setFilterEnseignant('') }}
-            className="text-orange-400/70 text-sm hover:text-orange-300 transition-colors px-2"
+            className="text-blue-600 dark:text-orange-400/70 text-sm hover:text-blue-900 dark:hover:text-orange-300 transition-colors px-2"
           >
             Réinitialiser
           </button>
         )}
-        <span className="ml-auto text-orange-200/40 text-sm self-center">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="ml-auto text-zinc-500 dark:text-orange-200/40 text-sm self-center">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Cards grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-20 text-orange-200/30">
+        <div className="text-center py-20 text-zinc-500 dark:text-orange-200/30">
           <BookOpen size={40} className="mx-auto mb-4 opacity-30" />
           <p className="text-sm">Aucun cours ne correspond aux filtres.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(c => (
-            <div key={c.id} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-5 flex flex-col gap-3 hover:border-orange-500/25 transition-colors">
+            <div key={c.id} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-5 flex flex-col gap-3 hover:border-orange-500/25 transition-colors">
               {/* Card header */}
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="text-orange-400 font-mono text-xs font-semibold">{c.code}</span>
-                  <h3 className="text-white font-semibold text-sm mt-0.5 leading-snug">{c.intitule}</h3>
+                  <span className="text-blue-600 dark:text-orange-400 font-mono text-xs font-semibold">{c.code}</span>
+                  <h3 className="text-zinc-900 dark:text-white font-semibold text-sm mt-0.5 leading-snug">{c.intitule}</h3>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     onClick={() => openEdit(c)}
-                    className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 transition-colors"
+                    className="p-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 transition-colors"
                     title="Modifier"
                   >
                     <Pencil size={13} />
@@ -224,36 +224,36 @@ export default function CoursesPage() {
               {/* Card fields */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 <div>
-                  <span className="text-orange-200/35 block">Filière</span>
-                  <span className="text-orange-100/70">{c.filiere}</span>
+                  <span className="text-zinc-500 dark:text-orange-200/35 block">Filière</span>
+                  <span className="text-zinc-800 dark:text-orange-100/70">{c.filiere}</span>
                 </div>
                 <div>
-                  <span className="text-orange-200/35 block">Niveau</span>
-                  <span className="text-orange-100/70">{c.niveau}</span>
+                  <span className="text-zinc-500 dark:text-orange-200/35 block">Niveau</span>
+                  <span className="text-zinc-800 dark:text-orange-100/70">{c.niveau}</span>
                 </div>
                 <div>
-                  <span className="text-orange-200/35 block">Enseignant</span>
-                  <span className="text-orange-100/70">{c.enseignant}</span>
+                  <span className="text-zinc-500 dark:text-orange-200/35 block">Enseignant</span>
+                  <span className="text-zinc-800 dark:text-orange-100/70">{c.enseignant}</span>
                 </div>
                 <div>
-                  <span className="text-orange-200/35 block">Salle</span>
-                  <span className="text-orange-100/70">{c.salle || '—'}</span>
+                  <span className="text-zinc-500 dark:text-orange-200/35 block">Salle</span>
+                  <span className="text-zinc-800 dark:text-orange-100/70">{c.salle || '—'}</span>
                 </div>
               </div>
 
               {/* Badges */}
               <div className="flex gap-2 flex-wrap">
-                <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-2.5 py-0.5">
+                <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 rounded-full px-2.5 py-0.5">
                   {c.credits} ECTS
                 </span>
-                <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-2.5 py-0.5">
+                <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 rounded-full px-2.5 py-0.5">
                   Sem. {c.semestre}
                 </span>
               </div>
 
               {/* Description */}
               {c.description && (
-                <p className="text-orange-100/45 text-xs leading-relaxed line-clamp-2">{c.description}</p>
+                <p className="text-zinc-800 dark:text-orange-100/45 text-xs leading-relaxed line-clamp-2">{c.description}</p>
               )}
             </div>
           ))}
@@ -263,12 +263,12 @@ export default function CoursesPage() {
       {/* Add / Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editId !== null ? 'Modifier le cours' : 'Ajouter un cours'}
               </h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors">
+              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -311,9 +311,9 @@ export default function CoursesPage() {
 
               {/* Row 3: Filière + Niveau — chargés depuis Firebase */}
               {filieres.length === 0 ? (
-                <p className="text-xs text-orange-200/60 bg-orange-500/5 border border-orange-500/20 rounded-xl px-4 py-3">
+                <p className="text-xs text-zinc-600 dark:text-orange-200/60 bg-orange-500/5 border border-orange-500/20 rounded-xl px-4 py-3">
                   Aucune filière disponible — créez d&apos;abord vos filières dans{' '}
-                  <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">
+                  <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">
                     Filières &amp; Matières
                   </Link>
                   .
@@ -398,14 +398,14 @@ export default function CoursesPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={closeModal}
-                  className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors"
+                  className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={!form.intitule.trim() || !form.code.trim()}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold rounded-xl py-2.5 text-sm transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
                 >
                   {editId !== null ? 'Enregistrer les modifications' : 'Ajouter le cours'}
                 </button>
@@ -418,20 +418,20 @@ export default function CoursesPage() {
       {/* Delete confirmation modal */}
       {confirmDeleteId !== null && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
-              <h2 className="text-base font-bold text-white">Supprimer ce cours ?</h2>
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer ce cours ?</h2>
             </div>
-            <p className="text-orange-100/55 text-sm mb-6">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">
               Cette action est irréversible. Le cours sera définitivement supprimé du catalogue.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors"
+                className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
               >
                 Annuler
               </button>

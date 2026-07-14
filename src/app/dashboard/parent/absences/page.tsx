@@ -52,17 +52,17 @@ export default function ParentAbsencesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Absences</h1>
-        <p className="text-orange-200/40 text-sm mt-1">{selectedChild.displayName}</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Absences</h1>
+        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">{selectedChild.displayName}</p>
       </div>
 
       {children.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-orange-200/40 mr-1">Enfant :</span>
+          <span className="text-xs text-zinc-500 dark:text-orange-200/40 mr-1">Enfant :</span>
           {children.map((c) => (
             <button key={c.uid} onClick={() => setSelectedUid(c.uid)}
               className={`text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
-                c.uid === selectedUid ? 'bg-orange-500/20 border-orange-500/40 text-orange-300' : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                c.uid === selectedUid ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300' : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
               }`}>{c.displayName}</button>
           ))}
         </div>

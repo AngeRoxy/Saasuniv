@@ -90,15 +90,15 @@ export default function ParentExamensPage() {
       {/* Sélecteur d'enfant */}
       {children.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-orange-200/40 mr-1">Enfant :</span>
+          <span className="text-xs text-zinc-500 dark:text-orange-200/40 mr-1">Enfant :</span>
           {children.map((c) => (
             <button
               key={c.uid}
               onClick={() => setSelectedUid(c.uid)}
               className={`text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
                 c.uid === selectedUid
-                  ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                  : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                  ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                  : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
               }`}
             >
               {c.displayName}
@@ -109,11 +109,11 @@ export default function ParentExamensPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ClipboardList size={22} className="text-orange-400" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <ClipboardList size={22} className="text-blue-600 dark:text-orange-400" />
             Examens
           </h1>
-          <p className="text-orange-200/40 text-sm mt-1">
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
             {selectedChild.displayName}
             {selectedChild.filiere && ` · ${selectedChild.filiere}`}
             {selectedChild.niveau && ` · ${selectedChild.niveau}`}
@@ -123,7 +123,7 @@ export default function ParentExamensPage() {
           <select
             value={semestreId ?? ''}
             onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60"
+            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
           >
             {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
@@ -131,7 +131,7 @@ export default function ParentExamensPage() {
       </div>
 
       {!childFiliereId || !niveau ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
           La filière ou le niveau de votre enfant n’est pas encore renseigné. Contactez l’administration.
         </div>
       ) : examLoading ? (

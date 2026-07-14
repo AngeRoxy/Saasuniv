@@ -7,7 +7,7 @@ import { statutAffiche, formatFCFA, type PaiementStatutAffiche } from '@/types/p
 
 const BADGE: Record<PaiementStatutAffiche, string> = {
   'Payé': 'bg-green-500/15 text-green-400 border border-green-500/25',
-  'En attente': 'bg-orange-500/15 text-orange-400 border border-orange-500/25',
+  'En attente': 'bg-orange-500/15 text-blue-600 dark:text-orange-400 border border-orange-500/25',
   'En retard': 'bg-red-500/15 text-red-400 border border-red-500/25',
 }
 
@@ -44,11 +44,11 @@ export function PaymentsView({ universityId, studentUid }: { universityId: strin
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total dû', value: formatFCFA(totalDu), color: 'text-white' },
+          { label: 'Total dû', value: formatFCFA(totalDu), color: 'text-zinc-900 dark:text-white' },
           { label: 'Payé', value: formatFCFA(totalPaye), color: 'text-green-400' },
-          { label: 'Reste à payer', value: formatFCFA(reste), color: reste > 0 ? 'text-orange-400' : 'text-green-400' },
+          { label: 'Reste à payer', value: formatFCFA(reste), color: reste > 0 ? 'text-blue-600 dark:text-orange-400' : 'text-green-400' },
         ].map((k) => (
-          <div key={k.label} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-5">
+          <div key={k.label} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-5">
             <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1">{k.label}</p>
             <p className={`text-lg font-bold ${k.color}`}>{k.value}</p>
           </div>
@@ -56,15 +56,15 @@ export function PaymentsView({ universityId, studentUid }: { universityId: strin
       </div>
 
       {paiements.length === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm flex flex-col items-center gap-3">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm flex flex-col items-center gap-3">
           <CreditCard size={32} className="opacity-30" />
           Aucun paiement enregistré pour l’instant.
         </div>
       ) : (
-        <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-x-auto">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-black/40 text-orange-300/60 text-xs uppercase tracking-wider border-b border-orange-500/10">
+              <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider border-b border-zinc-200 dark:border-orange-500/10">
                 <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-right">Montant</th>
                 <th className="px-4 py-3 text-left">Échéance</th>
@@ -76,9 +76,9 @@ export function PaymentsView({ universityId, studentUid }: { universityId: strin
                 const st = statutAffiche(p, today)
                 return (
                   <tr key={p.id} className="border-t border-orange-500/5">
-                    <td className="px-4 py-3 text-orange-100/80 font-medium">{p.type}</td>
-                    <td className="px-4 py-3 text-right text-white font-semibold whitespace-nowrap">{formatFCFA(p.montant)}</td>
-                    <td className="px-4 py-3 text-zinc-400 whitespace-nowrap">{p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</td>
+                    <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/80 font-medium">{p.type}</td>
+                    <td className="px-4 py-3 text-right text-zinc-900 dark:text-white font-semibold whitespace-nowrap">{formatFCFA(p.montant)}</td>
+                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-medium ${BADGE[st]}`}>{st}</span>
                     </td>

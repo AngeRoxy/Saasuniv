@@ -33,7 +33,7 @@ export function AbsenceAlertBadge({ nombreAbsences, seuil, showZero = false }: A
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-orange-500/15 text-orange-300 border border-orange-500/25">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-orange-500/15 text-blue-700 dark:text-orange-300 border border-orange-500/25">
       {nombreAbsences} absence{nombreAbsences > 1 ? 's' : ''} injustifiée{nombreAbsences > 1 ? 's' : ''}
     </span>
   )

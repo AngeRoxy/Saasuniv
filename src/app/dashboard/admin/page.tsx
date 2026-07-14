@@ -160,15 +160,15 @@ function AdminDashboardContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold text-white">
-            Bonjour, <span className="text-orange-400">{displayName}</span>
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Bonjour, <span className="text-blue-600 dark:text-orange-400">{displayName}</span>
           </h2>
           <p className="text-zinc-500 mt-1 capitalize">{getTodayString()}</p>
         </div>
         {universityId && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 self-start sm:self-auto">
-            <Bell size={13} className="text-orange-400" />
-            <span className="text-xs text-orange-300 font-mono">{universityId}</span>
+            <Bell size={13} className="text-blue-600 dark:text-orange-400" />
+            <span className="text-xs text-blue-700 dark:text-orange-300 font-mono">{universityId}</span>
           </div>
         )}
       </div>
@@ -176,18 +176,18 @@ function AdminDashboardContent() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {isTrialActive && (
-          <div className="bg-zinc-950 border border-amber-500/20 rounded-xl p-6 flex flex-col gap-4">
+          <div className="bg-white dark:bg-zinc-950 border border-amber-500/20 rounded-xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-amber-300/80">Essai Premium</span>
+              <span className="text-sm text-blue-700 dark:text-amber-300/80">Essai Premium</span>
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <Clock size={20} className="text-amber-400" />
+                <Clock size={20} className="text-blue-600 dark:text-amber-400" />
               </div>
             </div>
             <div>
-              <p className="text-3xl font-bold text-white">
-                {daysRemaining} <span className="text-lg font-medium text-zinc-400">jour{daysRemaining > 1 ? 's' : ''}</span>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+                {daysRemaining} <span className="text-lg font-medium text-zinc-600 dark:text-zinc-400">jour{daysRemaining > 1 ? 's' : ''}</span>
               </p>
-              <Link href="/dashboard/admin/billing" className="text-xs mt-1 inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors">
+              <Link href="/dashboard/admin/billing" className="text-xs mt-1 inline-flex items-center gap-1 text-blue-600 dark:text-amber-400 hover:text-blue-900 dark:hover:text-amber-300 transition-colors">
                 Choisir un plan
                 <ArrowRight size={12} />
               </Link>
@@ -195,15 +195,15 @@ function AdminDashboardContent() {
           </div>
         )}
         {kpiCards.map(({ label, value, icon: Icon, newCount }) => (
-          <div key={label} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-6 flex flex-col gap-4">
+          <div key={label} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">{label}</span>
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">{label}</span>
               <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                <Icon size={20} className="text-orange-400" />
+                <Icon size={20} className="text-blue-600 dark:text-orange-400" />
               </div>
             </div>
             <div>
-              <p className="text-3xl font-bold text-white">{loading ? '—' : value}</p>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-white">{loading ? '—' : value}</p>
               {newCount > 0 ? (
                 <p className="text-xs mt-1 flex items-center gap-1 text-green-400">
                   <TrendingUp size={12} />
@@ -233,18 +233,18 @@ function AdminDashboardContent() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Étudiants (filtrable) — données réelles */}
-        <div className="xl:col-span-2 bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-orange-500/10 flex items-center justify-between gap-2">
+        <div className="xl:col-span-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-zinc-200 dark:border-orange-500/10 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <GraduationCap size={15} className="text-orange-400" />
-              <h3 className="text-base font-semibold text-white">Étudiants</h3>
+              <GraduationCap size={15} className="text-blue-600 dark:text-orange-400" />
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-white">Étudiants</h3>
             </div>
             <span className="text-xs text-zinc-500">{filteredStudents.length} affiché·s</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-black/40 text-xs uppercase tracking-wider text-orange-300/60">
+                <tr className="bg-zinc-50 dark:bg-black/40 text-xs uppercase tracking-wider text-blue-700 dark:text-orange-300/60">
                   <th className="px-4 py-3 text-left">Étudiant</th>
                   <th className="px-4 py-3 text-left">Filière</th>
                   <th className="px-4 py-3 text-left">Niveau</th>
@@ -264,7 +264,7 @@ function AdminDashboardContent() {
                       {students.length === 0 ? (
                         <>
                           Aucun étudiant inscrit.{' '}
-                          <Link href="/dashboard/admin/students" className="text-orange-400 hover:text-orange-300 underline">
+                          <Link href="/dashboard/admin/students" className="text-blue-600 dark:text-orange-400 hover:text-blue-900 dark:hover:text-orange-300 underline">
                             Ajouter un étudiant
                           </Link>
                         </>
@@ -276,15 +276,15 @@ function AdminDashboardContent() {
                 ) : (
                   filteredStudents.map((s) => (
                     <tr key={s.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
-                      <td className="px-4 py-3 font-medium text-orange-100/80">{s.nom}</td>
-                      <td className="px-4 py-3 text-orange-100/70">{s.filiere}</td>
-                      <td className="px-4 py-3 text-orange-100/70">{s.niveau}</td>
+                      <td className="px-4 py-3 font-medium text-zinc-800 dark:text-orange-100/80">{s.nom}</td>
+                      <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/70">{s.filiere}</td>
+                      <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/70">{s.niveau}</td>
                       <td className="px-4 py-3 text-center">
                         <span
                           className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                             s.statut === 'Actif'
                               ? 'bg-green-500/15 text-green-400 border border-green-500/25'
-                              : 'bg-zinc-700/30 text-zinc-400 border border-white/10'
+                              : 'bg-zinc-200 dark:bg-zinc-700/30 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10'
                           }`}
                         >
                           {s.statut}
@@ -299,9 +299,9 @@ function AdminDashboardContent() {
         </div>
 
         {/* Accès rapide */}
-        <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden h-fit">
-          <div className="px-6 py-4 border-b border-orange-500/10">
-            <h3 className="text-base font-semibold text-white">Actions rapides</h3>
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden h-fit">
+          <div className="px-6 py-4 border-b border-zinc-200 dark:border-orange-500/10">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white">Actions rapides</h3>
           </div>
           <div className="p-4 space-y-2">
             {quickActions.map(({ label, icon: Icon, href, description }) => (
@@ -311,13 +311,13 @@ function AdminDashboardContent() {
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-500/5 border border-transparent hover:border-orange-500/10 transition-all group"
               >
                 <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
-                  <Icon size={18} className="text-orange-400" />
+                  <Icon size={18} className="text-blue-600 dark:text-orange-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{label}</p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-white">{label}</p>
                   <p className="text-xs text-zinc-500">{description}</p>
                 </div>
-                <ArrowRight size={14} className="text-zinc-600 group-hover:text-orange-400 transition-colors" />
+                <ArrowRight size={14} className="text-zinc-600 group-hover:text-blue-800 dark:group-hover:text-orange-400 transition-colors" />
               </Link>
             ))}
           </div>

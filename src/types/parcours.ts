@@ -109,8 +109,8 @@ export const STATUT_PARCOURS_LABELS: Record<StatutParcours, string> = {
 // Palette volontairement sobre : le redoublement reste neutre (ambre/zinc), jamais
 // rouge alarmant. Le vert « validé » reste discret pour ne pas écraser le reste.
 export const STATUT_PARCOURS_STYLES: Record<StatutParcours, string> = {
-  en_cours: 'bg-blue-500/10 text-blue-300 border-blue-500/25',
+  en_cours: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25',
   valide: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
-  redouble: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
-  abandonne: 'bg-zinc-700/30 text-zinc-400 border-white/10',
+  redouble: 'bg-amber-500/10 text-blue-700 dark:text-amber-300 border-amber-500/25',
+  abandonne: 'bg-zinc-700/30 text-zinc-600 dark:text-zinc-400 border-white/10',
 }

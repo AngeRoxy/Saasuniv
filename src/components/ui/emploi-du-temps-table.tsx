@@ -144,11 +144,11 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
           </colgroup>
           <thead>
             <tr>
-              <th className="sticky top-0 z-10 border border-white/10 border-b-orange-500/30 bg-zinc-950" />
+              <th className="sticky top-0 z-10 border border-zinc-200 dark:border-white/10 border-b-orange-500/30 bg-white dark:bg-zinc-950" />
               {JOURS.map((jour) => (
                 <th
                   key={jour}
-                  className="sticky top-0 z-10 border border-white/10 border-b-orange-500/30 bg-zinc-950 py-2 text-center text-xs font-medium uppercase tracking-wider text-orange-400"
+                  className="sticky top-0 z-10 border border-zinc-200 dark:border-white/10 border-b-orange-500/30 bg-white dark:bg-zinc-950 py-2 text-center text-xs font-medium uppercase tracking-wider text-blue-600 dark:text-orange-400"
                 >
                   {JOUR_LABEL[jour]}
                 </th>
@@ -158,7 +158,7 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
           <tbody>
             {lignes.map((minute, i) => (
               <tr key={minute}>
-                <td className="h-15 border border-white/10 bg-white/5 text-center align-middle font-mono text-[10px] text-zinc-500">
+                <td className="h-15 border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 text-center align-middle font-mono text-[10px] text-zinc-500">
                   {/* Intervalle COMPLET de cette ligne d'1h : début → fin (fin = début + 60 min).
                       Reste affiché sur chaque ligne, y compris celles traversées par un cours
                       en rowSpan — seul le contenu de la cellule du jour est fusionné. */}
@@ -183,7 +183,7 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                       <td
                         key={jour}
                         rowSpan={span}
-                        className="border border-white/10 align-middle"
+                        className="border border-zinc-200 dark:border-white/10 align-middle"
                         style={{ padding: '4px 10px' }}
                       >
                         <div
@@ -202,17 +202,17 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                               durée du cours (même 1h) : la ligne fait désormais 60px pour que les
                               3 infos tiennent. Polices compactes + line-clamp/truncate empêchent
                               tout débordement quand le nom ou l'intitulé est long. */}
-                          <p className="line-clamp-2 max-w-full break-words text-[10px] font-semibold leading-[1.2] text-white">
+                          <p className="line-clamp-2 max-w-full break-words text-[10px] font-semibold leading-[1.2] text-zinc-900 dark:text-white">
                             {c.matiere}
                           </p>
                           {c.salle && (
-                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-orange-300">
+                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300">
                               <MapPin className="h-2.5 w-2.5 shrink-0" />
                               <span className="truncate">{c.salle}</span>
                             </span>
                           )}
                           {c.enseignant && (
-                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-orange-300/80">
+                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300/80">
                               <User className="h-2.5 w-2.5 shrink-0" />
                               <span className="truncate">{c.enseignant}</span>
                             </span>
@@ -226,7 +226,7 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                   if (data.occupied[i]) return null
 
                   // Cellule libre : simple case de grille.
-                  return <td key={jour} className="h-15 border border-white/10" />
+                  return <td key={jour} className="h-15 border border-zinc-200 dark:border-white/10" />
                 })}
               </tr>
             ))}
@@ -242,7 +242,7 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
             .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
           return (
             <div key={jour}>
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-orange-400">
+              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-orange-400">
                 {JOUR_LABEL[jour]}
               </h3>
               {items.length === 0 ? (
@@ -254,12 +254,12 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                       key={c.id}
                       className="rounded-lg border border-orange-500/20 bg-orange-500/10 p-3"
                     >
-                      <p className="font-mono text-xs text-orange-400">
+                      <p className="font-mono text-xs text-blue-600 dark:text-orange-400">
                         {c.heureDebut} - {c.heureFin}
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-white">{c.matiere}</p>
-                      {c.salle && <p className="mt-1 text-xs text-zinc-400">{c.salle}</p>}
-                      {c.enseignant && <p className="mt-0.5 text-xs text-zinc-400">{c.enseignant}</p>}
+                      <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">{c.matiere}</p>
+                      {c.salle && <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{c.salle}</p>}
+                      {c.enseignant && <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">{c.enseignant}</p>}
                     </div>
                   ))}
                 </div>

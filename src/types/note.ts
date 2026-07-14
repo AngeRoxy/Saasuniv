@@ -42,9 +42,9 @@ export interface Mention {
 export function getMention(note: number | null | undefined): Mention | null {
   if (note === null || note === undefined || Number.isNaN(note)) return null
   if (note >= 16) return { label: 'Très Bien', abbr: 'TB', cls: 'bg-green-500/15 text-green-400 border-green-500/25' }
-  if (note >= 14) return { label: 'Bien', abbr: 'B', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/25' }
-  if (note >= 12) return { label: 'Assez Bien', abbr: 'AB', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25' }
-  if (note >= 10) return { label: 'Passable', abbr: 'P', cls: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25' }
+  if (note >= 14) return { label: 'Bien', abbr: 'B', cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25' }
+  if (note >= 12) return { label: 'Assez Bien', abbr: 'AB', cls: 'bg-cyan-500/15 text-blue-600 dark:text-cyan-400 border-cyan-500/25' }
+  if (note >= 10) return { label: 'Passable', abbr: 'P', cls: 'bg-yellow-500/15 text-blue-600 dark:text-yellow-400 border-yellow-500/25' }
   return { label: 'Insuffisant', abbr: 'I', cls: 'bg-red-500/15 text-red-400 border-red-500/25' }
 }
 

@@ -34,8 +34,8 @@ interface RecommandationsIAProps {
 /** Style (icône + couleurs) par type de recommandation. */
 const typeStyles: Record<RecommandationType, { icon: LucideIcon; border: string; text: string }> = {
   alerte_echec: { icon: AlertTriangle, border: 'border-red-500/30', text: 'text-red-400' },
-  orientation: { icon: Compass, border: 'border-blue-500/30', text: 'text-blue-400' },
-  revision: { icon: BookOpen, border: 'border-orange-500/30', text: 'text-orange-400' },
+  orientation: { icon: Compass, border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400' },
+  revision: { icon: BookOpen, border: 'border-orange-500/30', text: 'text-blue-600 dark:text-orange-400' },
   encouragement: { icon: Trophy, border: 'border-green-500/30', text: 'text-green-400' },
 }
 
@@ -135,7 +135,7 @@ export function RecommandationsIA({
       )}
 
       {loading && hasGenerated && (
-        <div className="flex items-center gap-2 text-sm text-orange-200/60">
+        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-orange-200/60">
           <Loader2 className="h-4 w-4 animate-spin" />
           Analyse en cours…
         </div>
@@ -158,19 +158,19 @@ export function RecommandationsIA({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: i * 0.06 }}
-                className={`flex items-start gap-3 rounded-xl bg-zinc-950 border ${style.border} p-4`}
+                className={`flex items-start gap-3 rounded-xl bg-white dark:bg-zinc-950 border ${style.border} p-4`}
               >
-                <div className="rounded-lg bg-black/40 p-2 shrink-0">
+                <div className="rounded-lg bg-zinc-50 dark:bg-black/40 p-2 shrink-0">
                   <Icon className={`h-5 w-5 ${style.text}`} />
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
-                  <p className="text-sm leading-relaxed text-orange-100/80">{reco.contenu}</p>
+                  <p className="text-sm leading-relaxed text-zinc-800 dark:text-orange-100/80">{reco.contenu}</p>
                   {reco.matieresImpactees.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {reco.matieresImpactees.map((m) => (
                         <span
                           key={m}
-                          className="rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-xs text-zinc-300"
+                          className="rounded-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-2 py-0.5 text-xs text-zinc-700 dark:text-zinc-300"
                         >
                           {m}
                         </span>
@@ -185,7 +185,7 @@ export function RecommandationsIA({
           <button
             onClick={analyser}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-sm font-medium text-blue-600 dark:text-orange-400 transition-colors hover:bg-orange-500/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Rafraîchir l&apos;analyse

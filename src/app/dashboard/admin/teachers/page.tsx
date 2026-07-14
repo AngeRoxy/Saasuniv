@@ -325,7 +325,7 @@ export default function TeachersPage() {
       <div className="flex justify-end">
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
         >
           <UserPlus size={16} />
           Ajouter un enseignant
@@ -334,11 +334,11 @@ export default function TeachersPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {teachers.map((teacher) => (
-          <div key={teacher.id} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-6 space-y-4">
+          <div key={teacher.id} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 space-y-4">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-white font-semibold">{teacher.nom} {teacher.prenom}</p>
+                  <p className="text-zinc-900 dark:text-white font-semibold">{teacher.nom} {teacher.prenom}</p>
                   {teacher.uid && (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium">
                       <Wifi size={9} />
@@ -352,7 +352,7 @@ export default function TeachersPage() {
                 {teacher.uid && (
                   <button
                     onClick={() => setEmailTarget(teacher)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                     title="Corriger l'email"
                   >
                     <Mail size={14} />
@@ -360,14 +360,14 @@ export default function TeachersPage() {
                 )}
                 <button
                   onClick={() => openEdit(teacher)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                  className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                   title="Modifier"
                 >
                   <Pencil size={14} />
                 </button>
                 <button
                   onClick={() => setDeleteTarget(teacher)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                   title="Supprimer"
                 >
                   <Trash2 size={14} />
@@ -382,7 +382,7 @@ export default function TeachersPage() {
                   {teacher.filiereIds.map((fid) => (
                     <span
                       key={fid}
-                      className="inline-flex items-center px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium"
+                      className="inline-flex items-center px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-blue-600 dark:text-orange-400 text-xs font-medium"
                     >
                       {filiereNom(fid)}
                     </span>
@@ -397,7 +397,7 @@ export default function TeachersPage() {
               <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Cours assignés</p>
               <div className="flex flex-wrap gap-1.5">
                 {teacher.matieres.map((m) => (
-                  <span key={m} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-300 text-xs">
+                  <span key={m} className="px-2 py-0.5 rounded-md bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-xs">
                     {m}
                   </span>
                 ))}
@@ -406,9 +406,9 @@ export default function TeachersPage() {
 
             <div className="flex items-center gap-2 pt-2 border-t border-orange-500/5">
               <Clock size={14} className="text-zinc-500" />
-              <span className="text-sm text-zinc-400">
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 Charge horaire :{' '}
-                <span className="text-white font-medium">{teacher.chargeHoraire}h / semaine</span>
+                <span className="text-zinc-900 dark:text-white font-medium">{teacher.chargeHoraire}h / semaine</span>
               </span>
             </div>
           </div>
@@ -423,12 +423,12 @@ export default function TeachersPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editingId ? 'Modifier l\'enseignant' : 'Ajouter un enseignant'}
               </h2>
-              <button onClick={closeModal} className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+              <button onClick={closeModal} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -436,55 +436,55 @@ export default function TeachersPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Nom</label>
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nom</label>
                   <input
                     required
                     type="text"
                     value={form.nom}
                     onChange={(e) => setForm({ ...form, nom: e.target.value })}
                     placeholder="Ouattara"
-                    className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                    className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Prénom</label>
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Prénom</label>
                   <input
                     required
                     type="text"
                     value={form.prenom}
                     onChange={(e) => setForm({ ...form, prenom: e.target.value })}
                     placeholder="Jean-Baptiste"
-                    className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                    className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Email professionnel</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Email professionnel</label>
                 <input
                   required
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="enseignant@university.ci"
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Téléphone</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Téléphone</label>
                 <input
                   type="tel"
                   value={form.telephone}
                   onChange={(e) => setForm({ ...form, telephone: e.target.value })}
                   placeholder="+225 07 00 00 00 00"
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
               </div>
 
               {/* Filières — multi-sélection : un enseignant peut intervenir dans plusieurs */}
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Filières enseignées</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Filières enseignées</label>
                 {filieres.length > 0 ? (
                   <>
                     <div className="flex flex-wrap gap-2">
@@ -497,8 +497,8 @@ export default function TeachersPage() {
                             onClick={() => toggleFiliere(f.id)}
                             className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                               selected
-                                ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                                : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                                ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                                : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
                             }`}
                           >
                             {f.nom}
@@ -506,14 +506,14 @@ export default function TeachersPage() {
                         )
                       })}
                     </div>
-                    <p className="text-[11px] text-orange-200/40 mt-1.5">
+                    <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
                       Cochez toutes les filières où intervient cet enseignant.
                     </p>
                   </>
                 ) : (
-                  <p className="text-xs text-orange-200/60">
+                  <p className="text-xs text-zinc-600 dark:text-orange-200/60">
                     Aucune filière disponible — créez d&apos;abord vos filières dans{' '}
-                    <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">
+                    <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">
                       Filières &amp; Matières
                     </Link>
                     .
@@ -523,7 +523,7 @@ export default function TeachersPage() {
 
               {/* Matières enseignées — union des matières des filières sélectionnées */}
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Matières enseignées</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Matières enseignées</label>
                 {matiereOptions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {matiereOptions.map((nom) => {
@@ -535,8 +535,8 @@ export default function TeachersPage() {
                           onClick={() => toggleMatiere(nom)}
                           className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                             selected
-                              ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                              : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                              ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                              : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
                           }`}
                         >
                           {nom}
@@ -553,14 +553,14 @@ export default function TeachersPage() {
                         setForm({ ...form, matieres: e.target.value.split(',').map((m) => m.trimStart()) })
                       }
                       placeholder="Saisir les matières (séparées par des virgules)"
-                      className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                      className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                     />
-                    <p className="text-xs text-orange-200/60 mt-1.5">
+                    <p className="text-xs text-zinc-600 dark:text-orange-200/60 mt-1.5">
                       {form.filiereIds.length > 0
                         ? 'Aucune matière dans ces filières — '
                         : 'Sélectionnez au moins une filière pour choisir ses matières, ou '}
                       créez vos matières dans{' '}
-                      <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">
+                      <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">
                         Filières &amp; Matières
                       </Link>
                       .
@@ -570,21 +570,21 @@ export default function TeachersPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Charge horaire (h/semaine)</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Charge horaire (h/semaine)</label>
                 <input
                   type="number"
                   min="0"
                   max="40"
                   value={form.chargeHoraire}
                   onChange={(e) => setForm({ ...form, chargeHoraire: e.target.value })}
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-500/50"
                 />
               </div>
 
               {!editingId && (
                 <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-                  <Mail size={15} className="text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-200/70 leading-relaxed">
+                  <Mail size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
                     Un email avec les accès sera envoyé automatiquement à
                     l&apos;enseignant. Il devra changer son mot de passe à la
                     première connexion.
@@ -597,14 +597,14 @@ export default function TeachersPage() {
                   type="button"
                   onClick={closeModal}
                   disabled={submitting}
-                  className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   {editingId ? 'Enregistrer les modifications' : submitting ? 'Création…' : 'Créer le compte'}
@@ -642,16 +642,16 @@ export default function TeachersPage() {
       {/* Confirmation de suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
             <div className="flex items-start gap-4 mb-6">
               <div className="p-2 bg-red-500/10 rounded-xl shrink-0">
                 <AlertTriangle size={20} className="text-red-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white mb-1">Supprimer l&apos;enseignant</h2>
-                <p className="text-sm text-zinc-400">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-1">Supprimer l&apos;enseignant</h2>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Voulez-vous vraiment supprimer{' '}
-                  <span className="text-white font-medium">{deleteTarget.nom} {deleteTarget.prenom}</span>{' '}
+                  <span className="text-zinc-900 dark:text-white font-medium">{deleteTarget.nom} {deleteTarget.prenom}</span>{' '}
                   ? Cette action est irréversible.
                 </p>
               </div>
@@ -660,7 +660,7 @@ export default function TeachersPage() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -669,7 +669,7 @@ export default function TeachersPage() {
                 disabled={deleting}
                 className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deleting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {deleting && <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />}
                 {deleting ? 'Suppression…' : 'Supprimer'}
               </button>
             </div>
@@ -679,10 +679,10 @@ export default function TeachersPage() {
 
       {/* Limit toast */}
       {limitError && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm flex items-start gap-3 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm flex items-start gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-2xl">
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-300 text-sm flex-1">{limitError}</p>
-          <button onClick={() => setLimitError(null)} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={() => setLimitError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -690,10 +690,10 @@ export default function TeachersPage() {
 
       {/* Erreur de création */}
       {createError && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-white dark:bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-300 text-sm flex-1">{createError}</p>
-          <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -701,10 +701,10 @@ export default function TeachersPage() {
 
       {/* Toast succès création */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-60 max-w-sm flex items-start gap-3 bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
-          <CheckCircle2 size={16} className="text-orange-400 shrink-0 mt-0.5" />
-          <p className="text-orange-100 text-sm flex-1">{toast}</p>
-          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-white transition-colors">
+        <div className="fixed bottom-6 right-6 z-60 max-w-sm flex items-start gap-3 bg-white dark:bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
+          <CheckCircle2 size={16} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-zinc-800 dark:text-orange-100 text-sm flex-1">{toast}</p>
+          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>

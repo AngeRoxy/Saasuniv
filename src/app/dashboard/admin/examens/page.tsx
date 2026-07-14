@@ -50,9 +50,9 @@ import {
   type TypeSession,
 } from '@/types/examen'
 
-const inputCls = 'w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60'
-const labelCls = 'text-orange-200/60 text-xs font-medium block mb-1.5'
+const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
+const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
+const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
 
 interface FormState {
   filiereId: string
@@ -98,7 +98,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     return () => clearTimeout(t)
   }, [onClose])
   return (
-    <div className="fixed bottom-6 right-6 z-[100] bg-orange-500 text-black text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
+    <div className="fixed bottom-6 right-6 z-[100] bg-orange-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
       {message}
       <button onClick={onClose}><X size={14} /></button>
     </div>
@@ -377,7 +377,7 @@ export default function ExamensAdminPage() {
   // Garde d'accès
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
     return (
-      <div className="flex items-center justify-center h-64 text-orange-300/60 text-sm">
+      <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">
         Accès réservé aux administrateurs.
       </div>
     )
@@ -396,18 +396,18 @@ export default function ExamensAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ClipboardList size={22} className="text-orange-400" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <ClipboardList size={22} className="text-blue-600 dark:text-orange-400" />
             Examens
           </h1>
-          <p className="text-orange-200/40 text-sm mt-1">
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
             Planifiez les épreuves : date, salle, surveillance, session normale ou rattrapage.
           </p>
         </div>
         {filieres.length > 0 && semestres.length > 0 && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors shrink-0"
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors shrink-0"
           >
             <Plus size={16} /> Planifier un examen
           </button>
@@ -416,19 +416,19 @@ export default function ExamensAdminPage() {
 
       {filieres.length === 0 || semestres.length === 0 ? (
         <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-          <AlertTriangle size={15} className="text-orange-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-orange-200/70 leading-relaxed">
+          <AlertTriangle size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
             Vous devez d’abord créer au moins une{' '}
-            <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">filière</Link>{' '}
+            <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">filière</Link>{' '}
             (avec ses niveaux) et un{' '}
-            <Link href="/dashboard/admin/semestres" className="text-orange-400 underline hover:text-orange-300">semestre</Link>{' '}
+            <Link href="/dashboard/admin/semestres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">semestre</Link>{' '}
             avant de planifier des examens.
           </p>
         </div>
       ) : (
         <>
           {/* Filtres */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-zinc-950 border border-orange-500/10 rounded-xl p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4">
             <div>
               <label className={labelCls}>Filière</label>
               <select value={fFiliereId} onChange={(e) => handleFilterFiliere(e.target.value)} className={selectCls}>
@@ -463,7 +463,7 @@ export default function ExamensAdminPage() {
 
           {/* Liste chronologique groupée par date */}
           {totalFiltres === 0 ? (
-            <div className="text-center py-16 text-orange-200/30 text-sm">
+            <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
               Aucun examen ne correspond à ces filtres. Cliquez sur « Planifier un examen » pour en créer un.
             </div>
           ) : (
@@ -471,8 +471,8 @@ export default function ExamensAdminPage() {
               {groupes.map(([date, items]) => (
                 <div key={date}>
                   <div className="flex items-center gap-2 mb-3">
-                    <CalendarCheck size={15} className="text-orange-400 shrink-0" />
-                    <h3 className="text-sm font-semibold text-orange-200/80">{capitalize(formatDateLong(date))}</h3>
+                    <CalendarCheck size={15} className="text-blue-600 dark:text-orange-400 shrink-0" />
+                    <h3 className="text-sm font-semibold text-zinc-600 dark:text-orange-200/80">{capitalize(formatDateLong(date))}</h3>
                   </div>
                   <div className="space-y-2.5">
                     {items.map((e) => {
@@ -482,15 +482,15 @@ export default function ExamensAdminPage() {
                         <div
                           key={e.id}
                           className={`group rounded-xl border p-4 ${
-                            annule ? 'border-white/10 bg-white/[0.02] opacity-60' : 'border-orange-500/15 bg-zinc-950'
+                            annule ? 'border-zinc-200 dark:border-white/10 bg-white/[0.02] opacity-60' : 'border-orange-500/15 bg-white dark:bg-zinc-950'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <span className="inline-flex items-center gap-1.5 text-xs font-mono text-orange-400">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-600 dark:text-orange-400">
                                 <Clock size={12} /> {e.heureDebut} – {e.heureFin}
                               </span>
-                              <p className={`text-base font-semibold mt-1 leading-snug ${annule ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                              <p className={`text-base font-semibold mt-1 leading-snug ${annule ? 'text-zinc-500 line-through' : 'text-zinc-900 dark:text-white'}`}>
                                 {e.matiereNom || 'Matière'}
                               </p>
                               <p className="text-[11px] text-zinc-500 mt-0.5">
@@ -498,15 +498,15 @@ export default function ExamensAdminPage() {
                               </p>
                             </div>
                             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                              <button onClick={() => openEdit(e)} className="p-1.5 rounded text-zinc-400 hover:text-orange-400" title="Modifier"><Pencil size={14} /></button>
+                              <button onClick={() => openEdit(e)} className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400" title="Modifier"><Pencil size={14} /></button>
                               {!annule && (
-                                <button onClick={() => setCancelTarget(e)} className="p-1.5 rounded text-zinc-400 hover:text-amber-400" title="Annuler l’examen"><Ban size={14} /></button>
+                                <button onClick={() => setCancelTarget(e)} className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-amber-400" title="Annuler l’examen"><Ban size={14} /></button>
                               )}
-                              <button onClick={() => setDeleteTarget(e)} className="p-1.5 rounded text-zinc-400 hover:text-red-400" title="Supprimer définitivement"><Trash2 size={14} /></button>
+                              <button onClick={() => setDeleteTarget(e)} className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-red-400" title="Supprimer définitivement"><Trash2 size={14} /></button>
                             </div>
                           </div>
 
-                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-zinc-400">
+                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-zinc-600 dark:text-zinc-400">
                             {e.salle && <span className="inline-flex items-center gap-1.5"><MapPin size={13} className="text-zinc-500" /> {e.salle}</span>}
                             {e.enseignantNom ? (
                               <span className="inline-flex items-center gap-1.5"><User size={13} className="text-zinc-500" /> {e.enseignantNom}</span>
@@ -526,8 +526,8 @@ export default function ExamensAdminPage() {
                           </div>
 
                           {e.instructions && (
-                            <p className="mt-2.5 flex items-start gap-1.5 text-[13px] text-orange-100/60 leading-relaxed">
-                              <Info size={13} className="text-orange-400/70 shrink-0 mt-0.5" />
+                            <p className="mt-2.5 flex items-start gap-1.5 text-[13px] text-zinc-800 dark:text-orange-100/60 leading-relaxed">
+                              <Info size={13} className="text-blue-600 dark:text-orange-400/70 shrink-0 mt-0.5" />
                               {e.instructions}
                             </p>
                           )}
@@ -545,10 +545,10 @@ export default function ExamensAdminPage() {
       {/* Modal ajout / édition */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">{editId ? 'Modifier l’examen' : 'Planifier un examen'}</h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier l’examen' : 'Planifier un examen'}</h2>
+              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"><X size={20} /></button>
             </div>
 
             <div className="space-y-4">
@@ -576,9 +576,9 @@ export default function ExamensAdminPage() {
                   {formMatieres.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
                 </select>
                 {form.filiereId && formMatieres.length === 0 && (
-                  <p className="text-[11px] text-orange-200/40 mt-1.5">
+                  <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
                     Ajoutez des matières dans{' '}
-                    <Link href={`/dashboard/admin/filieres/${form.filiereId}`} className="text-orange-400 underline hover:text-orange-300">cette filière</Link>.
+                    <Link href={`/dashboard/admin/filieres/${form.filiereId}`} className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">cette filière</Link>.
                   </p>
                 )}
               </div>
@@ -669,10 +669,10 @@ export default function ExamensAdminPage() {
               )}
 
               <div className="flex gap-3 pt-2">
-                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors disabled:opacity-50">
+                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">
                   Annuler
                 </button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-black font-semibold rounded-xl py-2.5 text-sm transition-colors">
+                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   {editId ? 'Enregistrer' : 'Planifier'}
                 </button>
@@ -685,14 +685,14 @@ export default function ExamensAdminPage() {
       {/* Confirmation ANNULATION (garde une trace, statut → annulé) */}
       {cancelTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-amber-500/20 rounded-2xl p-7 w-full max-w-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-amber-500/20 rounded-2xl p-7 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                <Ban size={18} className="text-amber-400" />
+                <Ban size={18} className="text-blue-600 dark:text-amber-400" />
               </div>
-              <h2 className="text-base font-bold text-white">Annuler cet examen ?</h2>
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white">Annuler cet examen ?</h2>
             </div>
-            <p className="text-orange-100/55 text-sm mb-2">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-2">
               {cancelTarget.matiereNom} — {capitalize(formatDateLong(cancelTarget.date))} {cancelTarget.heureDebut}–{cancelTarget.heureFin}
             </p>
             <p className="text-xs text-zinc-500 mb-6">
@@ -700,8 +700,8 @@ export default function ExamensAdminPage() {
             </p>
             {actionError && <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2 mb-3">{actionError}</p>}
             <div className="flex gap-3">
-              <button onClick={() => { setCancelTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors">Retour</button>
-              <button onClick={handleCancel} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-xl py-2.5 text-sm transition-colors">Annuler l’examen</button>
+              <button onClick={() => { setCancelTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Retour</button>
+              <button onClick={handleCancel} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Annuler l’examen</button>
             </div>
           </div>
         </div>
@@ -710,14 +710,14 @@ export default function ExamensAdminPage() {
       {/* Confirmation SUPPRESSION définitive */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
-              <h2 className="text-base font-bold text-white">Supprimer définitivement ?</h2>
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer définitivement ?</h2>
             </div>
-            <p className="text-orange-100/55 text-sm mb-2">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-2">
               {deleteTarget.matiereNom} — {capitalize(formatDateLong(deleteTarget.date))} {deleteTarget.heureDebut}–{deleteTarget.heureFin}
             </p>
             <p className="text-xs text-zinc-500 mb-6">
@@ -725,7 +725,7 @@ export default function ExamensAdminPage() {
             </p>
             {actionError && <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2 mb-3">{actionError}</p>}
             <div className="flex gap-3">
-              <button onClick={() => { setDeleteTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors">Retour</button>
+              <button onClick={() => { setDeleteTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Retour</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
             </div>
           </div>

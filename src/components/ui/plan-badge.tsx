@@ -9,9 +9,9 @@ interface PlanBadgeProps {
 }
 
 const STYLES: Record<PlanId, { pill: string; icon?: string }> = {
-  standard: { pill: 'bg-zinc-600/40 text-zinc-300' },
-  premium: { pill: 'bg-orange-500/20 text-orange-300', icon: '★' },
-  enterprise: { pill: 'bg-violet-500/20 text-violet-300', icon: '◆' },
+  standard: { pill: 'bg-zinc-600/40 text-zinc-700 dark:text-zinc-300' },
+  premium: { pill: 'bg-orange-500/20 text-blue-700 dark:text-orange-300', icon: '★' },
+  enterprise: { pill: 'bg-violet-500/20 text-blue-700 dark:text-violet-300', icon: '◆' },
 }
 
 /** Pill colorée affichant le plan tarifaire d'une université. */

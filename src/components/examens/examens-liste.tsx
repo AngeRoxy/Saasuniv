@@ -54,7 +54,7 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
 
   if (examens.length === 0) {
     return (
-      <div className="text-center py-16 text-orange-200/30 text-sm">
+      <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
         {emptyMessage ?? 'Aucun examen programmé.'}
       </div>
     )
@@ -65,8 +65,8 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
       {groupes.map(([date, items]) => (
         <div key={date}>
           <div className="flex items-center gap-2 mb-3">
-            <CalendarCheck size={15} className="text-orange-400 shrink-0" />
-            <h3 className="text-sm font-semibold text-orange-200/80">{capitalize(formatDateLong(date))}</h3>
+            <CalendarCheck size={15} className="text-blue-600 dark:text-orange-400 shrink-0" />
+            <h3 className="text-sm font-semibold text-zinc-600 dark:text-orange-200/80">{capitalize(formatDateLong(date))}</h3>
           </div>
           <div className="space-y-2.5">
             {items.map((e) => {
@@ -77,20 +77,20 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
                   key={e.id}
                   className={`rounded-xl border p-4 transition-colors ${
                     annule
-                      ? 'border-white/10 bg-white/[0.02] opacity-60'
+                      ? 'border-zinc-200 dark:border-white/10 bg-white/[0.02] opacity-60'
                       : imminent
                         ? 'border-orange-500/40 bg-orange-500/[0.07]'
-                        : 'border-orange-500/15 bg-zinc-950'
+                        : 'border-orange-500/15 bg-white dark:bg-zinc-950'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-mono text-orange-400">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-600 dark:text-orange-400">
                         <Clock size={12} /> {e.heureDebut} – {e.heureFin}
                       </span>
                       <p
                         className={`text-base font-semibold mt-1 leading-snug ${
-                          annule ? 'text-zinc-500 line-through' : 'text-white'
+                          annule ? 'text-zinc-500 line-through' : 'text-zinc-900 dark:text-white'
                         }`}
                       >
                         {e.matiereNom || 'Matière'}
@@ -98,7 +98,7 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 justify-end">
                       {!annule && imminent && (
-                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-orange-500 text-black">
+                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-orange-500 text-white">
                           {urgenceLabel(e.date)}
                         </span>
                       )}
@@ -111,14 +111,14 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
                         </span>
                       )}
                       {roleFor?.(e) && (
-                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-zinc-300">
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/15 bg-white dark:bg-white/5 text-zinc-700 dark:text-zinc-300">
                           {roleFor(e)}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-zinc-400">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-zinc-600 dark:text-zinc-400">
                     {e.salle && (
                       <span className="inline-flex items-center gap-1.5">
                         <MapPin size={13} className="text-zinc-500" /> {e.salle}
@@ -127,8 +127,8 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
                   </div>
 
                   {e.instructions && (
-                    <p className="mt-2.5 flex items-start gap-1.5 text-[13px] text-orange-100/60 leading-relaxed">
-                      <Info size={13} className="text-orange-400/70 shrink-0 mt-0.5" />
+                    <p className="mt-2.5 flex items-start gap-1.5 text-[13px] text-zinc-800 dark:text-orange-100/60 leading-relaxed">
+                      <Info size={13} className="text-blue-600 dark:text-orange-400/70 shrink-0 mt-0.5" />
                       {e.instructions}
                     </p>
                   )}

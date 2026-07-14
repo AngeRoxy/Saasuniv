@@ -97,7 +97,7 @@ export function VideoDemoModal({ open, onClose }: VideoDemoModalProps) {
                 type="button"
                 onClick={requestClose}
                 aria-label="Retour à l'accueil"
-                className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white transition-colors hover:bg-white/20"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -107,7 +107,7 @@ export function VideoDemoModal({ open, onClose }: VideoDemoModalProps) {
                 type="button"
                 onClick={requestClose}
                 aria-label="Fermer la vidéo"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-zinc-900 dark:text-white transition-colors hover:bg-white/20"
               >
                 <X className="h-5 w-5" />
               </button>

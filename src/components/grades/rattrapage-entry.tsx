@@ -141,12 +141,12 @@ export function RattrapageEntry({
     <div className="space-y-5">
       {/* Bandeau d'avertissement distinctif (ambre/rouge). */}
       <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3">
-        <RotateCcw size={18} className="text-amber-400 shrink-0 mt-0.5" />
+        <RotateCcw size={18} className="text-blue-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-amber-200">
+          <p className="text-sm font-semibold text-zinc-600 dark:text-amber-200">
             Saisie des notes de RATTRAPAGE{matiereNom ? ` — ${matiereNom}` : ''}
           </p>
-          <p className="text-xs text-amber-200/60 mt-0.5 leading-relaxed">
+          <p className="text-xs text-zinc-600 dark:text-amber-200/60 mt-0.5 leading-relaxed">
             Seuls les étudiants n’ayant pas validé (note normale &lt; 10/20) apparaissent ici. La note
             de rattrapage remplace la note normale dans la moyenne, mais l’originale reste conservée.
           </p>
@@ -154,7 +154,7 @@ export function RattrapageEntry({
       </div>
 
       {!ready ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
           Sélectionnez filière, niveau, semestre et matière pour saisir les rattrapages.
         </div>
       ) : loading ? (
@@ -162,7 +162,7 @@ export function RattrapageEntry({
           <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm flex flex-col items-center gap-3">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm flex flex-col items-center gap-3">
           <CheckCircle size={30} className="text-green-500/40" />
           Aucun étudiant n’a besoin de rattrapage pour cette matière.
         </div>
@@ -172,13 +172,13 @@ export function RattrapageEntry({
             <p className="text-xs text-zinc-500">
               {rows.length} étudiant{rows.length > 1 ? 's' : ''} éligible{rows.length > 1 ? 's' : ''}
               {modified.length > 0 && (
-                <span className="text-amber-400"> · {modified.length} à enregistrer</span>
+                <span className="text-blue-600 dark:text-amber-400"> · {modified.length} à enregistrer</span>
               )}
             </p>
             <button
               onClick={handleSave}
               disabled={saving || modified.length === 0}
-              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-black rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
             >
               {saving ? (
                 <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -189,10 +189,10 @@ export function RattrapageEntry({
             </button>
           </div>
 
-          <div className="bg-zinc-950 border border-amber-500/15 rounded-xl overflow-x-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-amber-500/15 rounded-xl overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-black/40 text-amber-300/60 text-xs uppercase tracking-wider border-b border-amber-500/15">
+                <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-amber-300/60 text-xs uppercase tracking-wider border-b border-amber-500/15">
                   <th className="px-4 py-3 text-left">Étudiant</th>
                   <th className="px-4 py-3 text-center w-32">Note normale</th>
                   <th className="px-4 py-3 text-center w-40">Note de rattrapage</th>
@@ -206,7 +206,7 @@ export function RattrapageEntry({
                   const mention = getMention(retenue)
                   return (
                     <tr key={r.studentUid} className="border-t border-amber-500/5 hover:bg-amber-500/5 transition-colors">
-                      <td className="px-4 py-2.5 text-orange-100/80 font-medium whitespace-nowrap">{r.displayName}</td>
+                      <td className="px-4 py-2.5 text-zinc-800 dark:text-orange-100/80 font-medium whitespace-nowrap">{r.displayName}</td>
                       <td className="px-4 py-2.5 text-center">
                         <span className="font-semibold text-red-400" title="Note obtenue en session normale (échec)">
                           {r.noteNormale}/20
@@ -221,14 +221,14 @@ export function RattrapageEntry({
                           value={r.rattrapage}
                           onChange={(e) => updateRow(r.studentUid, e.target.value)}
                           placeholder="—"
-                          className="w-24 bg-black/40 border border-amber-500/30 rounded-lg px-2 py-1 text-center text-sm font-semibold text-amber-200 focus:outline-none focus:border-amber-400/70 placeholder:text-amber-200/20"
+                          className="w-24 bg-zinc-50 dark:bg-black/40 border border-amber-500/30 rounded-lg px-2 py-1 text-center text-sm font-semibold text-zinc-600 dark:text-amber-200 focus:outline-none focus:border-amber-400/70 placeholder:text-zinc-500 dark:placeholder:text-amber-200/20"
                         />
                       </td>
                       <td className="px-4 py-2.5 text-center">
                         {mention ? (
                           <span className={`inline-block text-xs font-semibold border rounded-full px-2.5 py-0.5 ${mention.cls}`}>{mention.abbr}</span>
                         ) : (
-                          <span className="text-orange-200/20 text-xs">—</span>
+                          <span className="text-zinc-500 dark:text-orange-200/20 text-xs">—</span>
                         )}
                       </td>
                     </tr>
@@ -241,13 +241,13 @@ export function RattrapageEntry({
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-zinc-900 border border-amber-500/30 rounded-xl px-5 py-3.5 shadow-2xl">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-white dark:bg-zinc-900 border border-amber-500/30 rounded-xl px-5 py-3.5 shadow-2xl">
           {toast.error ? (
             <AlertTriangle size={17} className="text-red-400 shrink-0" />
           ) : (
-            <CheckCircle size={17} className="text-amber-400 shrink-0" />
+            <CheckCircle size={17} className="text-blue-600 dark:text-amber-400 shrink-0" />
           )}
-          <span className="text-white text-sm font-medium">{toast.msg}</span>
+          <span className="text-zinc-900 dark:text-white text-sm font-medium">{toast.msg}</span>
         </div>
       )}
     </div>

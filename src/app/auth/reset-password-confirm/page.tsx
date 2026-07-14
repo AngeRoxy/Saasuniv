@@ -54,18 +54,18 @@ function ResetConfirmInner() {
   // Code manquant → lien invalide, on invite à recommencer.
   if (!oobCode) {
     return (
-      <div className="bg-black/60 backdrop-blur-md border border-red-500/20 rounded-2xl p-8 shadow-2xl shadow-black/50 text-center">
+      <div className="bg-white dark:bg-white/5 border border-red-500/20 rounded-2xl p-8 shadow-lg shadow-zinc-300/40 dark:shadow-none text-center">
         <div className="mx-auto w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mb-4">
           <ShieldAlert className="h-6 w-6 text-red-400" />
         </div>
-        <h1 className="text-xl font-bold text-white mb-2">Lien invalide ou expiré</h1>
-        <p className="text-orange-200/60 text-sm mb-6 leading-relaxed">
+        <h1 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Lien invalide ou expiré</h1>
+        <p className="text-zinc-600 dark:text-orange-200/60 text-sm mb-6 leading-relaxed">
           Ce lien de réinitialisation est invalide ou a expiré. Vous pouvez en
           demander un nouveau.
         </p>
         <Link
           href="/auth/forgot-password"
-          className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-full py-2.5 px-6 text-sm transition-colors"
+          className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-2.5 px-6 text-sm transition-colors"
         >
           Recommencer la réinitialisation
         </Link>
@@ -75,18 +75,18 @@ function ResetConfirmInner() {
 
   if (done) {
     return (
-      <div className="bg-black/60 backdrop-blur-md border border-orange-500/20 rounded-2xl p-8 shadow-2xl shadow-black/50 text-center">
+      <div className="bg-white dark:bg-white/5 border border-orange-500/20 rounded-2xl p-8 shadow-lg shadow-zinc-300/40 dark:shadow-none text-center">
         <div className="mx-auto w-12 h-12 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center mb-4">
-          <CheckCircle2 className="h-6 w-6 text-orange-400" />
+          <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-orange-400" />
         </div>
-        <h1 className="text-xl font-bold text-white mb-2">Mot de passe réinitialisé</h1>
-        <p className="text-orange-200/60 text-sm mb-6 leading-relaxed">
+        <h1 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Mot de passe réinitialisé</h1>
+        <p className="text-zinc-600 dark:text-orange-200/60 text-sm mb-6 leading-relaxed">
           Votre mot de passe a été mis à jour. Vous allez être redirigé vers la
           page de connexion…
         </p>
         <Link
           href="/auth/login"
-          className="inline-flex items-center justify-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors"
+          className="inline-flex items-center justify-center gap-2 text-blue-600 dark:text-orange-400 hover:text-blue-900 dark:hover:text-orange-300 text-sm font-medium transition-colors"
         >
           Se connecter maintenant
         </Link>
@@ -95,15 +95,15 @@ function ResetConfirmInner() {
   }
 
   return (
-    <div className="bg-black/60 backdrop-blur-md border border-orange-500/20 rounded-2xl p-8 shadow-2xl shadow-black/50">
-      <h1 className="text-2xl font-bold text-white mb-1">Nouveau mot de passe</h1>
-      <p className="text-orange-200/60 text-sm mb-8">
+    <div className="bg-white dark:bg-white/5 border border-orange-500/20 rounded-2xl p-8 shadow-lg shadow-zinc-300/40 dark:shadow-none">
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1">Nouveau mot de passe</h1>
+      <p className="text-zinc-600 dark:text-orange-200/60 text-sm mb-8">
         Choisissez un nouveau mot de passe pour votre compte.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-orange-200/60 text-sm font-medium">Nouveau mot de passe</label>
+          <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Nouveau mot de passe</label>
           <div className="relative">
             <input
               type={showPw ? 'text' : 'password'}
@@ -112,12 +112,12 @@ function ResetConfirmInner() {
               placeholder="••••••••"
               required
               disabled={submitting}
-              className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 pr-10 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
+              className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 pr-10 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
             >
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
@@ -125,7 +125,7 @@ function ResetConfirmInner() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-orange-200/60 text-sm font-medium">Confirmer le mot de passe</label>
+          <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Confirmer le mot de passe</label>
           <input
             type={showPw ? 'text' : 'password'}
             value={confirmPw}
@@ -133,11 +133,11 @@ function ResetConfirmInner() {
             placeholder="••••••••"
             required
             disabled={submitting}
-            className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
+            className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
           />
         </div>
 
-        <p className="text-[11px] text-orange-200/40 leading-relaxed">
+        <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 leading-relaxed">
           Minimum 8 caractères, dont au moins une majuscule et un chiffre.
         </p>
 
@@ -150,7 +150,7 @@ function ResetConfirmInner() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-black font-semibold rounded-full py-3 transition-colors flex items-center justify-center gap-2"
+          className="mt-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 transition-colors flex items-center justify-center gap-2"
         >
           {submitting ? (
             <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -161,8 +161,8 @@ function ResetConfirmInner() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-orange-200/40 text-xs">
-        <Link href="/auth/login" className="hover:text-orange-300 transition-colors">
+      <p className="mt-6 text-center text-zinc-500 dark:text-orange-200/40 text-xs">
+        <Link href="/auth/login" className="hover:text-blue-900 dark:hover:text-orange-300 transition-colors">
           Retour à la connexion
         </Link>
       </p>

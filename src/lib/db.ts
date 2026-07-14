@@ -1,4 +1,4 @@
-import { ref, get, set, update, push, remove } from 'firebase/database'
+import { ref, get, set, update, push, remove, onValue, type Unsubscribe } from 'firebase/database'
 import { db } from './firebase'
 
 export type Role = 'super_admin_plateforme' | 'admin_universite' | 'teacher' | 'student' | 'parent'
@@ -18,6 +18,16 @@ export interface University {
   createdAt: number
   adminUid: string
   status: 'active' | 'inactive' | 'suspended'
+  pays?: string
+  type?: string
+  annee?: string
+  // Champs d'essai — présents uniquement si l'université est passée par un essai
+  // gratuit (écrits par initTrial / convertTrial / checkTrialExpired). Le
+  // super-admin les lit pour le MRR, le taux de conversion et les alertes.
+  trialEndsAt?: number
+  trialStatus?: TrialStatus
+  convertedAt?: number
+  convertedPlan?: PlanId
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
@@ -41,6 +51,20 @@ export async function getUniversity(universityId: string): Promise<University | 
   const snapshot = await get(ref(db, `universities/${universityId}`))
   if (!snapshot.exists()) return null
   return snapshot.val() as University
+}
+
+/**
+ * Met à jour les informations générales d'une université, sur le chemin scopé
+ * par tenant `universities/${universityId}`. N'écrit que les champs fournis
+ * (update partiel). Les règles RTDB par-champ n'autorisent l'admin_universite
+ * qu'à modifier name/pays/type/annee de SA propre université — un échec de
+ * permission rejette la promesse (aucun faux succès).
+ */
+export async function updateUniversity(
+  universityId: string,
+  data: Partial<Pick<University, 'name' | 'pays' | 'type' | 'annee'>>
+): Promise<void> {
+  await update(ref(db, `universities/${universityId}`), data)
 }
 
 // ─── University members ────────────────────────────────────────────────────────
@@ -567,6 +591,23 @@ export async function updateUniversityStatus(
   status: 'active' | 'inactive' | 'suspended'
 ): Promise<void> {
   await update(ref(db, `universities/${universityId}`), { status })
+}
+
+/**
+ * Nombre de membres `role === "student"` d'une université — pour les KPIs du
+ * super-admin (lecture autorisée par la cascade `.read` de /universities).
+ * Retourne 0 si l'université n'a aucun membre (jamais d'exception sur données
+ * absentes). Une erreur réelle (permission/réseau) rejette la promesse :
+ * l'appelant décide alors s'il parallélise plusieurs comptages ou affiche "—".
+ */
+export async function getUniversityStudentCount(universityId: string): Promise<number> {
+  const snapshot = await get(ref(db, `universities/${universityId}/members`))
+  if (!snapshot.exists()) return 0
+  let count = 0
+  snapshot.forEach((child) => {
+    if ((child.val() as { role?: Role }).role === 'student') count++
+  })
+  return count
 }
 
 // ─── Essai gratuit (trial 30 jours) ────────────────────────────────────────────
@@ -1871,4 +1912,139 @@ export async function getParcoursAnnee(
     if (p.anneeAcademique === anneeAcademique) map[p.studentUid] = p
   }
   return map
+}
+
+// ─── Cours en ligne en direct (visioconférence Jitsi) ────────────────────────────
+//
+// Nœud : /universities/{universityId}/sessions_direct/{sessionId}
+//
+// Particularité vs le reste de l'app : un écouteur TEMPS RÉEL (onValue) est exposé
+// côté étudiant — voir `ecouterSessionsActives`. Les autres accès restent des
+// lectures ponctuelles get(), cohérentes avec le module examens.
+
+import type { SessionEnLigne, SessionFormData, StatutSession } from '@/types/cours-en-ligne'
+
+export type { SessionEnLigne, SessionFormData, StatutSession }
+
+/**
+ * Génère un nom de salle Jitsi imprévisible. C'est la SEULE protection d'accès sur
+ * le service public gratuit meet.jit.si : un nom devinable (ex « gestuniv-algo-lundi »)
+ * laisserait n'importe qui rejoindre le cours. On préfixe l'UUID pour éviter toute
+ * collision avec d'autres salles publiques du même serveur.
+ */
+function genererRoomName(): string {
+  const uuid =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : // Repli défensif si randomUUID est indisponible : deux sources aléatoires
+        // concaténées. Ne devrait pas survenir (Node 16+ / navigateurs modernes).
+        `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
+  return `gestuniv-${uuid}`
+}
+
+/** Reconstruit une `SessionEnLigne` depuis un snapshot RTDB (id + universityId réinjectés). */
+function toSessionEnLigne(universityId: string, id: string, val: Record<string, unknown>): SessionEnLigne {
+  return { id, universityId, ...val } as SessionEnLigne
+}
+
+/**
+ * Crée une session en statut « programmee ». `matiereNom` et l'identité de
+ * l'enseignant sont résolus par l'appelant (la page connaît déjà ces libellés
+ * dénormalisés) et stockés tels quels — cohérent avec le reste du module.
+ * Le `roomName` aléatoire est généré ici, jamais côté UI.
+ */
+export async function createSessionEnLigne(
+  universityId: string,
+  data: SessionFormData,
+  enseignantUid: string,
+  enseignantNom: string,
+  matiereNom: string
+): Promise<string> {
+  const newRef = push(ref(db, `universities/${universityId}/sessions_direct`))
+  const now = Date.now()
+  const record: Omit<SessionEnLigne, 'id' | 'universityId'> = {
+    filiereId: data.filiereId,
+    niveau: data.niveau,
+    matiereId: data.matiereId,
+    matiereNom,
+    enseignantUid,
+    enseignantNom,
+    titre: data.titre,
+    roomName: genererRoomName(),
+    statut: 'programmee',
+    createdAt: now,
+  }
+  await set(newRef, record)
+  return newRef.key!
+}
+
+/** Passe une session à « en_direct » et horodate le démarrage. */
+export async function demarrerSession(universityId: string, sessionId: string): Promise<void> {
+  await update(ref(db, `universities/${universityId}/sessions_direct/${sessionId}`), {
+    statut: 'en_direct' satisfies StatutSession,
+    demarreeAt: Date.now(),
+  })
+}
+
+/** Passe une session à « terminee » et horodate la fin. */
+export async function terminerSession(universityId: string, sessionId: string): Promise<void> {
+  await update(ref(db, `universities/${universityId}/sessions_direct/${sessionId}`), {
+    statut: 'terminee' satisfies StatutSession,
+    termineeAt: Date.now(),
+  })
+}
+
+/** Toutes les sessions créées par un enseignant (lecture ponctuelle). */
+export async function getSessionsEnseignant(
+  universityId: string,
+  enseignantUid: string
+): Promise<SessionEnLigne[]> {
+  const snapshot = await get(ref(db, `universities/${universityId}/sessions_direct`))
+  if (!snapshot.exists()) return []
+  const result: SessionEnLigne[] = []
+  snapshot.forEach((child) => {
+    const s = toSessionEnLigne(universityId, child.key!, child.val())
+    if (s.enseignantUid === enseignantUid) result.push(s)
+  })
+  return result
+}
+
+/** Sessions destinées à un groupe filière + niveau (lecture ponctuelle). */
+export async function getSessionsEtudiant(
+  universityId: string,
+  filiereId: string,
+  niveau: string
+): Promise<SessionEnLigne[]> {
+  const snapshot = await get(ref(db, `universities/${universityId}/sessions_direct`))
+  if (!snapshot.exists()) return []
+  const result: SessionEnLigne[] = []
+  snapshot.forEach((child) => {
+    const s = toSessionEnLigne(universityId, child.key!, child.val())
+    if (s.filiereId === filiereId && s.niveau === niveau) result.push(s)
+  })
+  return result
+}
+
+/**
+ * Écoute EN TEMPS RÉEL les sessions d'un groupe filière + niveau. Contrairement au
+ * reste de l'app (get() ponctuels), on utilise onValue() : dès qu'une session passe
+ * à « en_direct », le callback est rappelé et l'étudiant voit « Rejoindre » s'activer
+ * sans rafraîchir sa page. Renvoie la fonction de désabonnement à appeler au
+ * démontage du composant (useEffect cleanup) pour éviter toute fuite d'écouteur.
+ */
+export function ecouterSessionsActives(
+  universityId: string,
+  filiereId: string,
+  niveau: string,
+  callback: (sessions: SessionEnLigne[]) => void
+): Unsubscribe {
+  const node = ref(db, `universities/${universityId}/sessions_direct`)
+  return onValue(node, (snapshot) => {
+    const result: SessionEnLigne[] = []
+    snapshot.forEach((child) => {
+      const s = toSessionEnLigne(universityId, child.key!, child.val())
+      if (s.filiereId === filiereId && s.niveau === niveau) result.push(s)
+    })
+    callback(result)
+  })
 }

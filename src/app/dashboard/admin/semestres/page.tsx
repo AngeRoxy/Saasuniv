@@ -15,9 +15,9 @@ import type { Filiere } from '@/types/filiere'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const inputCls = 'w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60'
-const labelCls = 'text-orange-200/60 text-xs font-medium block mb-1.5'
+const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
+const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
+const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     return () => clearTimeout(t)
   }, [onClose])
   return (
-    <div className="fixed bottom-6 right-6 z-[100] bg-orange-500 text-black text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
+    <div className="fixed bottom-6 right-6 z-[100] bg-orange-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
       {message}
       <button onClick={onClose}><X size={14} /></button>
     </div>
@@ -122,7 +122,7 @@ export default function SemestresPage() {
   // Auth guard
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
     return (
-      <div className="flex items-center justify-center h-64 text-orange-300/60 text-sm">
+      <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">
         Accès réservé aux administrateurs.
       </div>
     )
@@ -225,14 +225,14 @@ export default function SemestresPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Semestres</h1>
-          <p className="text-orange-200/40 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Semestres</h1>
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
             {semestres.length} semestre{semestres.length !== 1 ? 's' : ''} enregistré{semestres.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
         >
           <Plus size={16} /> Nouveau semestre
         </button>
@@ -241,10 +241,10 @@ export default function SemestresPage() {
       {/* Avertissement : aucun semestre en cours */}
       {!loading && semestres.length > 0 && !hasEnCours && (
         <div className="mb-6 flex items-start gap-3 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/20">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-orange-400" />
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-blue-600 dark:text-orange-400" />
           <div>
-            <p className="text-sm font-semibold text-orange-300">Aucun semestre en cours</p>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-sm font-semibold text-blue-700 dark:text-orange-300">Aucun semestre en cours</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
               Activez un semestre pour qu&apos;il apparaisse dans les tableaux de bord.
             </p>
           </div>
@@ -265,12 +265,12 @@ export default function SemestresPage() {
         </div>
       ) : semestres.length === 0 ? (
         /* Empty state */
-        <div className="text-center py-20 text-orange-200/30">
+        <div className="text-center py-20 text-zinc-500 dark:text-orange-200/30">
           <CalendarDays size={48} className="mx-auto mb-4 opacity-20" />
           <p className="text-base font-medium mb-3">Aucun semestre enregistré</p>
           <button
             onClick={openAdd}
-            className="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             Créer le premier semestre
           </button>
@@ -283,24 +283,24 @@ export default function SemestresPage() {
             return (
               <div
                 key={s.id}
-                className="group bg-zinc-950 border border-orange-500/10 hover:border-orange-500/25 rounded-xl px-5 py-4 flex items-center gap-4 transition-colors"
+                className="group bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 hover:border-orange-500/25 rounded-xl px-5 py-4 flex items-center gap-4 transition-colors"
               >
                 {/* Numéro badge */}
-                <span className="shrink-0 font-mono text-xs font-bold bg-orange-500/15 border border-orange-500/25 text-orange-400 rounded-lg px-2.5 py-1">
+                <span className="shrink-0 font-mono text-xs font-bold bg-orange-500/15 border border-orange-500/25 text-blue-600 dark:text-orange-400 rounded-lg px-2.5 py-1">
                   S{s.numero}
                 </span>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">{s.nom}</p>
+                  <p className="text-zinc-900 dark:text-white font-medium text-sm truncate">{s.nom}</p>
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    <span className="text-xs text-orange-200/40">{s.anneeAcademique}</span>
-                    <span className="text-orange-200/20 text-xs">·</span>
-                    <span className="text-xs text-orange-200/40">
+                    <span className="text-xs text-zinc-500 dark:text-orange-200/40">{s.anneeAcademique}</span>
+                    <span className="text-zinc-500 dark:text-orange-200/20 text-xs">·</span>
+                    <span className="text-xs text-zinc-500 dark:text-orange-200/40">
                       {formatDate(s.dateDebut)} → {formatDate(s.dateFin)}
                     </span>
                     {(s.filiereIds ?? []).map(id => (
-                      <span key={id} className="text-xs bg-zinc-800 border border-white/10 text-zinc-400 rounded-full px-2 py-0.5">
+                      <span key={id} className="text-xs bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 rounded-full px-2 py-0.5">
                         {filiereName(id)}
                       </span>
                     ))}
@@ -317,7 +317,7 @@ export default function SemestresPage() {
                   <button
                     onClick={() => handleActivate(s)}
                     disabled={isEnCours || activatingId === s.id}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium transition-colors"
                     title={isEnCours ? 'Déjà en cours' : 'Passer ce semestre en cours'}
                   >
                     <PlayCircle size={13} />
@@ -325,7 +325,7 @@ export default function SemestresPage() {
                   </button>
                   <button
                     onClick={() => openEdit(s)}
-                    className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 transition-colors opacity-0 group-hover:opacity-100"
                     title="Modifier"
                   >
                     <Pencil size={14} />
@@ -347,12 +347,12 @@ export default function SemestresPage() {
       {/* ── Modal création / modification ─────────────────────────────────────── */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editId ? 'Modifier le semestre' : 'Nouveau semestre'}
               </h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors">
+              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -432,7 +432,7 @@ export default function SemestresPage() {
                   <option value="termine">Terminé</option>
                 </select>
                 {form.statut === 'en_cours' && (
-                  <p className="text-xs text-orange-300/60 mt-1.5">
+                  <p className="text-xs text-blue-700 dark:text-orange-300/60 mt-1.5">
                     Les autres semestres seront automatiquement basculés selon leurs dates.
                   </p>
                 )}
@@ -442,7 +442,7 @@ export default function SemestresPage() {
               <div>
                 <label className={labelCls}>Filières concernées</label>
                 {filieres.length === 0 ? (
-                  <p className="text-xs text-orange-200/30">Aucune filière disponible. Créez-en d&apos;abord.</p>
+                  <p className="text-xs text-zinc-500 dark:text-orange-200/30">Aucune filière disponible. Créez-en d&apos;abord.</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {filieres.map(f => (
@@ -452,8 +452,8 @@ export default function SemestresPage() {
                         onClick={() => toggleFiliere(f.id)}
                         className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                           form.filiereIds.includes(f.id)
-                            ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                            : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                            ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                            : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
                         }`}
                       >
                         {f.code} — {f.nom}
@@ -467,14 +467,14 @@ export default function SemestresPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={closeModal}
-                  className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors"
+                  className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving || !form.nom.trim() || form.dateFin <= form.dateDebut}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold rounded-xl py-2.5 text-sm transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
                 >
                   {saving ? 'Enregistrement…' : editId ? 'Modifier' : 'Créer le semestre'}
                 </button>
@@ -487,20 +487,20 @@ export default function SemestresPage() {
       {/* ── Dialog suppression ────────────────────────────────────────────────── */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
-              <h2 className="text-base font-bold text-white">Supprimer ce semestre&nbsp;?</h2>
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer ce semestre&nbsp;?</h2>
             </div>
-            <p className="text-orange-100/55 text-sm mb-6">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">
               Cette action est irréversible. Le semestre sera définitivement supprimé.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors"
+                className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
               >
                 Annuler
               </button>

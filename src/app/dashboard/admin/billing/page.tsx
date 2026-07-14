@@ -73,7 +73,7 @@ export default function BillingPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-6 py-16 text-center">
         <ShieldAlert className="h-8 w-8 text-red-400" />
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Cette page est réservée aux administrateurs de l’université.
         </p>
       </div>
@@ -101,12 +101,12 @@ export default function BillingPage() {
   return (
     <div className="space-y-8">
       {/* ── Section 1 : statut actuel ─────────────────────────────────────── */}
-      <section className="rounded-xl border border-orange-500/10 bg-zinc-950 p-6">
+      <section className="rounded-xl border border-zinc-200 dark:border-orange-500/10 bg-white dark:bg-zinc-950 p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-white">Statut de l’abonnement</h2>
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Statut de l’abonnement</h2>
           {currentPlanId && <PlanBadge plan={currentPlanId} />}
           {isTrialActive && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-amber-300">
               Essai gratuit
             </span>
           )}
@@ -116,15 +116,15 @@ export default function BillingPage() {
           <p className="mt-4 text-sm text-zinc-500">Chargement…</p>
         ) : isTrialActive ? (
           <div className="mt-4 space-y-2">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Vous bénéficiez de toutes les fonctionnalités{' '}
-              <span className="font-medium text-orange-300">Premium</span> —{' '}
-              <span className="font-semibold text-white">
+              <span className="font-medium text-blue-700 dark:text-orange-300">Premium</span> —{' '}
+              <span className="font-semibold text-zinc-900 dark:text-white">
                 {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant
                 {daysRemaining > 1 ? 's' : ''}
               </span>
             </p>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white dark:bg-white/5">
               <div
                 className="h-full rounded-full bg-orange-500 transition-all"
                 style={{ width: `${Math.max(0, Math.min(100, (daysRemaining / TRIAL_DAYS) * 100))}%` }}
@@ -140,15 +140,15 @@ export default function BillingPage() {
             </p>
           </div>
         ) : isConverted && trialInfo?.convertedAt ? (
-          <p className="mt-4 text-sm text-zinc-400">
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
             Plan souscrit le{' '}
-            <span className="font-medium text-zinc-200">
+            <span className="font-medium text-zinc-800 dark:text-zinc-200">
               {formatDate(trialInfo.convertedAt)}
             </span>
             .
           </p>
         ) : (
-          <p className="mt-4 text-sm text-zinc-400">
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
             Gérez le plan tarifaire de votre université.
           </p>
         )}
@@ -156,12 +156,12 @@ export default function BillingPage() {
 
       {/* ── Toggle mensuel / annuel ───────────────────────────────────────── */}
       <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm ${!annual ? 'text-white font-medium' : 'text-zinc-500'}`}>
+        <span className={`text-sm ${!annual ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-500'}`}>
           Mensuel
         </span>
         <button
           onClick={() => setAnnual((v) => !v)}
-          className="relative h-6 w-11 rounded-full bg-white/10 transition-colors"
+          className="relative h-6 w-11 rounded-full bg-zinc-100 dark:bg-white/10 transition-colors"
           aria-label="Basculer mensuel/annuel"
         >
           <span
@@ -170,8 +170,8 @@ export default function BillingPage() {
             }`}
           />
         </button>
-        <span className={`text-sm ${annual ? 'text-white font-medium' : 'text-zinc-500'}`}>
-          Annuel <span className="text-orange-400">−20%</span>
+        <span className={`text-sm ${annual ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-500'}`}>
+          Annuel <span className="text-blue-600 dark:text-orange-400">−20%</span>
         </span>
       </div>
 
@@ -190,29 +190,29 @@ export default function BillingPage() {
                 isCurrent
                   ? 'border-orange-500/50 bg-orange-500/5'
                   : planId === 'premium'
-                    ? 'border-orange-500/30 bg-zinc-950'
-                    : 'border-white/10 bg-zinc-950'
+                    ? 'border-orange-500/30 bg-white dark:bg-zinc-950'
+                    : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950'
               }`}
             >
               {config.badge && !isCurrent && (
-                <span className="absolute -top-2.5 left-6 rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-bold text-black">
+                <span className="absolute -top-2.5 left-6 rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
                   {config.badge}
                 </span>
               )}
               {isCurrent && (
-                <span className="absolute -top-2.5 left-6 rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-bold text-black">
+                <span className="absolute -top-2.5 left-6 rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
                   Plan actuel
                 </span>
               )}
 
-              <h3 className="text-lg font-bold text-white">{config.nom}</h3>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{config.nom}</h3>
 
               <div className="mt-2 mb-4">
                 {isEnterprise ? (
-                  <span className="text-2xl font-bold text-white">Sur devis</span>
+                  <span className="text-2xl font-bold text-zinc-900 dark:text-white">Sur devis</span>
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-white">
+                    <span className="text-3xl font-bold text-zinc-900 dark:text-white">
                       {formatPrice(price)}
                     </span>
                     <span className="text-sm text-zinc-500">
@@ -230,11 +230,11 @@ export default function BillingPage() {
                     <li
                       key={key}
                       className={`flex items-center gap-2 text-sm ${
-                        on ? 'text-zinc-300' : 'text-zinc-600 line-through'
+                        on ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-600 line-through'
                       }`}
                     >
                       {on ? (
-                        <Check size={14} className="shrink-0 text-orange-400" />
+                        <Check size={14} className="shrink-0 text-blue-600 dark:text-orange-400" />
                       ) : (
                         <X size={14} className="shrink-0 text-zinc-700" />
                       )}
@@ -248,21 +248,21 @@ export default function BillingPage() {
                 {isCurrent ? (
                   <button
                     disabled
-                    className="w-full cursor-default rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-zinc-400"
+                    className="w-full cursor-default rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 py-2.5 text-sm font-semibold text-zinc-600 dark:text-zinc-400"
                   >
                     Plan actuel
                   </button>
                 ) : isEnterprise ? (
                   <Link
                     href={`mailto:${CONTACT_EMAIL}`}
-                    className="block w-full rounded-xl border border-violet-500/30 bg-violet-500/10 py-2.5 text-center text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
+                    className="block w-full rounded-xl border border-violet-500/30 bg-violet-500/10 py-2.5 text-center text-sm font-semibold text-blue-700 dark:text-violet-300 transition-colors hover:bg-violet-500/20"
                   >
                     Nous contacter
                   </Link>
                 ) : (
                   <button
                     onClick={() => setPending(planId)}
-                    className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600"
+                    className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
                   >
                     Choisir ce plan
                   </button>
@@ -284,15 +284,15 @@ export default function BillingPage() {
       {/* ── Dialog de confirmation ────────────────────────────────────────── */}
       {pending && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-orange-500/20 bg-zinc-950 p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">Confirmer votre choix</h3>
-            <p className="mt-3 text-sm text-zinc-400">
+          <div className="w-full max-w-md rounded-2xl border border-orange-500/20 bg-white dark:bg-zinc-950 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Confirmer votre choix</h3>
+            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
               Vous êtes sur le point de passer au plan{' '}
-              <span className="font-semibold text-orange-300">
+              <span className="font-semibold text-blue-700 dark:text-orange-300">
                 {PLANS_CONFIG[pending].nom}
               </span>{' '}
               à{' '}
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-zinc-900 dark:text-white">
                 {formatPrice(
                   annual ? PLANS_CONFIG[pending].prixAnnuel : PLANS_CONFIG[pending].prixMensuel
                 )}{' '}
@@ -308,14 +308,14 @@ export default function BillingPage() {
               <button
                 onClick={() => setPending(null)}
                 disabled={submitting}
-                className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/5 disabled:opacity-50"
+                className="flex-1 rounded-xl border border-zinc-200 dark:border-white/10 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-white/5 disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={submitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
               >
                 {submitting && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
@@ -329,9 +329,9 @@ export default function BillingPage() {
 
       {/* ── Toast ─────────────────────────────────────────────────────────── */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-110 flex items-center gap-2.5 rounded-xl border border-orange-500/20 bg-zinc-900 px-4 py-3 shadow-2xl">
-          <CheckCircle2 size={16} className="shrink-0 text-orange-400" />
-          <p className="text-sm text-orange-100">{toast}</p>
+        <div className="fixed bottom-6 right-6 z-110 flex items-center gap-2.5 rounded-xl border border-orange-500/20 bg-white dark:bg-zinc-900 px-4 py-3 shadow-2xl">
+          <CheckCircle2 size={16} className="shrink-0 text-blue-600 dark:text-orange-400" />
+          <p className="text-sm text-zinc-800 dark:text-orange-100">{toast}</p>
         </div>
       )}
     </div>

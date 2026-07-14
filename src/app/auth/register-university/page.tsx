@@ -147,76 +147,76 @@ export default function RegisterUniversityPage() {
   const progressPercent = step === 1 ? 33 : step === 2 ? 66 : 100
 
   return (
-    <div className="bg-black/60 backdrop-blur-md border border-orange-500/20 rounded-2xl p-8 shadow-2xl shadow-black/50">
+    <div className="bg-white dark:bg-white/5 border border-orange-500/20 rounded-2xl p-8 shadow-lg shadow-zinc-300/40 dark:shadow-none">
       <div className="mb-6">
         <Link
           href="/auth/register"
-          className="flex items-center gap-1.5 text-orange-300/60 hover:text-orange-300 text-sm mb-4 transition-colors"
+          className="flex items-center gap-1.5 text-blue-700/70 dark:text-orange-300/60 hover:text-blue-900 dark:hover:text-orange-300 text-sm mb-4 transition-colors"
         >
           <ArrowLeft size={14} />
           Retour
         </Link>
-        <h1 className="text-2xl font-bold text-white">Créer votre université</h1>
-        <p className="text-orange-200/60 text-sm mt-1">Étape {step} sur 3</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Créer votre université</h1>
+        <p className="text-zinc-600 dark:text-orange-200/60 text-sm mt-1">Étape {step} sur 3</p>
       </div>
 
-      <div className="w-full bg-black/40 rounded-full h-1.5 mb-8">
+      <div className="w-full bg-zinc-50 dark:bg-black/40 rounded-full h-1.5 mb-8">
         <div className="bg-orange-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
       </div>
 
       {step === 1 && (
         <div className="flex flex-col gap-4">
-          <p className="text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Informations établissement</p>
+          <p className="text-blue-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Informations établissement</p>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Nom de l&apos;université</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Nom de l&apos;université</label>
             <input
               type="text"
               value={step1.universityName}
               onChange={e => handleUniversityNameChange(e.target.value)}
               placeholder="Université de Abidjan"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Identifiant unique (slug)</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Identifiant unique (slug)</label>
             <input
               type="text"
               value={step1.slug}
               onChange={e => setStep1(prev => ({ ...prev, slug: e.target.value }))}
               placeholder="universite-abidjan"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
             />
-            <span className="text-orange-200/40 text-xs">Minuscules, chiffres et tirets. C&apos;est le code que vous partagerez avec vos membres.</span>
+            <span className="text-zinc-500 dark:text-orange-200/40 text-xs">Minuscules, chiffres et tirets. C&apos;est le code que vous partagerez avec vos membres.</span>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Pays</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Pays</label>
             <input
               type="text"
               value={step1.country}
               onChange={e => setStep1(prev => ({ ...prev, country: e.target.value }))}
               placeholder="Côte d'Ivoire"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Type d&apos;établissement</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Type d&apos;établissement</label>
             <select
               value={step1.type}
               onChange={e => setStep1(prev => ({ ...prev, type: e.target.value }))}
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-400/60"
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-orange-400/60"
             >
-              <option value="" disabled className="bg-black">Sélectionner un type</option>
-              {UNIVERSITY_TYPES.map(t => <option key={t} value={t} className="bg-black">{t}</option>)}
+              <option value="" disabled className="bg-[#fafafa] dark:bg-black">Sélectionner un type</option>
+              {UNIVERSITY_TYPES.map(t => <option key={t} value={t} className="bg-[#fafafa] dark:bg-black">{t}</option>)}
             </select>
           </div>
 
           {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
 
-          <button onClick={goToStep2} className="mt-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-full py-3 transition-colors">
+          <button onClick={goToStep2} className="mt-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-3 transition-colors">
             Continuer
           </button>
         </div>
@@ -224,46 +224,46 @@ export default function RegisterUniversityPage() {
 
       {step === 2 && (
         <div className="flex flex-col gap-4">
-          <p className="text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Compte administrateur</p>
+          <p className="text-blue-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Compte administrateur</p>
 
           <div className="flex gap-3">
             <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-orange-200/60 text-sm font-medium">Prénom</label>
+              <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Prénom</label>
               <input type="text" value={step2.firstName} onChange={e => setStep2(prev => ({ ...prev, firstName: e.target.value }))} placeholder="Jean"
-                className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+                className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
             </div>
             <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-orange-200/60 text-sm font-medium">Nom</label>
+              <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Nom</label>
               <input type="text" value={step2.lastName} onChange={e => setStep2(prev => ({ ...prev, lastName: e.target.value }))} placeholder="Kouassi"
-                className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+                className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Email</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Email</label>
             <input type="email" value={step2.email} onChange={e => setStep2(prev => ({ ...prev, email: e.target.value }))} placeholder="admin@universite.ci"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Mot de passe</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Mot de passe</label>
             <input type="password" value={step2.password} onChange={e => setStep2(prev => ({ ...prev, password: e.target.value }))} placeholder="••••••••"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-orange-200/60 text-sm font-medium">Confirmer le mot de passe</label>
+            <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Confirmer le mot de passe</label>
             <input type="password" value={step2.confirmPassword} onChange={e => setStep2(prev => ({ ...prev, confirmPassword: e.target.value }))} placeholder="••••••••"
-              className="bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
           </div>
 
           {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
 
           <div className="flex gap-3 mt-2">
-            <button onClick={() => { setError(''); setStep(1) }} className="flex-1 border border-orange-500/30 text-orange-300 hover:border-orange-400/60 font-semibold rounded-full py-3 transition-colors">
+            <button onClick={() => { setError(''); setStep(1) }} className="flex-1 border border-orange-500/30 text-blue-700 dark:text-orange-300 hover:border-orange-400/60 font-semibold rounded-full py-3 transition-colors">
               Retour
             </button>
-            <button onClick={goToStep3} className="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-full py-3 transition-colors">
+            <button onClick={goToStep3} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-3 transition-colors">
               Continuer
             </button>
           </div>
@@ -272,12 +272,12 @@ export default function RegisterUniversityPage() {
 
       {step === 3 && (
         <div className="flex flex-col gap-4">
-          <p className="text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Votre essai gratuit</p>
+          <p className="text-blue-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Votre essai gratuit</p>
 
           <div className="flex items-start gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3">
-            <Gift size={18} className="mt-0.5 shrink-0 text-orange-400" />
-            <p className="text-sm text-orange-200/90">
-              Vous démarrez avec un <span className="font-semibold text-orange-100">essai gratuit de 30 jours</span> incluant
+            <Gift size={18} className="mt-0.5 shrink-0 text-blue-600 dark:text-orange-400" />
+            <p className="text-sm text-zinc-800 dark:text-orange-200/90">
+              Vous démarrez avec un <span className="font-semibold text-zinc-800 dark:text-orange-100">essai gratuit de 30 jours</span> incluant
               toutes les fonctionnalités Premium. Aucune carte bancaire requise.
             </p>
           </div>
@@ -288,23 +288,23 @@ export default function RegisterUniversityPage() {
               const isEnterprise = planId === 'enterprise'
               return (
                 <div key={planId}
-                  className={`rounded-xl border p-4 ${planId === 'premium' ? 'border-orange-500/40 bg-orange-500/5' : 'border-orange-500/20 bg-black/40'}`}
+                  className={`rounded-xl border p-4 ${planId === 'premium' ? 'border-orange-500/40 bg-orange-500/5' : 'border-orange-500/20 bg-zinc-50 dark:bg-black/40'}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <span className="text-white font-semibold">{config.nom}</span>
-                      <span className="ml-3 text-orange-400 font-bold text-sm">
+                      <span className="text-zinc-900 dark:text-white font-semibold">{config.nom}</span>
+                      <span className="ml-3 text-blue-600 dark:text-orange-400 font-bold text-sm">
                         {isEnterprise ? 'Sur devis' : `${formatPrice(config.prixMensuel)} FCFA/mois`}
                       </span>
-                      {config.badge && <span className="ml-2 bg-orange-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">{config.badge}</span>}
+                      {config.badge && <span className="ml-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{config.badge}</span>}
                     </div>
                   </div>
                   <ul className="grid grid-cols-2 gap-1">
                     {PLAN_HIGHLIGHTS.map(({ key, label }) => {
                       const on = Boolean(config.features[key])
                       return (
-                        <li key={key} className={`text-xs flex items-center gap-1.5 ${on ? 'text-orange-200/70' : 'text-orange-200/25 line-through'}`}>
-                          <Check className={`w-3 h-3 shrink-0 ${on ? 'text-orange-400' : 'text-orange-200/20'}`} strokeWidth={3} />
+                        <li key={key} className={`text-xs flex items-center gap-1.5 ${on ? 'text-zinc-700 dark:text-orange-200/70' : 'text-zinc-600 dark:text-zinc-400 dark:text-orange-200/25 line-through'}`}>
+                          <Check className={`w-3 h-3 shrink-0 ${on ? 'text-blue-600 dark:text-orange-400' : 'text-zinc-600 dark:text-zinc-400 dark:text-orange-200/20'}`} strokeWidth={3} />
                           {label}
                         </li>
                       )
@@ -318,20 +318,20 @@ export default function RegisterUniversityPage() {
           {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
 
           <div className="flex gap-3 mt-2">
-            <button onClick={() => { setError(''); setStep(2) }} className="flex-1 border border-orange-500/30 text-orange-300 hover:border-orange-400/60 font-semibold rounded-full py-3 transition-colors">
+            <button onClick={() => { setError(''); setStep(2) }} className="flex-1 border border-orange-500/30 text-blue-700 dark:text-orange-300 hover:border-orange-400/60 font-semibold rounded-full py-3 transition-colors">
               Retour
             </button>
             <button onClick={handleSubmit} disabled={loading}
-              className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-black font-semibold rounded-full py-3 transition-colors">
+              className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-full py-3 transition-colors">
               {loading ? 'Création…' : "Démarrer l'essai gratuit"}
             </button>
           </div>
         </div>
       )}
 
-      <p className="mt-6 text-center text-orange-200/60 text-sm">
+      <p className="mt-6 text-center text-zinc-600 dark:text-orange-200/60 text-sm">
         Déjà un compte ?{' '}
-        <Link href="/auth/login" className="text-orange-400 hover:text-orange-300 font-medium transition-colors">
+        <Link href="/auth/login" className="text-blue-600 dark:text-orange-400 hover:text-blue-900 dark:hover:text-orange-300 font-medium transition-colors">
           Se connecter
         </Link>
       </p>

@@ -23,7 +23,7 @@ import {
 
 const BADGE: Record<PaiementStatutAffiche, string> = {
   'Payé': 'bg-green-500/15 text-green-400 border border-green-500/25',
-  'En attente': 'bg-orange-500/15 text-orange-400 border border-orange-500/25',
+  'En attente': 'bg-orange-500/15 text-blue-600 dark:text-orange-400 border border-orange-500/25',
   'En retard': 'bg-red-500/15 text-red-400 border border-red-500/25',
 }
 const FILTERS: ('Tous' | PaiementStatutAffiche)[] = ['Tous', 'Payé', 'En attente', 'En retard']
@@ -154,7 +154,7 @@ export default function FinancesPage() {
   }
 
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
-    return <div className="flex items-center justify-center h-64 text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
+    return <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
   }
   if (loading) {
     return <div className="flex items-center justify-center py-32"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -162,8 +162,8 @@ export default function FinancesPage() {
 
   const kpis = [
     { label: 'Total collecté', value: formatFCFA(totalCollecte), icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10' },
-    { label: 'En attente', value: `${enAttente.length} · ${formatFCFA(enAttente.reduce((s, p) => s + p.montant, 0))}`, icon: Clock, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    { label: 'Taux de recouvrement', value: `${taux} %`, icon: CreditCard, color: 'text-zinc-300', bg: 'bg-white/5' },
+    { label: 'En attente', value: `${enAttente.length} · ${formatFCFA(enAttente.reduce((s, p) => s + p.montant, 0))}`, icon: Clock, color: 'text-blue-600 dark:text-orange-400', bg: 'bg-orange-500/10' },
+    { label: 'Taux de recouvrement', value: `${taux} %`, icon: CreditCard, color: 'text-zinc-700 dark:text-zinc-300', bg: 'bg-white dark:bg-white/5' },
     { label: 'En retard', value: `${enRetard.length} dossier${enRetard.length !== 1 ? 's' : ''}`, icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
   ]
 
@@ -171,7 +171,7 @@ export default function FinancesPage() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {kpis.map((k) => (
-          <div key={k.label} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-5 flex items-center gap-4">
+          <div key={k.label} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-5 flex items-center gap-4">
             <div className={`w-11 h-11 rounded-xl ${k.bg} flex items-center justify-center shrink-0`}><k.icon size={20} className={k.color} /></div>
             <div className="min-w-0">
               <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1">{k.label}</p>
@@ -181,20 +181,20 @@ export default function FinancesPage() {
         ))}
       </div>
 
-      <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-orange-500/10 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-200 dark:border-orange-500/10 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un étudiant…"
-              className="w-full bg-black/40 border border-orange-500/20 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/60" />
+              className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/60" />
           </div>
           <div className="flex gap-1.5 flex-wrap">
             {FILTERS.map((f) => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? 'bg-orange-500 text-black' : 'bg-black/40 text-zinc-400 hover:text-white border border-orange-500/10'}`}>{f}</button>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? 'bg-orange-500 text-white' : 'bg-zinc-50 dark:bg-black/40 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-orange-500/10'}`}>{f}</button>
             ))}
           </div>
-          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-black text-sm font-semibold transition-colors shrink-0 sm:ml-auto">
+          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shrink-0 sm:ml-auto">
             <Plus size={15} /> Ajouter
           </button>
         </div>
@@ -202,7 +202,7 @@ export default function FinancesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-black/30 text-orange-300/60 text-xs uppercase tracking-wider">
+              <tr className="bg-zinc-50 dark:bg-black/30 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
                 <th className="px-5 py-3 text-left">Étudiant</th>
                 <th className="px-5 py-3 text-left">Type</th>
                 <th className="px-5 py-3 text-right">Montant</th>
@@ -221,12 +221,12 @@ export default function FinancesPage() {
                 return (
                   <tr key={p.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                     <td className="px-5 py-3.5">
-                      <p className="text-white text-sm font-medium leading-none">{p.studentNom}</p>
+                      <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{p.studentNom}</p>
                       {p.matricule && <p className="text-zinc-500 text-xs font-mono mt-0.5">{p.matricule}</p>}
                     </td>
-                    <td className="px-5 py-3.5 text-zinc-400">{p.type}</td>
-                    <td className="px-5 py-3.5 text-right text-white font-semibold whitespace-nowrap">{formatFCFA(p.montant)}</td>
-                    <td className="px-5 py-3.5 text-zinc-400 whitespace-nowrap">{p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</td>
+                    <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400">{p.type}</td>
+                    <td className="px-5 py-3.5 text-right text-zinc-900 dark:text-white font-semibold whitespace-nowrap">{formatFCFA(p.montant)}</td>
+                    <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="px-5 py-3.5 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap ${BADGE[st]}`}>{st}</span>
                     </td>
@@ -235,7 +235,7 @@ export default function FinancesPage() {
                         {p.statut !== 'Payé' && (
                           <button onClick={() => markPaid(p)} title="Marquer payé" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-green-400 hover:bg-green-500/10"><Check size={14} /></button>
                         )}
-                        <button onClick={() => openEdit(p)} title="Modifier" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-orange-400 hover:bg-orange-500/10"><Pencil size={13} /></button>
+                        <button onClick={() => openEdit(p)} title="Modifier" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10"><Pencil size={13} /></button>
                         <button onClick={() => setDeleteTarget(p)} title="Supprimer" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                       </div>
                     </td>
@@ -245,16 +245,16 @@ export default function FinancesPage() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-orange-500/10 text-xs text-zinc-600">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''} · {paiements.length} au total</div>
+        <div className="px-5 py-3 border-t border-zinc-200 dark:border-orange-500/10 text-xs text-zinc-600">{filtered.length} résultat{filtered.length !== 1 ? 's' : ''} · {paiements.length} au total</div>
       </div>
 
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">{editId ? 'Modifier le paiement' : 'Ajouter un paiement'}</h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-white"><X size={20} /></button>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier le paiement' : 'Ajouter un paiement'}</h2>
+              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
             <div className="space-y-4">
               <Field label="Étudiant">
@@ -286,8 +286,8 @@ export default function FinancesPage() {
               </div>
               {formError && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>}
               <div className="flex gap-3 pt-2">
-                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors disabled:opacity-50">Annuler</button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-black font-semibold rounded-xl py-2.5 text-sm transition-colors">
+                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
+                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   {editId ? 'Enregistrer' : 'Ajouter'}
                 </button>
@@ -300,11 +300,11 @@ export default function FinancesPage() {
       {/* Confirmation suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <h2 className="text-base font-bold text-white mb-2">Supprimer ce paiement ?</h2>
-            <p className="text-orange-100/55 text-sm mb-6">{deleteTarget.studentNom} — {formatFCFA(deleteTarget.montant)} ({deleteTarget.type})</p>
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2">Supprimer ce paiement ?</h2>
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">{deleteTarget.studentNom} — {formatFCFA(deleteTarget.montant)} ({deleteTarget.type})</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors">Annuler</button>
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Annuler</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
             </div>
           </div>
@@ -314,13 +314,13 @@ export default function FinancesPage() {
   )
 }
 
-const inputCls = 'w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60'
+const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
+const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-orange-200/60 text-xs font-medium block mb-1.5">{label}</label>
+      <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">{label}</label>
       {children}
     </div>
   )

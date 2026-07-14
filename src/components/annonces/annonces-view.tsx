@@ -34,7 +34,7 @@ export function AnnoncesView() {
 
   if (annonces.length === 0) {
     return (
-      <div className="text-center py-16 text-orange-200/30 text-sm flex flex-col items-center gap-3">
+      <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm flex flex-col items-center gap-3">
         <Bell size={32} className="opacity-30" />
         Aucune annonce pour le moment.
       </div>
@@ -44,13 +44,13 @@ export function AnnoncesView() {
   return (
     <div className="space-y-3">
       {annonces.map((a) => (
-        <div key={a.id} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-5">
+        <div key={a.id} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-5">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0"><Bell size={16} className="text-orange-400" /></div>
+            <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0"><Bell size={16} className="text-blue-600 dark:text-orange-400" /></div>
             <div className="min-w-0 flex-1">
-              <p className="text-white font-semibold text-sm">{a.titre}</p>
-              <p className="text-orange-100/60 text-sm leading-relaxed mt-1">{a.message}</p>
-              <p className="text-orange-200/30 text-xs mt-2">{a.auteur} · {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+              <p className="text-zinc-900 dark:text-white font-semibold text-sm">{a.titre}</p>
+              <p className="text-zinc-800 dark:text-orange-100/60 text-sm leading-relaxed mt-1">{a.message}</p>
+              <p className="text-zinc-500 dark:text-orange-200/30 text-xs mt-2">{a.auteur} · {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</p>
             </div>
           </div>
         </div>

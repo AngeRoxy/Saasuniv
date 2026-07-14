@@ -26,9 +26,9 @@ interface Mention {
 /** Mention calculée dynamiquement depuis la note (barème /20). */
 export function getMention(note: number): Mention {
   if (note >= 16) return { label: 'Très Bien', className: 'text-green-400' }
-  if (note >= 14) return { label: 'Bien', className: 'text-blue-400' }
-  if (note >= 12) return { label: 'Assez Bien', className: 'text-cyan-400' }
-  if (note >= 10) return { label: 'Passable', className: 'text-yellow-400' }
+  if (note >= 14) return { label: 'Bien', className: 'text-blue-600 dark:text-blue-400' }
+  if (note >= 12) return { label: 'Assez Bien', className: 'text-blue-600 dark:text-cyan-400' }
+  if (note >= 10) return { label: 'Passable', className: 'text-blue-600 dark:text-yellow-400' }
   return { label: 'Insuffisant', className: 'text-red-400' }
 }
 
@@ -59,11 +59,11 @@ export function NotesTable({
 }: NotesTableProps) {
   return (
     <div
-      className={`overflow-x-auto rounded-xl border border-orange-500/10 bg-zinc-950 ${className}`}
+      className={`overflow-x-auto rounded-xl border border-zinc-200 dark:border-orange-500/10 bg-white dark:bg-zinc-950 ${className}`}
     >
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-orange-500/10 bg-black/40 text-xs uppercase tracking-wider text-orange-300/60">
+          <tr className="border-b border-zinc-200 dark:border-orange-500/10 bg-zinc-50 dark:bg-black/40 text-xs uppercase tracking-wider text-blue-700 dark:text-orange-300/60">
             <th className="px-4 py-3 text-left">Date</th>
             {!hideEtudiant && <th className="px-4 py-3 text-left">Étudiant</th>}
             <th className="px-4 py-3 text-left">Matière</th>
@@ -90,16 +90,16 @@ export function NotesTable({
                   key={row.id}
                   className="border-t border-orange-500/5 transition-colors hover:bg-orange-500/5"
                 >
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-400">
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-400">
                     {formatNoteDate(row.date)}
                   </td>
                   {!hideEtudiant && (
-                    <td className="px-4 py-3 font-medium text-orange-100/80">{row.etudiant}</td>
+                    <td className="px-4 py-3 font-medium text-zinc-800 dark:text-orange-100/80">{row.etudiant}</td>
                   )}
-                  <td className="px-4 py-3 text-orange-100/70">{row.matiere}</td>
+                  <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/70">{row.matiere}</td>
                   <td
                     className={`px-4 py-3 text-center font-mono font-semibold ${
-                      failing ? 'text-red-400' : 'text-white'
+                      failing ? 'text-red-400' : 'text-zinc-900 dark:text-white'
                     }`}
                   >
                     {row.note.toFixed(2)}/20

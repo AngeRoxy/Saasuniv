@@ -287,7 +287,7 @@ export default function ParentsPage() {
         </p>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
         >
           <UserPlus size={16} />
           Ajouter un parent
@@ -303,11 +303,11 @@ export default function ParentsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {parents.map((parent) => (
-            <div key={parent.uid} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-6 space-y-4">
+            <div key={parent.uid} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-white font-semibold">{parent.displayName}</p>
+                    <p className="text-zinc-900 dark:text-white font-semibold">{parent.displayName}</p>
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium">
                       <Wifi size={9} />
                       Inscrit
@@ -319,21 +319,21 @@ export default function ParentsPage() {
                 <div className="flex gap-1 shrink-0">
                   <button
                     onClick={() => setEmailTarget(parent)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                     title="Corriger l'email"
                   >
                     <Mail size={14} />
                   </button>
                   <button
                     onClick={() => openEdit(parent)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                     title="Modifier"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(parent)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 size={14} />
@@ -355,7 +355,7 @@ export default function ParentsPage() {
                     return (
                       <span
                         key={uid}
-                        className="px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs"
+                        className="px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 text-xs"
                       >
                         {child?.displayName ?? 'Étudiant inconnu'}
                       </span>
@@ -371,31 +371,31 @@ export default function ParentsPage() {
       {/* Create / Edit modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editingUid ? 'Modifier le parent' : 'Ajouter un parent'}
               </h2>
-              <button onClick={closeModal} disabled={submitting} className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50">
+              <button onClick={closeModal} disabled={submitting} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Nom complet</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nom complet</label>
                 <input
                   required
                   type="text"
                   value={form.displayName}
                   onChange={(e) => setForm({ ...form, displayName: e.target.value })}
                   placeholder="Kouassi Jean"
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Email</label>
                 <input
                   required
                   type="email"
@@ -403,7 +403,7 @@ export default function ParentsPage() {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   disabled={!!editingUid}
                   placeholder="parent@exemple.com"
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 {editingUid && (
                   <p className="text-[11px] text-zinc-500 mt-1.5">
@@ -413,22 +413,22 @@ export default function ParentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Téléphone</label>
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Téléphone</label>
                 <input
                   type="tel"
                   value={form.telephone}
                   onChange={(e) => setForm({ ...form, telephone: e.target.value })}
                   placeholder="+225 07 00 00 00 00"
-                  className="w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
               </div>
 
               {/* Multi-select enfants */}
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">
                   Enfants liés <span className="text-zinc-600">({form.enfantUids.length} sélectionné{form.enfantUids.length !== 1 ? 's' : ''})</span>
                 </label>
-                <div className="max-h-44 overflow-y-auto rounded-xl border border-orange-500/20 bg-black/40 divide-y divide-white/5">
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-orange-500/20 bg-zinc-50 dark:bg-black/40 divide-y divide-zinc-200 dark:divide-white/5">
                   {students.length === 0 && (
                     <p className="px-4 py-3 text-xs text-zinc-600">Aucun étudiant disponible.</p>
                   )}
@@ -440,11 +440,11 @@ export default function ParentsPage() {
                         type="button"
                         onClick={() => toggleEnfant(s.uid)}
                         className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left transition-colors ${
-                          selected ? 'bg-orange-500/10' : 'hover:bg-white/5'
+                          selected ? 'bg-orange-500/10' : 'hover:bg-zinc-100 dark:hover:bg-white/5'
                         }`}
                       >
                         <span className="min-w-0">
-                          <span className="block text-sm text-white truncate">{s.displayName}</span>
+                          <span className="block text-sm text-zinc-900 dark:text-white truncate">{s.displayName}</span>
                           {(s.filiere || s.niveau) && (
                             <span className="block text-xs text-zinc-500 truncate">
                               {[s.filiere, s.niveau].filter(Boolean).join(' · ')}
@@ -452,9 +452,9 @@ export default function ParentsPage() {
                           )}
                         </span>
                         <span className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center ${
-                          selected ? 'bg-orange-500 border-orange-500' : 'border-zinc-600'
+                          selected ? 'bg-orange-500 border-orange-500' : 'border-zinc-300 dark:border-zinc-600'
                         }`}>
-                          {selected && <CheckCircle2 size={12} className="text-black" />}
+                          {selected && <CheckCircle2 size={12} className="text-zinc-900 dark:text-white" />}
                         </span>
                       </button>
                     )
@@ -464,8 +464,8 @@ export default function ParentsPage() {
 
               {!editingUid && (
                 <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-                  <Mail size={15} className="text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-200/70 leading-relaxed">
+                  <Mail size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
                     Un email avec les accès sera envoyé automatiquement au parent. Il
                     devra changer son mot de passe à la première connexion.
                   </p>
@@ -477,14 +477,14 @@ export default function ParentsPage() {
                   type="button"
                   onClick={closeModal}
                   disabled={submitting}
-                  className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   {submitting
@@ -524,20 +524,20 @@ export default function ParentsPage() {
       {/* Confirmation de suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl">
             <div className="flex items-start gap-4 mb-6">
               <div className="p-2 bg-red-500/10 rounded-xl shrink-0">
                 <AlertTriangle size={20} className="text-red-400" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-white mb-1">Supprimer le parent</h2>
-                <p className="text-sm text-zinc-400">
-                  Supprimer <span className="text-white font-medium">{deleteTarget.displayName}</span> ?
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-1">Supprimer le parent</h2>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Supprimer <span className="text-zinc-900 dark:text-white font-medium">{deleteTarget.displayName}</span> ?
                   Cette action retirera son accès à GestUniv.{' '}
                   {deleteTarget.enfantUids.length > 0 ? (
                     <>
                       Les enfants liés (
-                      <span className="text-zinc-300">{enfantNoms(deleteTarget.enfantUids).join(', ')}</span>
+                      <span className="text-zinc-700 dark:text-zinc-300">{enfantNoms(deleteTarget.enfantUids).join(', ')}</span>
                       ) resteront dans le système mais ne seront plus rattachés à ce parent.
                     </>
                   ) : (
@@ -550,7 +550,7 @@ export default function ParentsPage() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -559,7 +559,7 @@ export default function ParentsPage() {
                 disabled={deleting}
                 className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deleting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {deleting && <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />}
                 {deleting ? 'Suppression…' : 'Confirmer'}
               </button>
             </div>
@@ -569,10 +569,10 @@ export default function ParentsPage() {
 
       {/* Erreur (création / modification / suppression) */}
       {createError && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-md flex items-start gap-3 bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-md flex items-start gap-3 bg-white dark:bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-300 text-sm flex-1">{createError}</p>
-          <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -580,10 +580,10 @@ export default function ParentsPage() {
 
       {/* Toast succès */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[60] max-w-sm flex items-start gap-3 bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
-          <CheckCircle2 size={16} className="text-orange-400 shrink-0 mt-0.5" />
-          <p className="text-orange-100 text-sm flex-1">{toast}</p>
-          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-white transition-colors">
+        <div className="fixed bottom-6 right-6 z-[60] max-w-sm flex items-start gap-3 bg-white dark:bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
+          <CheckCircle2 size={16} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-zinc-800 dark:text-orange-100 text-sm flex-1">{toast}</p>
+          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>

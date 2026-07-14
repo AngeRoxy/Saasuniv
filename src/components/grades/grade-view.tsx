@@ -80,35 +80,35 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
         <div className="flex items-center gap-3">
           {moyenne !== null && (
             <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2">
-              <span className="text-xs text-orange-200/60">Moyenne</span>
-              <span className="text-lg font-bold text-white">{moyenne.toFixed(2)}/20</span>
+              <span className="text-xs text-zinc-600 dark:text-orange-200/60">Moyenne</span>
+              <span className="text-lg font-bold text-zinc-900 dark:text-white">{moyenne.toFixed(2)}/20</span>
               {moyenneMention && (
                 <span className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${moyenneMention.cls}`}>{moyenneMention.abbr}</span>
               )}
               {moyenneManuelle !== null && (
-                <span className="text-[10px] text-amber-400 border border-amber-500/30 rounded px-1" title="Moyenne ajustée manuellement par l'enseignant">forcée</span>
+                <span className="text-[10px] text-blue-600 dark:text-amber-400 border border-amber-500/30 rounded px-1" title="Moyenne ajustée manuellement par l'enseignant">forcée</span>
               )}
             </div>
           )}
         </div>
         {semestres.length > 0 && (
           <select value={semestreId} onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60">
+            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60">
             {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
         )}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm flex flex-col items-center gap-3">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm flex flex-col items-center gap-3">
           <BarChart3 size={32} className="opacity-30" />
           Aucune note publiée pour ce semestre.
         </div>
       ) : (
-        <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-x-auto">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-black/40 text-orange-300/60 text-xs uppercase tracking-wider border-b border-orange-500/10">
+              <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider border-b border-zinc-200 dark:border-orange-500/10">
                 <th className="px-4 py-3 text-left">Matière</th>
                 <th className="px-4 py-3 text-center w-24">Note /20</th>
                 <th className="px-4 py-3 text-center w-28">Mention</th>
@@ -122,13 +122,13 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
                 const mention = getMention(retenue)
                 return (
                   <tr key={n.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
-                    <td className="px-4 py-3 text-orange-100/80 font-medium">{n.matiere}</td>
-                    <td className={`px-4 py-3 text-center font-bold ${retenue < 10 ? 'text-red-400' : 'text-white'}`}>
+                    <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/80 font-medium">{n.matiere}</td>
+                    <td className={`px-4 py-3 text-center font-bold ${retenue < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>
                       <span className="inline-flex items-center gap-1.5">
                         {retenue}/20
                         {rattrapee && (
                           <span
-                            className="text-[10px] font-semibold text-amber-400 border border-amber-500/40 bg-amber-500/10 rounded px-1 py-0.5 cursor-help"
+                            className="text-[10px] font-semibold text-blue-600 dark:text-amber-400 border border-amber-500/40 bg-amber-500/10 rounded px-1 py-0.5 cursor-help"
                             title={`Session normale: ${n.note}/20 → Rattrapage: ${n.noteRattrapage}/20`}
                           >
                             Rattrapage
@@ -139,7 +139,7 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
                     <td className="px-4 py-3 text-center">
                       {mention && <span className={`inline-block text-xs font-semibold border rounded-full px-2.5 py-0.5 ${mention.cls}`}>{mention.abbr}</span>}
                     </td>
-                    <td className="px-4 py-3 text-orange-100/50 text-xs">{n.commentaire || '—'}</td>
+                    <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/50 text-xs">{n.commentaire || '—'}</td>
                   </tr>
                 )
               })}

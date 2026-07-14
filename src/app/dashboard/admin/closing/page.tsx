@@ -31,10 +31,10 @@ import {
 const DECISIONS: Decision[] = ['Admis', 'Redoublant', 'Diplômé']
 const decisionColors: Record<Decision, string> = {
   Admis: 'bg-green-500/20 text-green-400 border-green-500/30',
-  Diplômé: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  Diplômé: 'bg-amber-500/20 text-blue-600 dark:text-amber-400 border-amber-500/30',
   // Neutre (ambre), jamais rouge alarmant : un redoublement se présente avec respect.
-  Redoublant: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  'Sans notes': 'bg-zinc-700/40 text-zinc-400 border-white/10',
+  Redoublant: 'bg-amber-500/15 text-blue-700 dark:text-amber-300 border-amber-500/30',
+  'Sans notes': 'bg-zinc-200 dark:bg-zinc-700/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/10',
 }
 
 // Métadonnées d'un étudiant nécessaires à la clôture de son année (résolues depuis
@@ -261,7 +261,7 @@ export default function ClosingPage() {
   }
 
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
-    return <div className="flex items-center justify-center h-64 text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
+    return <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
   }
   if (loading) {
     return <div className="flex items-center justify-center py-32"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -274,34 +274,34 @@ export default function ClosingPage() {
     <div className="max-w-5xl space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Clôture & délibérations</h1>
-          <p className="text-orange-200/40 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Clôture & délibérations</h1>
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
             Moyennes calculées à partir des notes saisies.
-            {anneeAcademique && <> Année académique <span className="text-orange-300/70">{anneeAcademique}</span>.</>}
+            {anneeAcademique && <> Année académique <span className="text-blue-700 dark:text-orange-300/70">{anneeAcademique}</span>.</>}
           </p>
         </div>
         {semestres.length > 0 && (
           <select value={semestreId} onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60">
+            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60">
             {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}{s.statut === 'termine' ? ' (clôturé)' : ''}</option>)}
           </select>
         )}
       </div>
 
       {semestres.length === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">Aucun semestre. Créez-en un d’abord.</div>
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">Aucun semestre. Créez-en un d’abord.</div>
       ) : (
         <>
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Étudiants', value: stats.total, color: 'text-white' },
-              { label: 'Notés', value: `${stats.avecNotes}/${stats.total}`, color: 'text-orange-400' },
+              { label: 'Étudiants', value: stats.total, color: 'text-zinc-900 dark:text-white' },
+              { label: 'Notés', value: `${stats.avecNotes}/${stats.total}`, color: 'text-blue-600 dark:text-orange-400' },
               { label: 'Admis', value: stats.admis, color: 'text-green-400' },
-              { label: 'Redoublants', value: stats.redoublants, color: 'text-amber-300' },
+              { label: 'Redoublants', value: stats.redoublants, color: 'text-blue-700 dark:text-amber-300' },
             ].map((k) => (
-              <div key={k.label} className="bg-zinc-950 border border-orange-500/10 rounded-xl p-4 text-center">
-                <p className="text-orange-200/50 text-xs mb-1">{k.label}</p>
+              <div key={k.label} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4 text-center">
+                <p className="text-zinc-600 dark:text-orange-200/50 text-xs mb-1">{k.label}</p>
                 <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
               </div>
             ))}
@@ -318,13 +318,13 @@ export default function ClosingPage() {
           {rowsLoading ? (
             <div className="flex items-center justify-center py-16"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-16 text-orange-200/30 text-sm">Aucun étudiant inscrit.</div>
+            <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">Aucun étudiant inscrit.</div>
           ) : (
-            <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-black/40 text-orange-300/60 text-xs uppercase tracking-wider">
+                    <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
                       <th className="px-4 py-3 text-left">Étudiant</th>
                       <th className="px-4 py-3 text-center">Moyenne</th>
                       <th className="px-4 py-3 text-center">Décision</th>
@@ -336,15 +336,15 @@ export default function ClosingPage() {
                       const traite = traites[r.studentUid]
                       return (
                         <tr key={r.studentUid} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
-                          <td className="px-4 py-3 text-orange-100/80 font-medium">{r.studentNom}</td>
-                          <td className={`px-4 py-3 text-center font-bold ${r.moyenne === null ? 'text-zinc-600' : r.moyenne < 10 ? 'text-amber-300' : 'text-white'}`}>
+                          <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/80 font-medium">{r.studentNom}</td>
+                          <td className={`px-4 py-3 text-center font-bold ${r.moyenne === null ? 'text-zinc-600' : r.moyenne < 10 ? 'text-blue-700 dark:text-amber-300' : 'text-zinc-900 dark:text-white'}`}>
                             {r.moyenne === null ? '—' : `${r.moyenne.toFixed(2)}/20`}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <select value={r.decision} onChange={(e) => setDecision(r.studentUid, e.target.value as Decision)}
                               className={`text-xs font-medium border rounded-lg px-3 py-1.5 focus:outline-none ${decisionColors[r.decision]}`}>
-                              {DECISIONS.map((d) => <option key={d} value={d} className="bg-zinc-900 text-white">{d}</option>)}
-                              {r.decision === 'Sans notes' && <option value="Sans notes" className="bg-zinc-900 text-white">Sans notes</option>}
+                              {DECISIONS.map((d) => <option key={d} value={d} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{d}</option>)}
+                              {r.decision === 'Sans notes' && <option value="Sans notes" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Sans notes</option>}
                             </select>
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -357,7 +357,7 @@ export default function ClosingPage() {
                             ) : (
                               <button
                                 onClick={() => openCloture(r)}
-                                className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-orange-500/20 transition-colors"
+                                className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-orange-500/20 transition-colors"
                               >
                                 Confirmer la clôture
                               </button>
@@ -376,11 +376,11 @@ export default function ClosingPage() {
           {rows.length > 0 && (
             <div className="flex flex-wrap items-center gap-3">
               <button onClick={handleSaveDelib} disabled={saving}
-                className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-orange-500/20 transition-colors disabled:opacity-50">
+                className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-orange-500/20 transition-colors disabled:opacity-50">
                 <Save size={15} /> Enregistrer les délibérations
               </button>
               {stats.traites > 0 && (
-                <span className="text-xs text-orange-200/40">{stats.traites}/{stats.total} étudiant{stats.traites > 1 ? 's' : ''} clôturé{stats.traites > 1 ? 's' : ''} pour {anneeAcademique}</span>
+                <span className="text-xs text-zinc-500 dark:text-orange-200/40">{stats.traites}/{stats.total} étudiant{stats.traites > 1 ? 's' : ''} clôturé{stats.traites > 1 ? 's' : ''} pour {anneeAcademique}</span>
               )}
               {!dejaClos && (
                 <button onClick={() => setConfirmClose(true)} disabled={saving}
@@ -396,18 +396,18 @@ export default function ClosingPage() {
       {/* Confirmation clôture du semestre (archivage global existant) */}
       {confirmClose && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-md">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-md">
             <div className="flex items-start gap-3 mb-4">
               <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
               <div>
-                <h2 className="text-base font-bold text-white">Clôturer {selectedSemestre?.nom} ?</h2>
-                <p className="text-orange-100/55 text-sm mt-1">Le semestre passera au statut « terminé » et les décisions seront archivées. Vous pourrez toujours les rouvrir depuis la gestion des semestres.</p>
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white">Clôturer {selectedSemestre?.nom} ?</h2>
+                <p className="text-zinc-800 dark:text-orange-100/55 text-sm mt-1">Le semestre passera au statut « terminé » et les décisions seront archivées. Vous pourrez toujours les rouvrir depuis la gestion des semestres.</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmClose(false)} disabled={saving} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors disabled:opacity-50">Annuler</button>
+              <button onClick={() => setConfirmClose(false)} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
               <button onClick={handleCloture} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors disabled:opacity-50">
-                {saving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {saving && <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />}
                 Confirmer la clôture
               </button>
             </div>
@@ -418,29 +418,29 @@ export default function ClosingPage() {
       {/* Confirmation clôture individuelle de l'année (parcours / redoublement) */}
       {clotureTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-white/10 rounded-2xl p-7 w-full max-w-md">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-md">
             <div className="flex items-start gap-3 mb-4">
               <div className={`p-2 rounded-xl shrink-0 ${clotureTarget.decision === 'Redoublant' ? 'bg-amber-500/10' : clotureTarget.decision === 'Diplômé' ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
                 {clotureTarget.decision === 'Redoublant'
-                  ? <RotateCcw size={18} className="text-amber-300" />
+                  ? <RotateCcw size={18} className="text-blue-700 dark:text-amber-300" />
                   : clotureTarget.decision === 'Diplômé'
-                    ? <GraduationCap size={18} className="text-amber-300" />
+                    ? <GraduationCap size={18} className="text-blue-700 dark:text-amber-300" />
                     : <ArrowRight size={18} className="text-emerald-300" />}
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-white">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white">
                   {clotureTarget.decision === 'Redoublant'
                     ? `Confirmer que ${clotureTarget.studentNom} redouble ${clotureMeta?.niveau || 'son niveau'} ?`
                     : clotureTarget.decision === 'Diplômé'
                       ? `Confirmer le diplôme de ${clotureTarget.studentNom} ?`
                       : `Confirmer le passage de ${clotureTarget.studentNom} ?`}
                 </h2>
-                <p className="text-orange-100/55 text-sm mt-1">
+                <p className="text-zinc-800 dark:text-orange-100/55 text-sm mt-1">
                   {clotureTarget.decision === 'Redoublant'
-                    ? <>Cette action clôture son année <span className="text-white">{anneeAcademique}</span> avec le statut « Niveau repris » et le maintient sur le même niveau. Ses notes de cette année restent conservées et consultables.</>
+                    ? <>Cette action clôture son année <span className="text-zinc-900 dark:text-white">{anneeAcademique}</span> avec le statut « Niveau repris » et le maintient sur le même niveau. Ses notes de cette année restent conservées et consultables.</>
                     : clotureTarget.decision === 'Diplômé'
-                      ? <>Cette action clôture son année <span className="text-white">{anneeAcademique}</span> comme validée (diplômé). Son niveau reste inchangé.</>
-                      : <>Cette action clôture son année <span className="text-white">{anneeAcademique}</span> comme validée et le fait passer au niveau suivant.</>}
+                      ? <>Cette action clôture son année <span className="text-zinc-900 dark:text-white">{anneeAcademique}</span> comme validée (diplômé). Son niveau reste inchangé.</>
+                      : <>Cette action clôture son année <span className="text-zinc-900 dark:text-white">{anneeAcademique}</span> comme validée et le fait passer au niveau suivant.</>}
                 </p>
               </div>
             </div>
@@ -448,30 +448,30 @@ export default function ClosingPage() {
             {/* Choix du niveau suivant — uniquement pour un admis */}
             {clotureTarget.decision === 'Admis' && (
               <div className="mb-4">
-                <label className="block text-xs text-orange-200/60 mb-1.5">Niveau suivant</label>
+                <label className="block text-xs text-zinc-600 dark:text-orange-200/60 mb-1.5">Niveau suivant</label>
                 {clotureMeta && clotureMeta.niveaux.length > 0 ? (
                   <select
                     value={niveauChoice}
                     onChange={(e) => setNiveauChoice(e.target.value)}
-                    className="w-full bg-black border border-white/10 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none transition-colors"
+                    className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-white/10 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors"
                   >
-                    <option value="" className="bg-zinc-900">Ne pas changer de niveau</option>
+                    <option value="" className="bg-white dark:bg-zinc-900">Ne pas changer de niveau</option>
                     {clotureMeta.niveaux.map((n) => (
-                      <option key={n} value={n} className="bg-zinc-900">{n}</option>
+                      <option key={n} value={n} className="bg-white dark:bg-zinc-900">{n}</option>
                     ))}
                   </select>
                 ) : (
                   <div className="flex items-start gap-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-3">
-                    <AlertTriangle size={15} className="text-amber-300 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-100/70 leading-relaxed">
+                    <AlertTriangle size={15} className="text-blue-700 dark:text-amber-300 shrink-0 mt-0.5" />
+                    <p className="text-xs text-zinc-800 dark:text-amber-100/70 leading-relaxed">
                       Aucun niveau n’est défini pour cette filière — le niveau ne sera pas modifié automatiquement. Ajustez-le manuellement depuis la fiche étudiant si nécessaire.
                     </p>
                   </div>
                 )}
                 {clotureMeta && clotureMeta.niveaux.length > 0 && (
-                  <p className="text-[11px] text-orange-200/40 mt-1.5">
+                  <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
                     {niveauChoice
-                      ? <>Niveau actuel <span className="text-orange-200/70">{clotureMeta.niveau || '—'}</span> → <span className="text-orange-200/70">{niveauChoice}</span></>
+                      ? <>Niveau actuel <span className="text-zinc-600 dark:text-orange-200/70">{clotureMeta.niveau || '—'}</span> → <span className="text-zinc-600 dark:text-orange-200/70">{niveauChoice}</span></>
                       : 'Le niveau du membre restera inchangé.'}
                   </p>
                 )}
@@ -486,8 +486,8 @@ export default function ClosingPage() {
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => { setClotureTarget(null); setClotureError(null) }} disabled={processing} className="flex-1 border border-white/10 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors disabled:opacity-50">Annuler</button>
-              <button onClick={handleConfirmCloture} disabled={processing} className={`flex-1 flex items-center justify-center gap-2 font-semibold rounded-xl py-2.5 text-sm transition-colors disabled:opacity-50 ${clotureTarget.decision === 'Admis' ? 'bg-emerald-500 hover:bg-emerald-600 text-black' : 'bg-amber-500 hover:bg-amber-600 text-black'}`}>
+              <button onClick={() => { setClotureTarget(null); setClotureError(null) }} disabled={processing} className="flex-1 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
+              <button onClick={handleConfirmCloture} disabled={processing} className={`flex-1 flex items-center justify-center gap-2 font-semibold rounded-xl py-2.5 text-sm transition-colors disabled:opacity-50 ${clotureTarget.decision === 'Admis' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                 {processing && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                 Confirmer
               </button>
@@ -497,9 +497,9 @@ export default function ClosingPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
-          <CheckCircle size={16} className="text-orange-400 shrink-0" />
-          <p className="text-orange-100 text-sm">{toast}</p>
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-white dark:bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
+          <CheckCircle size={16} className="text-blue-600 dark:text-orange-400 shrink-0" />
+          <p className="text-zinc-800 dark:text-orange-100 text-sm">{toast}</p>
         </div>
       )}
     </div>

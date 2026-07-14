@@ -54,12 +54,12 @@ export default function StudentCoursesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Mes cours & ressources</h1>
-        <p className="text-orange-200/40 text-sm mt-1">Documents et liens partagés par vos enseignants.</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Mes cours & ressources</h1>
+        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Documents et liens partagés par vos enseignants.</p>
       </div>
 
       {visibles.length === 0 ? (
-        <div className="text-center py-20 text-orange-200/30 text-sm flex flex-col items-center gap-3">
+        <div className="text-center py-20 text-zinc-500 dark:text-orange-200/30 text-sm flex flex-col items-center gap-3">
           <BookOpen size={40} className="opacity-30" />
           Aucune ressource disponible pour le moment.
         </div>
@@ -67,17 +67,17 @@ export default function StudentCoursesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibles.map((r) => (
             <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
-              className="bg-zinc-950 border border-orange-500/10 hover:border-orange-500/25 rounded-xl p-5 flex flex-col gap-2 transition-colors group">
+              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 hover:border-orange-500/25 rounded-xl p-5 flex flex-col gap-2 transition-colors group">
               <div className="flex items-center gap-2">
-                <Link2 size={14} className="text-orange-400 shrink-0" />
-                <h3 className="text-white font-semibold text-sm truncate">{r.titre}</h3>
+                <Link2 size={14} className="text-blue-600 dark:text-orange-400 shrink-0" />
+                <h3 className="text-zinc-900 dark:text-white font-semibold text-sm truncate">{r.titre}</h3>
               </div>
-              {r.description && <p className="text-orange-100/50 text-xs line-clamp-2">{r.description}</p>}
+              {r.description && <p className="text-zinc-800 dark:text-orange-100/50 text-xs line-clamp-2">{r.description}</p>}
               <div className="flex flex-wrap gap-1.5">
-                {r.matiere && <span className="text-[11px] bg-white/5 border border-white/10 text-zinc-400 rounded-full px-2 py-0.5">{r.matiere}</span>}
+                {r.matiere && <span className="text-[11px] bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 rounded-full px-2 py-0.5">{r.matiere}</span>}
               </div>
-              <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-orange-400 group-hover:text-orange-300">Ouvrir <ExternalLink size={11} /></span>
-              <span className="text-[11px] text-orange-200/30">Par {r.auteur}</span>
+              <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-orange-400 group-hover:text-blue-900 dark:group-hover:text-orange-300">Ouvrir <ExternalLink size={11} /></span>
+              <span className="text-[11px] text-zinc-500 dark:text-orange-200/30">Par {r.auteur}</span>
             </a>
           ))}
         </div>

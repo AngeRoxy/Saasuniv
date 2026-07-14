@@ -53,6 +53,18 @@ export async function registerMember(
   displayName: string,
   role: 'teacher' | 'student' | 'parent' | 'super_admin_plateforme'
 ) {
+  // SÉCURITÉ — refus explicite et inconditionnel du rôle plateforme. Cette voie
+  // (inscription publique) ne doit JAMAIS pouvoir créer un super_admin_plateforme,
+  // même si l'appelant contourne l'UI (DevTools, appel direct de la fonction).
+  // Le contrôle est ici AVANT createUserWithEmailAndPassword pour ne laisser
+  // aucun compte Auth orphelin. Le super_admin a été amorcé une seule fois via une
+  // route de bootstrap temporaire, depuis SUPPRIMÉE (verrou /bootstrap dans les règles).
+  if (role === 'super_admin_plateforme') {
+    throw new Error(
+      "Rôle interdit : un compte super_admin_plateforme ne peut pas être créé via l'inscription."
+    )
+  }
+
   const credential = await createUserWithEmailAndPassword(auth, email, password)
   const uid = credential.user.uid
   const createdAt = Date.now()

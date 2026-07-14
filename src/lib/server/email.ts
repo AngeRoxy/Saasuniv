@@ -25,7 +25,7 @@ function buildHtml(params: SendAccessEmailRequest): string {
           <!-- Logo -->
           <tr>
             <td style="padding:32px 32px 0;">
-              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Gest<span style="color:#f97316;">Univ</span></span>
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Gest<span style="color:#2563eb;">Univ</span></span>
             </td>
           </tr>
           <!-- Body -->
@@ -40,11 +40,11 @@ function buildHtml(params: SendAccessEmailRequest): string {
           <!-- Credentials box -->
           <tr>
             <td style="padding:16px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(37,99,235,0.10);border:1px solid rgba(37,99,235,0.30);border-radius:12px;">
                 <tr><td style="padding:18px 20px;">
-                  <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#fb923c;">Vos identifiants</p>
+                  <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#3b82f6;">Vos identifiants</p>
                   <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Email : <strong style="color:#ffffff;">${params.email}</strong></p>
-                  <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Mot de passe temporaire : <strong style="color:#fb923c;font-family:monospace;">${params.tempPassword}</strong></p>
+                  <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Mot de passe temporaire : <strong style="color:#3b82f6;font-family:monospace;">${params.tempPassword}</strong></p>
                   <p style="margin:0;font-size:14px;color:#e4e4e7;">Rôle : <strong style="color:#ffffff;">${roleFr}</strong></p>
                 </td></tr>
               </table>
@@ -53,7 +53,7 @@ function buildHtml(params: SendAccessEmailRequest): string {
           <!-- CTA -->
           <tr>
             <td align="center" style="padding:8px 32px 24px;">
-              <a href="${params.loginUrl}" style="display:inline-block;background-color:#f97316;color:#000000;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:9999px;">Se connecter</a>
+              <a href="${params.loginUrl}" style="display:inline-block;background-color:#2563eb;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:9999px;">Se connecter</a>
             </td>
           </tr>
           <!-- Warning -->
@@ -146,7 +146,7 @@ function buildEmailChangeHtml(p: EmailChangeNotification): string {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#18181b;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;">
           <tr>
             <td style="padding:32px 32px 0;">
-              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Gest<span style="color:#f97316;">Univ</span></span>
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Gest<span style="color:#2563eb;">Univ</span></span>
             </td>
           </tr>
           <tr>
@@ -159,10 +159,10 @@ function buildEmailChangeHtml(p: EmailChangeNotification): string {
           </tr>
           <tr>
             <td style="padding:16px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(37,99,235,0.10);border:1px solid rgba(37,99,235,0.30);border-radius:12px;">
                 <tr><td style="padding:18px 20px;">
                   <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Ancienne adresse : <strong style="color:#ffffff;">${p.oldEmail}</strong></p>
-                  <p style="margin:0;font-size:14px;color:#e4e4e7;">Nouvelle adresse : <strong style="color:#fb923c;">${p.newEmail}</strong></p>
+                  <p style="margin:0;font-size:14px;color:#e4e4e7;">Nouvelle adresse : <strong style="color:#3b82f6;">${p.newEmail}</strong></p>
                 </td></tr>
               </table>
             </td>

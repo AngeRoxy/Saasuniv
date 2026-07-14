@@ -37,7 +37,7 @@ function AiAvatar({ size = 'md' }: { size?: 'sm' | 'md' }) {
         dim
       )}
     >
-      <Sparkles className={cn('text-orange-400', icon)} />
+      <Sparkles className={cn('text-blue-600 dark:text-orange-400', icon)} />
     </div>
   )
 }
@@ -135,24 +135,24 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'fixed bottom-6 right-6 z-50 flex h-130 w-95 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 text-zinc-100 shadow-2xl backdrop-blur',
+              'fixed bottom-6 right-6 z-50 flex h-130 w-95 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-900/95 text-zinc-800 dark:text-zinc-100 shadow-2xl backdrop-blur',
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-white/10 px-4 py-3">
               <AiAvatar />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-zinc-50">
+                <p className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-50">
                   Assistant GestUniv
                 </p>
-                <p className="truncate text-xs text-zinc-400">Propulsé par Claude</p>
+                <p className="truncate text-xs text-zinc-600 dark:text-zinc-400">Propulsé par Claude</p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Fermer"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-100"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-zinc-100"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -163,7 +163,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
               {/* Bulle de bienvenue (visuelle uniquement) */}
               <div className="flex items-end gap-2 self-start">
                 <AiAvatar size="sm" />
-                <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-white/5 px-3 py-2 text-sm text-zinc-100">
+                <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-white dark:bg-white/5 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100">
                   {WELCOME}
                 </div>
               </div>
@@ -171,7 +171,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
               {messages.map((msg) =>
                 msg.role === 'user' ? (
                   <div key={msg.id} className="flex flex-col items-end self-end">
-                    <div className="max-w-[80%] whitespace-pre-wrap wrap-break rounded-2xl rounded-br-sm bg-orange-500/20 px-3 py-2 text-sm text-zinc-50">
+                    <div className="max-w-[80%] whitespace-pre-wrap wrap-break rounded-2xl rounded-br-sm bg-orange-500/20 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-50">
                       {msg.content}
                     </div>
                     <span className="mt-1 text-[10px] text-zinc-500">
@@ -182,7 +182,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
                   <div key={msg.id} className="flex flex-col items-start self-start">
                     <div className="flex items-end gap-2">
                       <AiAvatar size="sm" />
-                      <div className="max-w-[80%] whitespace-pre-wrap wrap-break rounded-2xl rounded-bl-sm bg-white/5 px-3 py-2 text-sm text-zinc-100">
+                      <div className="max-w-[80%] whitespace-pre-wrap wrap-break rounded-2xl rounded-bl-sm bg-white dark:bg-white/5 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100">
                         {msg.content}
                       </div>
                     </div>
@@ -197,7 +197,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
               {loading && (
                 <div className="flex items-end gap-2 self-start">
                   <AiAvatar size="sm" />
-                  <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white/5 px-3 py-3">
+                  <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white dark:bg-white/5 px-3 py-3">
                     {[0, 1, 2].map((i) => (
                       <motion.span
                         key={i}
@@ -224,7 +224,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
             </div>
 
             {/* Zone de saisie */}
-            <div className="border-t border-white/10 p-3">
+            <div className="border-t border-zinc-200 dark:border-white/10 p-3">
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
@@ -237,7 +237,7 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
                   }}
                   rows={1}
                   placeholder="Écrivez votre message…"
-                  className="max-h-28 min-h-10 flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+                  className="max-h-28 min-h-10 flex-1 resize-none rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-500 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
                 />
                 <button
                   type="button"

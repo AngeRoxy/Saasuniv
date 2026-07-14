@@ -37,20 +37,20 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
   if (isTrialExpired) {
     return (
       <div className="fixed inset-0 z-100 bg-zinc-950/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl bg-zinc-950 border border-red-500/20 shadow-2xl shadow-black/50 overflow-hidden text-center">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-red-500/20 shadow-2xl shadow-black/50 overflow-hidden text-center">
           <div className="px-7 py-8">
             <div className="mx-auto w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mb-4">
               <XCircle className="h-6 w-6 text-red-400" />
             </div>
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
               Votre essai gratuit a expiré
             </h2>
-            <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed">
               Choisissez un plan pour continuer à utiliser GestUniv.
             </p>
             <Link
               href={BILLING_HREF}
-              className="mt-6 inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl px-6 py-2.5 transition-colors"
+              className="mt-6 inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl px-6 py-2.5 transition-colors"
             >
               Voir les plans
             </Link>
@@ -74,24 +74,24 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
       >
         <AlertTriangle
           size={18}
-          className="shrink-0 text-orange-400 animate-pulse"
+          className="shrink-0 text-blue-600 dark:text-orange-400 animate-pulse"
         />
-        <p className="flex-1 text-sm text-orange-200">
+        <p className="flex-1 text-sm text-zinc-600 dark:text-orange-200">
           ⚠️ Votre essai expire dans{' '}
-          <span className="font-semibold text-orange-100">
+          <span className="font-semibold text-zinc-800 dark:text-orange-100">
             {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
           </span>{' '}
           — Choisissez un plan pour continuer
         </p>
         <Link
           href={BILLING_HREF}
-          className="shrink-0 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-orange-600"
+          className="shrink-0 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-orange-600"
         >
           Choisir un plan maintenant
         </Link>
         <button
           onClick={() => setDismissed(true)}
-          className="shrink-0 text-xs font-medium text-orange-200/60 transition-colors hover:text-orange-200"
+          className="shrink-0 text-xs font-medium text-zinc-600 dark:text-orange-200/60 transition-colors hover:text-zinc-900 dark:hover:text-orange-200"
         >
           Ignorer
         </button>
@@ -107,17 +107,17 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
         className
       )}
     >
-      <Clock size={18} className="shrink-0 text-amber-400" />
-      <p className="flex-1 text-sm text-amber-200/90">
+      <Clock size={18} className="shrink-0 text-blue-600 dark:text-amber-400" />
+      <p className="flex-1 text-sm text-zinc-600 dark:text-amber-200/90">
         Essai gratuit —{' '}
-        <span className="font-semibold text-amber-100">
+        <span className="font-semibold text-zinc-800 dark:text-amber-100">
           {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant
           {daysRemaining > 1 ? 's' : ''}
         </span>
       </p>
       <Link
         href={BILLING_HREF}
-        className="shrink-0 rounded-lg border border-amber-500/30 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/10"
+        className="shrink-0 rounded-lg border border-amber-500/30 px-3 py-1.5 text-xs font-semibold text-zinc-600 dark:text-amber-200 transition-colors hover:bg-amber-500/10"
       >
         Choisir un plan
       </Link>

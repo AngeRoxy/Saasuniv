@@ -65,8 +65,8 @@ export const TYPE_SESSION_OPTIONS: { value: TypeSession; label: string }[] = [
 ]
 
 export const TYPE_SESSION_STYLES: Record<TypeSession, string> = {
-  normale: 'bg-orange-500/15 border-orange-500/30 text-orange-300',
-  rattrapage: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
+  normale: 'bg-orange-500/15 border-orange-500/30 text-blue-700 dark:text-orange-300',
+  rattrapage: 'bg-purple-500/15 border-purple-500/30 text-blue-700 dark:text-purple-300',
 }
 
 export const STATUT_EXAMEN_LABELS: Record<StatutExamen, string> = {
@@ -77,9 +77,9 @@ export const STATUT_EXAMEN_LABELS: Record<StatutExamen, string> = {
 }
 
 export const STATUT_EXAMEN_STYLES: Record<StatutExamen, string> = {
-  planifie: 'bg-blue-500/15 border-blue-500/30 text-blue-300',
-  en_cours: 'bg-orange-500/15 border-orange-500/30 text-orange-300',
-  termine: 'bg-zinc-700/30 border-white/10 text-zinc-400',
+  planifie: 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300',
+  en_cours: 'bg-orange-500/15 border-orange-500/30 text-blue-700 dark:text-orange-300',
+  termine: 'bg-zinc-700/30 border-white/10 text-zinc-600 dark:text-zinc-400',
   annule: 'bg-red-500/15 border-red-500/30 text-red-300',
 }
 

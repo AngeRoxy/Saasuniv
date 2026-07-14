@@ -30,9 +30,9 @@ interface FormState {
 
 type StatutFilter = 'toutes' | 'justifiees' | 'injustifiees'
 
-const inputCls = 'w-full bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60'
-const filterCls = 'bg-zinc-900 border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/60'
+const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
+const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
+const filterCls = 'bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-orange-500/60'
 
 export default function AdminAbsencesPage() {
   const { user, profile } = useAuth()
@@ -228,7 +228,7 @@ export default function AdminAbsencesPage() {
   }
 
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
-    return <div className="flex items-center justify-center h-64 text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
+    return <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
   }
   if (loading) {
     return <div className="flex items-center justify-center py-32"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -247,7 +247,7 @@ export default function AdminAbsencesPage() {
             {alertes.map((al) => (
               <Link key={al.uid} href="/dashboard/admin/students"
                 className="group inline-flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg px-3 py-1.5 transition-colors">
-                <span className="text-sm text-white font-medium">{al.nom}</span>
+                <span className="text-sm text-zinc-900 dark:text-white font-medium">{al.nom}</span>
                 <span className="text-[11px] text-red-300/80">{al.count} × {al.matiere}</span>
               </Link>
             ))}
@@ -261,9 +261,9 @@ export default function AdminAbsencesPage() {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un étudiant…"
-              className="w-full bg-black/40 border border-orange-500/20 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/60" />
+              className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/60" />
           </div>
-          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-black text-sm font-semibold transition-colors shrink-0 sm:ml-auto">
+          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shrink-0 sm:ml-auto">
             <Plus size={15} /> Marquer une absence
           </button>
         </div>
@@ -285,10 +285,10 @@ export default function AdminAbsencesPage() {
       </div>
 
       {/* Tableau */}
-      <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-x-auto">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-black/40 text-orange-300/60 text-xs uppercase tracking-wider">
+            <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
               <th className="px-5 py-3 text-left">Étudiant</th>
               <th className="px-5 py-3 text-left">Date</th>
               <th className="px-5 py-3 text-left">Matière</th>
@@ -306,11 +306,11 @@ export default function AdminAbsencesPage() {
             ) : filtered.map((a) => (
               <tr key={a.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                 <td className="px-5 py-3.5">
-                  <p className="text-white text-sm font-medium leading-none">{a.studentNom}</p>
+                  <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{a.studentNom}</p>
                   {a.matricule && <p className="text-zinc-500 text-xs font-mono mt-0.5">{a.matricule}</p>}
                 </td>
-                <td className="px-5 py-3.5 text-zinc-400 whitespace-nowrap">{a.date ? new Date(a.date).toLocaleDateString('fr-FR') : '—'}</td>
-                <td className="px-5 py-3.5 text-zinc-400">{a.matiere || '—'}</td>
+                <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{a.date ? new Date(a.date).toLocaleDateString('fr-FR') : '—'}</td>
+                <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400">{a.matiere || '—'}</td>
                 <td className="px-5 py-3.5 text-center">
                   {a.justifiee ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-green-500/15 text-green-400 border border-green-500/25"><Check size={11} /> Justifiée</span>
@@ -321,7 +321,7 @@ export default function AdminAbsencesPage() {
                 <td className="px-5 py-3.5 text-zinc-500 text-xs max-w-48">
                   {a.justifiee ? (
                     <div className="truncate">
-                      {a.motifCategorie && <span className="text-orange-200/70">{motifLabel(a.motifCategorie)}</span>}
+                      {a.motifCategorie && <span className="text-zinc-600 dark:text-orange-200/70">{motifLabel(a.motifCategorie)}</span>}
                       {a.motif && <span>{a.motifCategorie ? ' · ' : ''}{a.motif}</span>}
                       {a.referenceJustificatif && <span className="text-zinc-600"> · réf. {a.referenceJustificatif}</span>}
                       {!a.motifCategorie && !a.motif && !a.referenceJustificatif && '—'}
@@ -331,7 +331,7 @@ export default function AdminAbsencesPage() {
                 <td className="px-5 py-3.5 text-zinc-500 text-xs">{a.marqueParNom || '—'}</td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-1 justify-center">
-                    <button onClick={() => openEdit(a)} title={a.justifiee ? 'Modifier' : 'Justifier / modifier'} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-orange-400 hover:bg-orange-500/10"><Pencil size={13} /></button>
+                    <button onClick={() => openEdit(a)} title={a.justifiee ? 'Modifier' : 'Justifier / modifier'} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10"><Pencil size={13} /></button>
                     <button onClick={() => setDeleteTarget(a)} title="Supprimer" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                   </div>
                 </td>
@@ -342,13 +342,13 @@ export default function AdminAbsencesPage() {
       </div>
 
       {/* Paramètre : seuil d'alerte */}
-      <div className="bg-zinc-950 border border-orange-500/10 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-1">Seuil d’alerte</h2>
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white mb-1">Seuil d’alerte</h2>
         <p className="text-xs text-zinc-500 mb-4">Nombre d’absences injustifiées sur une même matière déclenchant une alerte (admin + parent).</p>
         <div className="flex flex-wrap items-center gap-3">
           <input type="number" min={1} value={seuilInput} onChange={(e) => { setSeuilInput(e.target.value); setSeuilMsg(null) }}
-            className="w-24 bg-black/40 border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/60" />
-          <button onClick={handleSaveSeuil} disabled={seuilSaving} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/90 hover:bg-orange-500 disabled:opacity-40 text-black text-sm font-semibold transition-colors">
+            className="w-24 bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-orange-500/60" />
+          <button onClick={handleSaveSeuil} disabled={seuilSaving} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/90 hover:bg-orange-500 disabled:opacity-40 text-white text-sm font-semibold transition-colors">
             {seuilSaving ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Save size={14} />}
             Enregistrer
           </button>
@@ -359,14 +359,14 @@ export default function AdminAbsencesPage() {
       {/* Modal ajout / justification */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">{editId ? 'Modifier l’absence' : 'Marquer une absence'}</h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-white"><X size={20} /></button>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier l’absence' : 'Marquer une absence'}</h2>
+              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Étudiant</label>
+                <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Étudiant</label>
                 <select value={form.studentUid} onChange={(e) => setForm((f) => ({ ...f, studentUid: e.target.value }))} className={selectCls}>
                   <option value="">{students.length ? 'Choisir…' : 'Aucun étudiant inscrit'}</option>
                   {students.map((s) => <option key={s.uid} value={s.uid}>{s.displayName}{s.matricule ? ` (${s.matricule})` : ''}</option>)}
@@ -374,47 +374,47 @@ export default function AdminAbsencesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Date</label>
+                  <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Date</label>
                   <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className={`${inputCls} scheme-dark`} />
                 </div>
                 <div>
-                  <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Matière (option.)</label>
+                  <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Matière (option.)</label>
                   <input value={form.matiere} onChange={(e) => setForm((f) => ({ ...f, matiere: e.target.value }))} placeholder="Ex: Maths" className={inputCls} />
                 </div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <button type="button" onClick={() => setForm((f) => ({ ...f, justifiee: !f.justifiee }))}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${form.justifiee ? 'bg-green-500' : 'bg-zinc-700'}`}>
+                  className={`relative w-10 h-5 rounded-full transition-colors ${form.justifiee ? 'bg-green-500' : 'bg-zinc-200 dark:bg-zinc-700'}`}>
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.justifiee ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
-                <span className="text-sm text-orange-200/70">Absence justifiée</span>
+                <span className="text-sm text-zinc-600 dark:text-orange-200/70">Absence justifiée</span>
               </label>
 
               {/* Champs de justification (RÈGLE 2) — visibles seulement si justifiée */}
               {form.justifiee && (
                 <div className="space-y-4 border-l-2 border-green-500/30 pl-4">
                   <div>
-                    <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Motif</label>
+                    <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Motif</label>
                     <select value={form.motifCategorie} onChange={(e) => setForm((f) => ({ ...f, motifCategorie: e.target.value as MotifAbsence | '' }))} className={selectCls}>
                       <option value="">Choisir…</option>
                       {MOTIFS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Référence du justificatif (option.)</label>
+                    <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Référence du justificatif (option.)</label>
                     <input value={form.referenceJustificatif} onChange={(e) => setForm((f) => ({ ...f, referenceJustificatif: e.target.value }))} placeholder="Ex: Certificat n°2024-118" className={inputCls} />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="text-orange-200/60 text-xs font-medium block mb-1.5">Commentaire (option.)</label>
+                <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Commentaire (option.)</label>
                 <input value={form.motif} onChange={(e) => setForm((f) => ({ ...f, motif: e.target.value }))} placeholder="Précision libre" className={inputCls} />
               </div>
               {formError && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>}
               <div className="flex gap-3 pt-2">
-                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors disabled:opacity-50">Annuler</button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-black font-semibold rounded-xl py-2.5 text-sm transition-colors">
+                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
+                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   {editId ? 'Enregistrer' : 'Ajouter'}
                 </button>
@@ -427,14 +427,14 @@ export default function AdminAbsencesPage() {
       {/* Suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0"><CalendarX size={18} className="text-red-400" /></div>
-              <h2 className="text-base font-bold text-white">Supprimer cette absence ?</h2>
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer cette absence ?</h2>
             </div>
-            <p className="text-orange-100/55 text-sm mb-6">{deleteTarget.studentNom} — {deleteTarget.date ? new Date(deleteTarget.date).toLocaleDateString('fr-FR') : ''}</p>
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">{deleteTarget.studentNom} — {deleteTarget.date ? new Date(deleteTarget.date).toLocaleDateString('fr-FR') : ''}</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-white transition-colors">Annuler</button>
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Annuler</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
             </div>
           </div>

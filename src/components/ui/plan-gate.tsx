@@ -63,17 +63,17 @@ export function UpgradePrompt({ feature, plan }: UpgradePromptProps) {
   const nomPlan = planMinimal ? getPlanConfig(planMinimal).nom : 'supérieur'
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/20 bg-white/3 px-6 py-8 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-zinc-400">
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 dark:border-white/20 bg-white/3 px-6 py-8 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-white/5 text-zinc-600 dark:text-zinc-400">
         <Lock className="h-5 w-5" />
       </div>
-      <p className="max-w-sm text-sm text-zinc-400">
+      <p className="max-w-sm text-sm text-zinc-600 dark:text-zinc-400">
         Cette fonctionnalité est disponible à partir du plan{' '}
-        <span className="font-medium text-zinc-200">{nomPlan}</span>.
+        <span className="font-medium text-zinc-800 dark:text-zinc-200">{nomPlan}</span>.
       </p>
       <Link
         href="/dashboard/admin/billing"
-        className="rounded-lg border border-white/10 bg-orange-500/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
+        className="rounded-lg border border-zinc-200 dark:border-white/10 bg-orange-500/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
       >
         Voir les plans
       </Link>

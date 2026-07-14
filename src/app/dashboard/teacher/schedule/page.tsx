@@ -73,17 +73,17 @@ export default function TeacherSchedulePage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <CalendarClock size={22} className="text-orange-400" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <CalendarClock size={22} className="text-blue-600 dark:text-orange-400" />
             Mon emploi du temps
           </h1>
-          <p className="text-orange-200/40 text-sm mt-1">Vos cours, tous niveaux confondus</p>
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Vos cours, tous niveaux confondus</p>
         </div>
         {semestres.length > 0 && (
           <select
             value={semestreId}
             onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60"
+            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
           >
             {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
@@ -91,30 +91,30 @@ export default function TeacherSchedulePage() {
       </div>
 
       {total === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
           Aucun cours ne vous est assigné pour ce semestre. L’administration vous attribue les créneaux depuis l’emploi du temps.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {byDay.map(({ jour, items }) => (
-            <div key={jour} className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
-              <div className="px-3 py-2.5 border-b border-orange-500/10 bg-black/30">
-                <p className="text-xs font-semibold text-orange-300/80 uppercase tracking-wider">{JOUR_LABEL[jour]}</p>
+            <div key={jour} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+              <div className="px-3 py-2.5 border-b border-zinc-200 dark:border-orange-500/10 bg-[#fafafa]/30 dark:bg-black/30">
+                <p className="text-xs font-semibold text-blue-700 dark:text-orange-300/80 uppercase tracking-wider">{JOUR_LABEL[jour]}</p>
               </div>
               <div className="p-2 space-y-2 min-h-16">
                 {items.length === 0 ? (
-                  <p className="text-center text-orange-200/20 text-xs py-4">—</p>
+                  <p className="text-center text-zinc-500 dark:text-orange-200/20 text-xs py-4">—</p>
                 ) : (
                   items.map((c) => (
                     <div key={c.id} className="rounded-lg bg-orange-500/5 border border-orange-500/15 p-2.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-orange-400">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 dark:text-orange-400">
                         <Clock size={10} /> {c.heureDebut}–{c.heureFin}
                       </span>
-                      <p className="text-sm font-medium text-white mt-1 leading-snug">{c.matiere}</p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1 leading-snug">{c.matiere}</p>
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
                         <Layers size={9} /> {filiereNom(c.filiereId)} · {c.niveau}
                       </p>
-                      {c.salle && <p className="text-[11px] text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
+                      {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
                     </div>
                   ))
                 )}

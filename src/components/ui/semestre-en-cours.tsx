@@ -20,7 +20,7 @@ const statutColors: Record<StatutSemestre, {
   label: string
 }> = {
   en_cours: {
-    text: 'text-orange-400',
+    text: 'text-blue-600 dark:text-orange-400',
     bar: 'bg-orange-500',
     dot: 'bg-orange-400',
     border: 'border-orange-500/20',
@@ -28,15 +28,15 @@ const statutColors: Record<StatutSemestre, {
     label: 'En cours',
   },
   termine: {
-    text: 'text-zinc-400',
+    text: 'text-zinc-600 dark:text-zinc-400',
     bar: 'bg-zinc-500',
     dot: 'bg-zinc-400',
-    border: 'border-white/10',
+    border: 'border-zinc-200 dark:border-white/10',
     bg: 'bg-zinc-700/20',
     label: 'Terminé',
   },
   a_venir: {
-    text: 'text-blue-400',
+    text: 'text-blue-600 dark:text-blue-400',
     bar: 'bg-blue-500',
     dot: 'bg-blue-400',
     border: 'border-blue-500/20',
@@ -100,33 +100,33 @@ export function SemestreEnCours({
     if (variant === 'badge') {
       return (
         <span
-          className={`inline-block h-6 w-40 animate-pulse rounded-full bg-white/5 ${className}`}
+          className={`inline-block h-6 w-40 animate-pulse rounded-full bg-white dark:bg-white/5 ${className}`}
         />
       )
     }
     if (variant === 'compact') {
       return (
         <div
-          className={`flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-950 px-4 py-3 ${className}`}
+          className={`flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 px-4 py-3 ${className}`}
         >
-          <div className="h-8 w-8 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-8 w-8 animate-pulse rounded-lg bg-white dark:bg-white/5" />
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-40 animate-pulse rounded bg-white/5" />
-            <div className="h-2.5 w-28 animate-pulse rounded bg-white/5" />
+            <div className="h-3 w-40 animate-pulse rounded bg-white dark:bg-white/5" />
+            <div className="h-2.5 w-28 animate-pulse rounded bg-white dark:bg-white/5" />
           </div>
         </div>
       )
     }
     return (
       <div
-        className={`rounded-xl border border-white/10 bg-zinc-950 p-6 ${className}`}
+        className={`rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 p-6 ${className}`}
       >
         <div className="mb-4 flex items-center justify-between">
-          <div className="h-4 w-48 animate-pulse rounded bg-white/5" />
-          <div className="h-6 w-20 animate-pulse rounded-full bg-white/5" />
+          <div className="h-4 w-48 animate-pulse rounded bg-white dark:bg-white/5" />
+          <div className="h-6 w-20 animate-pulse rounded-full bg-white dark:bg-white/5" />
         </div>
-        <div className="mb-4 h-3 w-56 animate-pulse rounded bg-white/5" />
-        <div className="h-2 w-full animate-pulse rounded-full bg-white/5" />
+        <div className="mb-4 h-3 w-56 animate-pulse rounded bg-white dark:bg-white/5" />
+        <div className="h-2 w-full animate-pulse rounded-full bg-white dark:bg-white/5" />
       </div>
     )
   }
@@ -136,7 +136,7 @@ export function SemestreEnCours({
     if (variant === 'badge') {
       return (
         <span
-          className={`inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-500 ${className}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-xs text-zinc-500 ${className}`}
         >
           <CalendarOff size={12} />
           Aucun semestre actif
@@ -146,7 +146,7 @@ export function SemestreEnCours({
     if (variant === 'compact') {
       return (
         <div
-          className={`flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-zinc-500 ${className}`}
+          className={`flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 px-4 py-3 text-sm text-zinc-500 ${className}`}
         >
           <CalendarOff size={16} className="text-zinc-600" />
           Aucun semestre actif
@@ -155,7 +155,7 @@ export function SemestreEnCours({
     }
     return (
       <div
-        className={`flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-950 px-6 py-5 text-sm text-zinc-500 ${className}`}
+        className={`flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 px-6 py-5 text-sm text-zinc-500 ${className}`}
       >
         <CalendarOff size={18} className="text-zinc-600" />
         Aucun semestre actif pour le moment.
@@ -181,13 +181,13 @@ export function SemestreEnCours({
   if (variant === 'compact') {
     return (
       <div
-        className={`flex items-center gap-3 rounded-xl border bg-zinc-950 px-4 py-3 ${c.border} ${className}`}
+        className={`flex items-center gap-3 rounded-xl border bg-white dark:bg-zinc-950 px-4 py-3 ${c.border} ${className}`}
       >
         <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bg}`}>
           <CalendarDays size={16} className={c.text} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-white">{semestre.nom}</p>
+          <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">{semestre.nom}</p>
           <p className="text-xs text-zinc-500">
             {formatDate(semestre.dateDebut, true)} – {formatDate(semestre.dateFin, true)}
           </p>
@@ -200,7 +200,7 @@ export function SemestreEnCours({
   // ─── Full ─────────────────────────────────────────────────────────────────────
   return (
     <div
-      className={`rounded-xl border bg-zinc-950 p-6 ${c.border} ${className}`}
+      className={`rounded-xl border bg-white dark:bg-zinc-950 p-6 ${c.border} ${className}`}
     >
       <div className="mb-1 flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
@@ -208,7 +208,7 @@ export function SemestreEnCours({
             <CalendarDays size={18} className={c.text} />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white">{semestre.nom}</h3>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white">{semestre.nom}</h3>
             <p className="text-xs text-zinc-500">
               Année académique {semestre.anneeAcademique}
             </p>
@@ -222,14 +222,14 @@ export function SemestreEnCours({
         </span>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-xs text-zinc-400">
+      <div className="mt-4 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
         <span>Début : {formatDate(semestre.dateDebut)}</span>
         <span>Fin : {formatDate(semestre.dateFin)}</span>
       </div>
 
       {/* Barre de progression temporelle */}
       <div className="mt-2">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-white dark:bg-white/5">
           <div
             className={`h-full rounded-full transition-all ${c.bar}`}
             style={{ width: `${progress}%` }}

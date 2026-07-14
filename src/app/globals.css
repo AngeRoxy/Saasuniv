@@ -129,114 +129,105 @@
   }
 }
 
-/* ── Hero shader animations ── */
-@keyframes fade-in-down {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes gradient-shift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
+/* ── Animations maison ──
+   NB : ce sont des classes CSS écrites à la main, PAS des utilities Tailwind.
+   Les variants Tailwind (motion-safe:, motion-reduce:, hover:…) ne s'y
+   appliquent donc pas — leur neutralisation passe par le bloc
+   prefers-reduced-motion plus bas. */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-10px); }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(251,146,60,0.3); }
-  50%       { box-shadow: 0 0 40px rgba(251,146,60,0.6); }
+  0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(59,130,246,0.6); }
 }
 
-/* ── Spotlight animation ── */
-@keyframes spotlight {
-  0%   { opacity: 0; transform: translate(-72%, -62%) scale(0.5); }
-  100% { opacity: 1; transform: translate(-50%, -40%) scale(1); }
-}
-
-.animate-spotlight {
-  animation: spotlight 2s ease 0.75s 1 forwards;
-}
-
-.animate-fade-in-down {
-  animation: fade-in-down 0.8s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-  opacity: 0;
-}
-
+/* Badge flottant du Hero */
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
+/* Carte de tarif mise en avant */
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient-shift 3s ease infinite;
+/* Or de notation : les étoiles d'avis sont un code universel, PAS une couleur
+   d'accent de marque. On leur donne un token dédié, hors des échelles
+   orange/amber/yellow remappées en bleu ci-dessous (valeur = yellow-400 d'origine). */
+@theme {
+  --color-gold-400: #facc15;
 }
 
-/* ── Blue theme — html.theme-blue > :root garantit la cascade ── */
-/* orange → blue-500 family */
-html.theme-blue {
-  --color-orange-50:  oklch(0.970 0.013 254);
-  --color-orange-100: oklch(0.932 0.032 255);
-  --color-orange-200: oklch(0.882 0.059 254);
-  --color-orange-300: oklch(0.809 0.105 250);
-  --color-orange-400: oklch(0.707 0.165 259);
-  --color-orange-500: oklch(0.623 0.214 259);
-  --color-orange-600: oklch(0.546 0.245 263);
-  --color-orange-700: oklch(0.464 0.218 260);
-  --color-orange-800: oklch(0.379 0.146 265);
-  --color-orange-900: oklch(0.282 0.091 268);
-  --color-orange-950: oklch(0.200 0.072 265);
+/* ── Accent BLEU permanent ─────────────────────────────────────────────────
+   Le bleu est désormais LA couleur d'accent unique. On remappe les échelles
+   Tailwind orange / amber / yellow vers du bleu au niveau des variables de
+   palette : toute classe `*-orange-*`, `*-amber-*`, `*-yellow-*` rend bleu,
+   partout, sans toucher au JSX. (red / green conservés pour les alertes.)
+   Valeurs pensées pour le MODE CLAIR : les pas moyens (400/500) restent assez
+   foncés pour rester lisibles sur fond blanc. Le `.dark` plus bas les éclaircit
+   pour le contraste sur fond noir. */
+:root {
+  /* orange → bleu (orange-500 ≈ blue-600, lisible sur blanc) */
+  --color-orange-50:  #eff6ff;
+  --color-orange-100: #dbeafe;
+  --color-orange-200: #bfdbfe;
+  --color-orange-300: #93c5fd;
+  --color-orange-400: #3b82f6; /* blue-500 */
+  --color-orange-500: #2563eb; /* blue-600 */
+  --color-orange-600: #1d4ed8; /* blue-700 */
+  --color-orange-700: #1e40af; /* blue-800 */
+  --color-orange-800: #1e3a8a; /* blue-900 */
+  --color-orange-900: #172554; /* blue-950 */
+  --color-orange-950: #0f1836;
 
-  /* amber → indigo family */
-  --color-amber-50:  oklch(0.970 0.016 277);
-  --color-amber-100: oklch(0.930 0.036 277);
-  --color-amber-200: oklch(0.870 0.070 277);
-  --color-amber-300: oklch(0.740 0.130 277);
-  --color-amber-400: oklch(0.661 0.182 277);
-  --color-amber-500: oklch(0.585 0.233 277);
-  --color-amber-600: oklch(0.511 0.237 281);
-  --color-amber-700: oklch(0.432 0.200 282);
-  --color-amber-800: oklch(0.355 0.146 284);
-  --color-amber-900: oklch(0.285 0.098 284);
-  --color-amber-950: oklch(0.195 0.065 285);
+  /* amber → bleu (amber-500 = blue-500) */
+  --color-amber-50:  #eff6ff;
+  --color-amber-100: #dbeafe;
+  --color-amber-200: #bfdbfe;
+  --color-amber-300: #93c5fd;
+  --color-amber-400: #60a5fa; /* blue-400 */
+  --color-amber-500: #3b82f6; /* blue-500 */
+  --color-amber-600: #2563eb; /* blue-600 */
+  --color-amber-700: #1d4ed8; /* blue-700 */
+  --color-amber-800: #1e40af; /* blue-800 */
+  --color-amber-900: #1e3a8a; /* blue-900 */
+  --color-amber-950: #172554; /* blue-950 */
 
-  /* yellow → violet family */
-  --color-yellow-50:  oklch(0.970 0.014 301);
-  --color-yellow-100: oklch(0.930 0.032 301);
-  --color-yellow-200: oklch(0.870 0.068 301);
-  --color-yellow-300: oklch(0.786 0.132 301);
-  --color-yellow-400: oklch(0.697 0.196 301);
-  --color-yellow-500: oklch(0.606 0.256 301);
-  --color-yellow-600: oklch(0.534 0.236 302);
-  --color-yellow-700: oklch(0.455 0.195 302);
-  --color-yellow-800: oklch(0.380 0.141 303);
-  --color-yellow-900: oklch(0.313 0.094 303);
-  --color-yellow-950: oklch(0.215 0.060 303);
-
-  /* red (alertes) → on garde pour la lisibilité */
+  /* yellow → bleu (même échelle que amber) */
+  --color-yellow-50:  #eff6ff;
+  --color-yellow-100: #dbeafe;
+  --color-yellow-200: #bfdbfe;
+  --color-yellow-300: #93c5fd;
+  --color-yellow-400: #60a5fa;
+  --color-yellow-500: #3b82f6;
+  --color-yellow-600: #2563eb;
+  --color-yellow-700: #1d4ed8;
+  --color-yellow-800: #1e40af;
+  --color-yellow-900: #1e3a8a;
+  --color-yellow-950: #172554;
 }
 
-/* Override animation glow */
-html.theme-blue .animate-pulse-glow {
-  animation-name: pulse-glow-blue;
+/* En MODE SOMBRE, l'accent est éclairci d'un cran (blue-500 plutôt que
+   blue-600) pour mieux ressortir sur fond noir. Ce bloc vient APRÈS `:root`
+   donc il l'emporte quand `.dark` est présent sur <html>. */
+.dark {
+  --color-orange-300: #93c5fd;
+  --color-orange-400: #60a5fa; /* blue-400 */
+  --color-orange-500: #3b82f6; /* blue-500 */
+  --color-orange-600: #2563eb; /* blue-600 */
 }
-@keyframes pulse-glow-blue {
-  0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.3); }
-  50%       { box-shadow: 0 0 40px rgba(59,130,246,0.6); }
+
+/* ── Accessibilité : prefers-reduced-motion ────────────────────────────────
+   Neutralise les animations CSS de la landing pour les utilisateurs qui ont
+   activé « réduire les animations ». (Framer Motion est géré via useReducedMotion
+   côté composant.) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-pulse-glow {
+    animation: none !important;
+  }
+  html { scroll-behavior: auto !important; }
 }

@@ -95,7 +95,7 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
   // Skeleton plein écran pendant la vérification.
   if (state === 'checking') {
     return (
-      <div className="fixed inset-0 z-100 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 z-100 bg-[#fafafa] dark:bg-black flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -104,13 +104,13 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
   if (state === 'required') {
     return (
       <div className="fixed inset-0 z-100 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl bg-zinc-950 border border-orange-500/20 shadow-2xl shadow-black/50 overflow-hidden">
-          <div className="px-7 pt-7 pb-5 text-center border-b border-orange-500/10">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-orange-500/20 shadow-2xl shadow-black/50 overflow-hidden">
+          <div className="px-7 pt-7 pb-5 text-center border-b border-zinc-200 dark:border-orange-500/10">
             <div className="mx-auto w-12 h-12 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center mb-4">
-              <ShieldCheck className="h-6 w-6 text-orange-400" />
+              <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-orange-400" />
             </div>
-            <h2 className="text-xl font-bold text-white">Bienvenue sur GestUniv !</h2>
-            <p className="text-sm text-orange-200/60 mt-2 leading-relaxed">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Bienvenue sur GestUniv !</h2>
+            <p className="text-sm text-zinc-600 dark:text-orange-200/60 mt-2 leading-relaxed">
               Pour sécuriser votre compte, vous devez changer votre mot de passe
               temporaire avant de continuer.
             </p>
@@ -118,19 +118,19 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
 
           <form onSubmit={handleSubmit} className="px-7 py-6 space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs text-orange-200/60 font-medium">Nouveau mot de passe</label>
+              <label className="text-xs text-zinc-600 dark:text-orange-200/60 font-medium">Nouveau mot de passe</label>
               <div className="relative">
                 <input
                   type={showNew ? 'text' : 'password'}
                   value={newPw}
                   onChange={(e) => setNewPw(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 pr-10 text-sm text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 transition-colors"
+                  className="w-full bg-[#fafafa] dark:bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 pr-10 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNew((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
                 >
                   {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -138,17 +138,17 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-orange-200/60 font-medium">Confirmer le mot de passe</label>
+              <label className="text-xs text-zinc-600 dark:text-orange-200/60 font-medium">Confirmer le mot de passe</label>
               <input
                 type={showNew ? 'text' : 'password'}
                 value={confirmPw}
                 onChange={(e) => setConfirmPw(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 transition-colors"
+                className="w-full bg-[#fafafa] dark:bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 transition-colors"
               />
             </div>
 
-            <p className="text-[11px] text-orange-200/40 leading-relaxed">
+            <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 leading-relaxed">
               Minimum 8 caractères, dont au moins une majuscule et un chiffre.
             </p>
 
@@ -161,7 +161,7 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold rounded-xl py-2.5 transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 transition-colors"
             >
               {submitting && (
                 <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -180,9 +180,9 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
     <>
       {children}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-110 flex items-center gap-2.5 bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-3 shadow-2xl">
-          <CheckCircle2 size={16} className="text-orange-400 shrink-0" />
-          <p className="text-orange-100 text-sm">{toast}</p>
+        <div className="fixed bottom-6 right-6 z-110 flex items-center gap-2.5 bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-3 shadow-2xl">
+          <CheckCircle2 size={16} className="text-blue-600 dark:text-orange-400 shrink-0" />
+          <p className="text-zinc-800 dark:text-orange-100 text-sm">{toast}</p>
         </div>
       )}
     </>

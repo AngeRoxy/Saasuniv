@@ -98,15 +98,15 @@ export default function ParentSchedulePage() {
       {/* Sélecteur d'enfant */}
       {children.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-orange-200/40 mr-1">Enfant :</span>
+          <span className="text-xs text-zinc-500 dark:text-orange-200/40 mr-1">Enfant :</span>
           {children.map((c) => (
             <button
               key={c.uid}
               onClick={() => setSelectedUid(c.uid)}
               className={`text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
                 c.uid === selectedUid
-                  ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                  : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'
+                  ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                  : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
               }`}
             >
               {c.displayName}
@@ -117,11 +117,11 @@ export default function ParentSchedulePage() {
 
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <CalendarClock size={22} className="text-orange-400" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <CalendarClock size={22} className="text-blue-600 dark:text-orange-400" />
             Emploi du temps
           </h1>
-          <p className="text-orange-200/40 text-sm mt-1">
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
             {selectedChild.displayName}
             {selectedChild.filiere && ` · ${selectedChild.filiere}`}
             {selectedChild.niveau && ` · ${selectedChild.niveau}`}
@@ -131,7 +131,7 @@ export default function ParentSchedulePage() {
           <select
             value={semestreId}
             onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-400/60"
+            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
           >
             {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
@@ -139,32 +139,32 @@ export default function ParentSchedulePage() {
       </div>
 
       {!childFiliereId || !selectedChild.niveau ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
           La filière ou le niveau de votre enfant n’est pas encore renseigné. Contactez l’administration.
         </div>
       ) : total === 0 ? (
-        <div className="text-center py-16 text-orange-200/30 text-sm">
+        <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
           Aucun cours programmé pour ce semestre.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {byDay.map(({ jour, items }) => (
-            <div key={jour} className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
-              <div className="px-3 py-2.5 border-b border-orange-500/10 bg-black/30">
-                <p className="text-xs font-semibold text-orange-300/80 uppercase tracking-wider">{JOUR_LABEL[jour]}</p>
+            <div key={jour} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+              <div className="px-3 py-2.5 border-b border-zinc-200 dark:border-orange-500/10 bg-zinc-50 dark:bg-black/30">
+                <p className="text-xs font-semibold text-blue-700 dark:text-orange-300/80 uppercase tracking-wider">{JOUR_LABEL[jour]}</p>
               </div>
               <div className="p-2 space-y-2 min-h-16">
                 {items.length === 0 ? (
-                  <p className="text-center text-orange-200/20 text-xs py-4">—</p>
+                  <p className="text-center text-zinc-500 dark:text-orange-200/20 text-xs py-4">—</p>
                 ) : (
                   items.map((c) => (
                     <div key={c.id} className="rounded-lg bg-orange-500/5 border border-orange-500/15 p-2.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-orange-400">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 dark:text-orange-400">
                         <Clock size={10} /> {c.heureDebut}–{c.heureFin}
                       </span>
-                      <p className="text-sm font-medium text-white mt-1 leading-snug">{c.matiere}</p>
-                      {c.salle && <p className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
-                      {c.enseignant && <p className="text-[11px] text-zinc-400 flex items-center gap-1"><User size={9} /> {c.enseignant}</p>}
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1 leading-snug">{c.matiere}</p>
+                      {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
+                      {c.enseignant && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><User size={9} /> {c.enseignant}</p>}
                     </div>
                   ))
                 )}

@@ -99,14 +99,14 @@ function FieldInput({
 }) {
   return (
     <div>
-      <label className="block text-xs text-zinc-400 mb-1.5">{label}</label>
+      <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">{label}</label>
       <input
         required={required}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-black border border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors"
+        className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors"
       />
     </div>
   )
@@ -131,17 +131,17 @@ function FieldSelect({
 }) {
   return (
     <div>
-      <label className="block text-xs text-zinc-400 mb-1.5">{label}</label>
+      <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">{label}</label>
       <select
         required={required}
         disabled={disabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-black border border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <option value="" disabled className="bg-zinc-900">{placeholder ?? 'Choisir…'}</option>
+        <option value="" disabled className="bg-white dark:bg-zinc-900">{placeholder ?? 'Choisir…'}</option>
         {options.map((o) => (
-          <option key={o} value={o} className="bg-zinc-900">{o}</option>
+          <option key={o} value={o} className="bg-white dark:bg-zinc-900">{o}</option>
         ))}
       </select>
     </div>
@@ -185,15 +185,15 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+      <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
             {mode === 'add' ? 'Ajouter un étudiant' : 'Modifier l\'étudiant'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
           >
             <X size={18} />
           </button>
@@ -215,10 +215,10 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
           {/* Filière / Niveau — chargés dynamiquement depuis Firebase */}
           {filieres.length === 0 ? (
             <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-              <AlertTriangle size={15} className="text-orange-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-orange-200/70 leading-relaxed">
+              <AlertTriangle size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
                 Aucune filière disponible — créez d&apos;abord vos filières dans{' '}
-                <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">
+                <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">
                   Filières &amp; Matières
                 </Link>
                 .
@@ -240,10 +240,10 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
               </div>
               {form.filiere && niveauOptions.length === 0 && (
                 <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-                  <AlertTriangle size={15} className="text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-200/70 leading-relaxed">
+                  <AlertTriangle size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
                     La filière «&nbsp;{form.filiere}&nbsp;» n&apos;a aucun niveau défini. Ajoutez-en un dans{' '}
-                    <Link href="/dashboard/admin/filieres" className="text-orange-400 underline hover:text-orange-300">
+                    <Link href="/dashboard/admin/filieres" className="text-blue-600 dark:text-orange-400 underline hover:text-blue-900 dark:hover:text-orange-300">
                       Filières &amp; Matières
                     </Link>{' '}
                     pour pouvoir inscrire un étudiant.
@@ -256,31 +256,31 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
           {/* Lier à un parent (optionnel) — création uniquement */}
           {mode === 'add' && (
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Lier à un parent (optionnel)</label>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Lier à un parent (optionnel)</label>
               <select
                 value={form.parentUid ?? ''}
                 onChange={(e) => set('parentUid')(e.target.value)}
-                className="w-full bg-black border border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none transition-colors appearance-none"
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none"
               >
-                <option value="" className="bg-zinc-900">Aucun parent lié</option>
+                <option value="" className="bg-white dark:bg-zinc-900">Aucun parent lié</option>
                 {parents.map((p) => (
-                  <option key={p.uid} value={p.uid} className="bg-zinc-900">{p.displayName}</option>
+                  <option key={p.uid} value={p.uid} className="bg-white dark:bg-zinc-900">{p.displayName}</option>
                 ))}
               </select>
             </div>
           )}
 
           {/* Matricule preview */}
-          <div className="bg-black border border-zinc-800 rounded-xl px-4 py-3">
+          <div className="bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3">
             <p className="text-xs text-zinc-500">Numéro matricule</p>
-            <p className="text-sm font-mono text-orange-400 mt-0.5">{matriculePreview}</p>
+            <p className="text-sm font-mono text-blue-600 dark:text-orange-400 mt-0.5">{matriculePreview}</p>
           </div>
 
           {/* Indicateur envoi email — création uniquement */}
           {mode === 'add' && (
             <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
-              <Mail size={15} className="text-orange-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-orange-200/70 leading-relaxed">
+              <Mail size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
                 Un email contenant les identifiants de connexion sera envoyé
                 automatiquement à l&apos;étudiant. Il devra changer son mot de
                 passe à la première connexion.
@@ -294,14 +294,14 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
               {mode === 'add' ? (submitting ? 'Création…' : 'Créer le compte') : 'Enregistrer'}
@@ -318,16 +318,16 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
 function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: Student; deleting: boolean; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+      <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
         <div className="flex items-start gap-4 mb-6">
           <div className="p-2 bg-red-500/10 rounded-xl shrink-0">
             <AlertTriangle size={20} className="text-red-400" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white mb-1">Supprimer l&apos;étudiant</h2>
-            <p className="text-sm text-zinc-400">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-1">Supprimer l&apos;étudiant</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Voulez-vous vraiment supprimer{' '}
-              <span className="text-white font-medium">{student.prenom} {student.nom}</span>{' '}
+              <span className="text-zinc-900 dark:text-white font-medium">{student.prenom} {student.nom}</span>{' '}
               ({student.matricule}) ? Cette action est irréversible.
             </p>
           </div>
@@ -336,7 +336,7 @@ function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: St
           <button
             onClick={onCancel}
             disabled={deleting}
-            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
           >
             Annuler
           </button>
@@ -345,7 +345,7 @@ function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: St
             disabled={deleting}
             className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {deleting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {deleting && <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />}
             {deleting ? 'Suppression…' : 'Supprimer'}
           </button>
         </div>
@@ -376,13 +376,13 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-white/10 rounded-2xl p-7 w-full max-w-lg shadow-2xl">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-lg shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-bold text-white">Parcours académique</h2>
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Parcours académique</h2>
             <p className="text-zinc-500 text-xs mt-0.5">{student.prenom} {student.nom}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -399,19 +399,19 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
         ) : (
           <ol className="space-y-3">
             {list.map((p) => (
-              <li key={p.id} className="flex items-start gap-3 rounded-xl border border-white/5 bg-black/30 px-4 py-3">
+              <li key={p.id} className="flex items-start gap-3 rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-black/30 px-4 py-3">
                 <span className="w-2 h-2 rounded-full bg-orange-400 mt-1.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-white text-sm font-medium">{p.anneeAcademique}</p>
+                    <p className="text-zinc-900 dark:text-white text-sm font-medium">{p.anneeAcademique}</p>
                     <span className={`text-[11px] font-medium border rounded-md px-2 py-0.5 ${STATUT_PARCOURS_STYLES[p.statut]}`}>
                       {STATUT_PARCOURS_LABELS[p.statut]}
                     </span>
                   </div>
-                  <p className="text-zinc-400 text-xs mt-1">
-                    Niveau <span className="text-zinc-200">{p.niveau || '—'}</span>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1">
+                    Niveau <span className="text-zinc-800 dark:text-zinc-200">{p.niveau || '—'}</span>
                     {typeof p.moyenneGenerale === 'number' && (
-                      <> · Moyenne <span className="text-zinc-200">{p.moyenneGenerale.toFixed(2)}/20</span></>
+                      <> · Moyenne <span className="text-zinc-800 dark:text-zinc-200">{p.moyenneGenerale.toFixed(2)}/20</span></>
                     )}
                   </p>
                   {p.clotureParNom && (
@@ -744,7 +744,7 @@ export default function StudentsPage() {
             placeholder="Rechercher par nom, email, filière…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full bg-black border border-zinc-800 focus:border-orange-500/50 rounded-xl pl-9 pr-4 py-2.5 text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors"
+            className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/50 rounded-xl pl-9 pr-4 py-2.5 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors"
           />
         </div>
 
@@ -752,18 +752,18 @@ export default function StudentsPage() {
         <select
           value={filiereFilter}
           onChange={(e) => handleFiliereChange(e.target.value)}
-          className="bg-black border border-zinc-800 focus:border-orange-500/50 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none transition-colors appearance-none min-w-50"
+          className="bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/50 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none min-w-50"
         >
-          <option value="" className="bg-zinc-900">Toutes les filières</option>
+          <option value="" className="bg-white dark:bg-zinc-900">Toutes les filières</option>
           {filieres.map((f) => (
-            <option key={f.id} value={f.nom} className="bg-zinc-900">{f.nom}</option>
+            <option key={f.id} value={f.nom} className="bg-white dark:bg-zinc-900">{f.nom}</option>
           ))}
         </select>
 
         {/* Add button */}
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors whitespace-nowrap shrink-0"
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors whitespace-nowrap shrink-0"
         >
           <UserPlus size={15} />
           Ajouter un étudiant
@@ -773,21 +773,21 @@ export default function StudentsPage() {
       {/* Stats bar */}
       <p className="text-xs text-zinc-500">
         {filtered.length} étudiant{filtered.length !== 1 ? 's' : ''} trouvé{filtered.length !== 1 ? 's' : ''}
-        {filiereFilter && <span> · filière <span className="text-orange-400">{filiereFilter}</span></span>}
+        {filiereFilter && <span> · filière <span className="text-blue-600 dark:text-orange-400">{filiereFilter}</span></span>}
       </p>
 
       {/* Table */}
-      <div className="bg-zinc-950 border border-orange-500/10 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-black/60 border-b border-zinc-800">
-                <th className="text-left text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Matricule</th>
-                <th className="text-left text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Nom complet</th>
-                <th className="text-left text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Filière</th>
-                <th className="text-left text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Niveau</th>
-                <th className="text-left text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Statut</th>
-                <th className="text-right text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Actions</th>
+              <tr className="bg-zinc-100 dark:bg-black/60 border-b border-zinc-200 dark:border-zinc-800">
+                <th className="text-left text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Matricule</th>
+                <th className="text-left text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Nom complet</th>
+                <th className="text-left text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Filière</th>
+                <th className="text-left text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Niveau</th>
+                <th className="text-left text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Statut</th>
+                <th className="text-right text-blue-700 dark:text-orange-300/50 text-xs uppercase tracking-wider px-5 py-3.5 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-900">
@@ -801,12 +801,12 @@ export default function StudentsPage() {
               {paginated.map((student) => (
                 <tr key={student.uid ?? student.fbKey ?? student.matricule} className="hover:bg-white/2 transition-colors">
                   {/* Matricule */}
-                  <td className="px-5 py-4 text-orange-400 text-xs font-mono whitespace-nowrap">{student.matricule}</td>
+                  <td className="px-5 py-4 text-blue-600 dark:text-orange-400 text-xs font-mono whitespace-nowrap">{student.matricule}</td>
 
                   {/* Nom complet + email */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <p className="text-white text-sm font-medium leading-none">{student.prenom} {student.nom}</p>
+                      <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{student.prenom} {student.nom}</p>
                       {student.uid && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium">
                           <Wifi size={9} />
@@ -815,7 +815,7 @@ export default function StudentsPage() {
                       )}
                       {student.uid && redoublants[student.uid] > 0 && (
                         <span
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-medium"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-blue-700 dark:text-amber-300 text-[10px] font-medium"
                           title="Situation de redoublement"
                         >
                           <RotateCcw size={9} />
@@ -827,11 +827,11 @@ export default function StudentsPage() {
                   </td>
 
                   {/* Filière */}
-                  <td className="px-5 py-4 text-zinc-300 text-sm whitespace-nowrap">{student.filiere}</td>
+                  <td className="px-5 py-4 text-zinc-700 dark:text-zinc-300 text-sm whitespace-nowrap">{student.filiere}</td>
 
                   {/* Niveau */}
                   <td className="px-5 py-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-mono">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-mono">
                       {student.niveau}
                     </span>
                   </td>
@@ -842,8 +842,8 @@ export default function StudentsPage() {
                       onClick={() => handleToggleStatus(student.matricule)}
                       className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                         student.statut === 'Actif'
-                          ? 'bg-orange-500/15 text-orange-400 border-orange-500/25 hover:bg-orange-500/25'
-                          : 'bg-zinc-800/60 text-zinc-400 border-zinc-700 hover:bg-zinc-700/60'
+                          ? 'bg-orange-500/15 text-blue-600 dark:text-orange-400 border-orange-500/25 hover:bg-orange-500/25'
+                          : 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-700/60'
                       }`}
                       title="Cliquer pour changer le statut"
                     >
@@ -857,7 +857,7 @@ export default function StudentsPage() {
                       {student.uid && (
                         <button
                           onClick={() => setParcoursTarget(student)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                           title="Parcours académique"
                         >
                           <History size={14} />
@@ -866,7 +866,7 @@ export default function StudentsPage() {
                       {student.uid && (
                         <button
                           onClick={() => setEmailTarget(student)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                           title="Corriger l'email"
                         >
                           <Mail size={14} />
@@ -874,7 +874,7 @@ export default function StudentsPage() {
                       )}
                       <button
                         onClick={() => openEdit(student)}
-                        className="p-1.5 rounded-lg text-zinc-500 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                         title="Modifier"
                       >
                         <Pencil size={14} />
@@ -896,7 +896,7 @@ export default function StudentsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-t border-zinc-900 bg-black/30">
+          <div className="flex items-center justify-between px-5 py-3.5 border-t border-zinc-200 dark:border-zinc-900 bg-zinc-50 dark:bg-black/30">
             <p className="text-xs text-zinc-500">
               Page {safePage} sur {totalPages} · {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
             </p>
@@ -904,7 +904,7 @@ export default function StudentsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={safePage === 1}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={15} />
               </button>
@@ -914,8 +914,8 @@ export default function StudentsPage() {
                   onClick={() => setPage(n)}
                   className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
                     n === safePage
-                      ? 'bg-orange-500 text-black'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/10'
+                      ? 'bg-orange-500 text-white'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10'
                   }`}
                 >
                   {n}
@@ -924,7 +924,7 @@ export default function StudentsPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safePage === totalPages}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={15} />
               </button>
@@ -947,10 +947,10 @@ export default function StudentsPage() {
             onClose={closeModal}
           />
           {createError && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-white dark:bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
               <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
               <p className="text-red-300 text-sm flex-1">{createError}</p>
-              <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-white transition-colors">
+              <button onClick={() => setCreateError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <X size={14} />
               </button>
             </div>
@@ -960,10 +960,10 @@ export default function StudentsPage() {
 
       {/* Toast succès création */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-60 max-w-sm flex items-start gap-3 bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
-          <CheckCircle2 size={16} className="text-orange-400 shrink-0 mt-0.5" />
-          <p className="text-orange-100 text-sm flex-1">{toast}</p>
-          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-white transition-colors">
+        <div className="fixed bottom-6 right-6 z-60 max-w-sm flex items-start gap-3 bg-white dark:bg-zinc-900 border border-orange-500/25 rounded-xl px-4 py-3 shadow-2xl">
+          <CheckCircle2 size={16} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-zinc-800 dark:text-orange-100 text-sm flex-1">{toast}</p>
+          <button onClick={() => setToast(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -1014,10 +1014,10 @@ export default function StudentsPage() {
 
       {/* Limit toast */}
       {limitError && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm flex items-start gap-3 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm flex items-start gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-2xl">
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-300 text-sm flex-1">{limitError}</p>
-          <button onClick={() => setLimitError(null)} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={() => setLimitError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -1025,10 +1025,10 @@ export default function StudentsPage() {
 
       {/* Erreur d'action (suppression / changement de statut) */}
       {actionError && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 max-w-md flex items-start gap-3 bg-white dark:bg-zinc-900 border border-red-500/30 rounded-xl px-4 py-3 shadow-2xl">
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-300 text-sm flex-1">{actionError}</p>
-          <button onClick={() => setActionError(null)} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={() => setActionError(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
             <X size={14} />
           </button>
         </div>

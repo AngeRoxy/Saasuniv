@@ -68,10 +68,10 @@ export function FilterBar({
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-zinc-950 px-3 py-2.5 ${className}`}
+      className={`flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 px-3 py-2.5 ${className}`}
     >
       <div className="flex items-center gap-1.5 pr-1 text-xs font-medium text-zinc-500">
-        <SlidersHorizontal size={14} className="text-orange-400/70" />
+        <SlidersHorizontal size={14} className="text-blue-600 dark:text-orange-400/70" />
         <span className="hidden sm:inline">Filtres</span>
       </div>
 
@@ -87,7 +87,7 @@ export function FilterBar({
             className={`group relative flex items-center rounded-lg border transition-colors ${
               active
                 ? 'border-orange-500/40 bg-orange-500/20'
-                : 'border-white/10 bg-white/5 hover:border-white/20'
+                : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-white/20'
             }`}
           >
             <select
@@ -95,14 +95,14 @@ export function FilterBar({
               value={value}
               onChange={(e) => onFilterChange(c.key, e.target.value)}
               className={`cursor-pointer appearance-none rounded-lg bg-transparent py-1.5 pl-3 text-sm focus:outline-none ${
-                active ? 'pr-7 text-orange-300' : 'pr-3 text-zinc-300'
+                active ? 'pr-7 text-blue-700 dark:text-orange-300' : 'pr-3 text-zinc-700 dark:text-zinc-300'
               }`}
             >
-              <option value={fallback} className="bg-zinc-900 text-zinc-300">
+              <option value={fallback} className="bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
                 {c.placeholder}
               </option>
               {opts.map((o) => (
-                <option key={o.value} value={o.value} className="bg-zinc-900 text-zinc-200">
+                <option key={o.value} value={o.value} className="bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
                   {o.label}
                 </option>
               ))}
@@ -113,7 +113,7 @@ export function FilterBar({
                 type="button"
                 onClick={() => onFilterChange(c.key, fallback)}
                 aria-label={`Réinitialiser ${c.label}`}
-                className="absolute right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-orange-300/80 hover:bg-orange-500/30 hover:text-orange-200"
+                className="absolute right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-blue-700 dark:text-orange-300/80 hover:bg-orange-500/30 hover:text-zinc-900 dark:hover:text-orange-200"
               >
                 <X size={11} />
               </button>
@@ -126,11 +126,11 @@ export function FilterBar({
         <button
           type="button"
           onClick={resetAll}
-          className="ml-auto flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-orange-500/30 hover:text-orange-300"
+          className="ml-auto flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 px-2.5 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:border-orange-500/30 hover:text-blue-900 dark:hover:text-orange-300"
         >
           <RotateCcw size={12} />
           Réinitialiser
-          <span className="rounded-full bg-orange-500/20 px-1.5 text-orange-300">{count}</span>
+          <span className="rounded-full bg-orange-500/20 px-1.5 text-blue-700 dark:text-orange-300">{count}</span>
         </button>
       )}
     </div>

@@ -26,7 +26,7 @@ export const STATUT_LABELS: Record<StatutSemestre, string> = {
 }
 
 export const STATUT_STYLES: Record<StatutSemestre, string> = {
-  en_cours: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
-  termine: 'bg-zinc-700/30 border-white/10 text-zinc-400',
-  a_venir: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
+  en_cours: 'bg-orange-500/15 border-orange-500/30 text-blue-600 dark:text-orange-400',
+  termine: 'bg-zinc-700/30 border-white/10 text-zinc-600 dark:text-zinc-400',
+  a_venir: 'bg-blue-500/15 border-blue-500/30 text-blue-600 dark:text-blue-400',
 }

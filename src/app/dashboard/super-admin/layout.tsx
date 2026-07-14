@@ -34,22 +34,22 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#fafafa] dark:bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-orange-300/60 text-sm">Chargement…</p>
+          <p className="text-blue-700 dark:text-orange-300/60 text-sm">Chargement…</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-black text-white">
-      <aside className="fixed top-0 left-0 h-screen w-64 bg-zinc-950 border-r border-orange-500/10 flex flex-col z-40">
-        <div className="px-6 py-6 border-b border-orange-500/10">
+    <div className="flex min-h-screen bg-[#fafafa] dark:bg-black text-zinc-900 dark:text-white">
+      <aside className="fixed top-0 left-0 h-screen w-64 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-orange-500/10 flex flex-col z-40">
+        <div className="px-6 py-6 border-b border-zinc-200 dark:border-orange-500/10">
           <span className="text-xl font-bold tracking-tight">
             <span className="text-orange-500">Gest</span>
-            <span className="text-white">Univ</span>
+            <span className="text-zinc-900 dark:text-white">Univ</span>
           </span>
           <div className="mt-2">
             <span className="text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30 rounded-full px-2.5 py-1">
@@ -67,21 +67,21 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 href={href}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-orange-500/15 text-orange-400 border border-orange-500/20'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-orange-500/15 text-blue-600 dark:text-orange-400 border border-orange-500/20'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
-                <Icon size={18} className={isActive ? 'text-orange-400' : 'text-zinc-500'} />
+                <Icon size={18} className={isActive ? 'text-blue-600 dark:text-orange-400' : 'text-zinc-500'} />
                 {label}
               </Link>
             )
           })}
         </nav>
 
-        <div className="px-4 py-4 border-t border-orange-500/10">
+        <div className="px-4 py-4 border-t border-zinc-200 dark:border-orange-500/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <LogOut size={18} />
             Déconnexion
@@ -90,7 +90,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       </aside>
 
       <div className="ml-64 flex-1 flex flex-col min-h-screen">
-        <main className="flex-1 p-8 bg-black">{children}</main>
+        <main className="flex-1 p-8 bg-[#fafafa] dark:bg-black">{children}</main>
       </div>
     </div>
   )

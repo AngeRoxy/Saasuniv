@@ -16,17 +16,17 @@ export default function TeacherDashboard() {
   return (
     <div className="space-y-8">
       {/* Welcome — données réelles */}
-      <div className="rounded-xl bg-orange-950/30 border border-orange-500/10 p-6">
-        <p className="text-xs uppercase tracking-widest text-orange-300/40 mb-1">Tableau de bord</p>
-        <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
-        <p className="text-sm text-orange-200/50">Enseignant — {universityId ?? '—'}</p>
+      <div className="rounded-xl bg-orange-950/30 border border-zinc-200 dark:border-orange-500/10 p-6">
+        <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-orange-300/40 mb-1">Tableau de bord</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1">{displayName}</h1>
+        <p className="text-sm text-zinc-600 dark:text-orange-200/50">Enseignant — {universityId ?? '—'}</p>
       </div>
 
       {/* Semestre en cours — données réelles */}
       {universityId && <SemestreEnCours universityId={universityId} variant="compact" />}
 
       {/* Modules pas encore connectés */}
-      <div className="rounded-xl bg-zinc-950 border border-orange-500/10">
+      <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10">
         <ComingSoon
           icon={Users}
           title="Classes, notes et ressources"

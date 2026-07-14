@@ -43,11 +43,11 @@ export default function TeacherExamensPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <ClipboardList size={22} className="text-orange-400" />
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+          <ClipboardList size={22} className="text-blue-600 dark:text-orange-400" />
           Mes examens
         </h1>
-        <p className="text-orange-200/40 text-sm mt-1">
+        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
           Les épreuves à venir où vous êtes responsable ou surveillant.
         </p>
       </div>
