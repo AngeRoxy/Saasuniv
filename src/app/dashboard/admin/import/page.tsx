@@ -5,6 +5,7 @@ import { Upload, Download, FileSpreadsheet, CheckCircle, AlertTriangle, X } from
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMembers } from '@/lib/db'
 import { createMemberViaApi } from '@/lib/members-client'
+import { PlanGate } from '@/components/ui/plan-gate'
 
 type Tab = 'etudiants' | 'enseignants'
 
@@ -151,9 +152,22 @@ export default function ImportPage() {
     return <div className="flex items-center justify-center h-64 text-blue-700 dark:text-orange-300/60 text-sm">Accès réservé aux administrateurs.</div>
   }
 
+  if (!universityId) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   const successCount = results?.filter((r) => r.ok).length ?? 0
 
   return (
+    // L'import est un feature flag de plan (importCSV) : le gate rend la règle
+    // applicable même si la grille tarifaire évolue. Aujourd'hui importCSV est
+    // à true sur les trois plans (cf. src/lib/plans.ts), le gate laisse donc
+    // passer — le jour où l'import devient payant, un seul booléen suffit.
+    <PlanGate feature="importCSV" universityId={universityId}>
     <div className="space-y-6 max-w-4xl">
       <p className="text-zinc-600 dark:text-orange-200/50 text-sm">
         Importez des comptes en masse depuis un fichier CSV. Chaque membre reçoit ses identifiants par email
@@ -265,5 +279,6 @@ export default function ImportPage() {
         </div>
       )}
     </div>
+    </PlanGate>
   )
 }
