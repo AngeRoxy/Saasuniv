@@ -2,10 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Save, Shield, Globe, ChevronRight, X } from 'lucide-react'
+import { Save, Shield, Globe, ChevronRight, X, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
-import { getFilieres, getUniversity, updateUniversity } from '@/lib/db'
+import {
+  getFilieres,
+  getUniversity,
+  updateUniversity,
+  getFraisScolarite,
+  setFraisScolarite,
+  getCalendrierAcademique,
+  setCalendrierAcademique,
+  getSousDomaine,
+  setSousDomaine,
+  CALENDRIER_VIDE,
+  type CalendrierAcademique,
+} from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
 import { PlanBadge } from '@/components/ui/plan-badge'
 import { PlanGate } from '@/components/ui/plan-gate'
@@ -32,15 +44,18 @@ export default function SettingsPage() {
   const { profile } = useAuth()
   const universityId = profile?.universityId ?? ''
   const { plan } = usePlan(universityId)
-  const [sousDomaine, setSousDomaine] = useState('')
+  const [sousDomaine, setSousDomaineInput] = useState('')
+  const [savingSousDomaine, setSavingSousDomaine] = useState(false)
   const [info, setInfo] = useState({ nom: '', pays: '', type: 'Publique', slug: '', annee: '' })
   const [savingInfo, setSavingInfo] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [frais, setFrais] = useState<{ filiereId: string; filiere: string; montant: number }[]>([])
-  const [calendrier, setCalendrier] = useState({ rentree: '2024-10-07', examsS1: '2025-01-20', vacances: '2025-02-10', examsS2: '2025-06-09', cloture: '2025-07-31' })
-  const [confirmText, setConfirmText] = useState('')
-  const [showDanger, setShowDanger] = useState(false)
+  const [savingFrais, setSavingFrais] = useState(false)
+  // Aucune date par défaut inventée : les champs restent vides tant que
+  // l'université n'a rien configuré.
+  const [calendrier, setCalendrier] = useState<CalendrierAcademique>({ ...CALENDRIER_VIDE })
+  const [savingCalendrier, setSavingCalendrier] = useState(false)
 
   // Informations générales : chargées depuis la vraie université du tenant
   // (universities/{universityId}). Plus aucune valeur codée en dur — les champs
@@ -64,15 +79,54 @@ export default function SettingsPage() {
   }, [universityId])
 
   // Filières chargées depuis Firebase (gérées dans Filières & Matières).
-  // Les frais de scolarité s'alignent sur ces filières réelles.
+  // Les frais s'alignent sur ces filières réelles et sont pré-remplis avec les
+  // montants déjà enregistrés (config/frais). Une filière sans montant connu
+  // reste à 0 — c'est une valeur non configurée, pas une valeur inventée.
   useEffect(() => {
     if (!universityId) return
-    getFilieres(universityId)
-      .then((list) => {
+    let active = true
+    ;(async () => {
+      try {
+        const [list, montants] = await Promise.all([
+          getFilieres(universityId),
+          getFraisScolarite(universityId),
+        ])
+        if (!active) return
         setFilieres(list)
-        setFrais(list.map((f) => ({ filiereId: f.id, filiere: f.nom, montant: 0 })))
-      })
-      .catch(() => { setFilieres([]); setFrais([]) })
+        setFrais(
+          list.map((f) => ({
+            filiereId: f.id,
+            filiere: f.nom,
+            montant: montants[f.id]?.montant ?? 0,
+          }))
+        )
+      } catch {
+        if (!active) return
+        setFilieres([])
+        setFrais([])
+      }
+    })()
+    return () => { active = false }
+  }, [universityId])
+
+  // Calendrier académique + sous-domaine (config/*).
+  useEffect(() => {
+    if (!universityId) return
+    let active = true
+    ;(async () => {
+      try {
+        const [cal, sd] = await Promise.all([
+          getCalendrierAcademique(universityId),
+          getSousDomaine(universityId),
+        ])
+        if (!active) return
+        setCalendrier(cal)
+        setSousDomaineInput(sd)
+      } catch {
+        /* lecture échouée : champs laissés vides, aucune donnée inventée */
+      }
+    })()
+    return () => { active = false }
   }, [universityId])
 
   // Persiste réellement le nom + infos générales sur universities/{id}.
@@ -96,14 +150,57 @@ export default function SettingsPage() {
       setSavingInfo(false)
     }
   }
-  function handleSaveFrais() { alert('Frais de scolarité mis à jour.') }
-  function handleSaveCalendrier() { alert('Calendrier académique sauvegardé.') }
+  // Frais de scolarité → config/frais. Écriture réelle, succès après confirmation.
+  async function handleSaveFrais() {
+    if (!universityId || savingFrais) return
+    if (frais.some((f) => f.montant < 0)) {
+      setToast({ message: 'Un montant ne peut pas être négatif.', type: 'error' })
+      return
+    }
+    setSavingFrais(true)
+    try {
+      await setFraisScolarite(
+        universityId,
+        frais.map((f) => ({ filiereId: f.filiereId, filiereNom: f.filiere, montant: f.montant }))
+      )
+      setToast({ message: 'Frais de scolarité enregistrés.', type: 'success' })
+    } catch (err) {
+      console.error('setFraisScolarite a échoué', err)
+      setToast({ message: "Échec de l'enregistrement des frais — vérifiez vos droits ou votre connexion.", type: 'error' })
+    } finally {
+      setSavingFrais(false)
+    }
+  }
 
-  function handleCloture() {
-    if (confirmText !== 'CLOTURE-2025') return alert('Texte de confirmation incorrect.')
-    alert('Année académique 2024-2025 clôturée avec succès.')
-    setShowDanger(false)
-    setConfirmText('')
+  // Calendrier académique → config/calendrier.
+  async function handleSaveCalendrier() {
+    if (!universityId || savingCalendrier) return
+    setSavingCalendrier(true)
+    try {
+      await setCalendrierAcademique(universityId, calendrier)
+      setToast({ message: 'Calendrier académique enregistré.', type: 'success' })
+    } catch (err) {
+      console.error('setCalendrierAcademique a échoué', err)
+      setToast({ message: "Échec de l'enregistrement du calendrier — vérifiez vos droits ou votre connexion.", type: 'error' })
+    } finally {
+      setSavingCalendrier(false)
+    }
+  }
+
+  // Sous-domaine → config/sousDomaine. Le bouton n'avait aucun handler : il
+  // affichait « Sauvegarder » sans rien enregistrer.
+  async function handleSaveSousDomaine() {
+    if (!universityId || savingSousDomaine) return
+    setSavingSousDomaine(true)
+    try {
+      await setSousDomaine(universityId, sousDomaine.trim())
+      setToast({ message: 'Sous-domaine enregistré.', type: 'success' })
+    } catch (err) {
+      console.error('setSousDomaine a échoué', err)
+      setToast({ message: "Échec de l'enregistrement du sous-domaine — vérifiez vos droits ou votre connexion.", type: 'error' })
+    } finally {
+      setSavingSousDomaine(false)
+    }
   }
 
   return (
@@ -156,9 +253,8 @@ export default function SettingsPage() {
               <span className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium">Plan actuel</span>
               {plan && <PlanBadge plan={plan} size="md" />}
             </div>
-            <p className="text-zinc-500 dark:text-orange-200/40 text-xs">Renouvellement le 26 juillet 2026</p>
           </div>
-          <Link href="/pricing" className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors">
+          <Link href="/dashboard/admin/billing" className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors">
             Changer de plan
           </Link>
         </div>
@@ -172,11 +268,11 @@ export default function SettingsPage() {
             <div>
               <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Sous-domaine</label>
               <div className="flex items-center gap-2">
-                <input value={sousDomaine} onChange={e => setSousDomaine(e.target.value)} placeholder="mon-universite" className="flex-1 bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60" />
+                <input value={sousDomaine} onChange={e => setSousDomaineInput(e.target.value)} placeholder="mon-universite" className="flex-1 bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60" />
                 <span className="text-zinc-500 dark:text-orange-200/40 text-sm">.gestuniv.app</span>
               </div>
             </div>
-            <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> Sauvegarder</button>
+            <button onClick={handleSaveSousDomaine} disabled={savingSousDomaine || !universityId} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> {savingSousDomaine ? 'Enregistrement…' : 'Sauvegarder'}</button>
           </div>
         </PlanGate>
       </div>
@@ -228,12 +324,17 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-        <button onClick={handleSaveCalendrier} className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> Sauvegarder</button>
+        <button onClick={handleSaveCalendrier} disabled={savingCalendrier || !universityId} className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> {savingCalendrier ? 'Enregistrement…' : 'Sauvegarder'}</button>
       </div>
 
       {/* Frais */}
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Frais de scolarité</h2>
+        {frais.length === 0 && (
+          <p className="text-zinc-500 dark:text-orange-200/40 text-sm">
+            Aucune filière enregistrée — créez d&apos;abord vos filières pour leur associer des frais.
+          </p>
+        )}
         <div className="space-y-3">
           {frais.map((f, i) => (
             <div key={i} className="flex items-center gap-4 bg-zinc-50 dark:bg-black/30 border border-orange-500/5 rounded-xl px-4 py-3">
@@ -243,27 +344,21 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-        <button onClick={handleSaveFrais} className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> Sauvegarder</button>
+        <button onClick={handleSaveFrais} disabled={savingFrais || !universityId || frais.length === 0} className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> {savingFrais ? 'Enregistrement…' : 'Sauvegarder'}</button>
       </div>
 
-      {/* Danger Zone */}
+      {/* Clôture de l'année — la vraie procédure vit dans /dashboard/admin/closing
+          (délibération, redoublement, progression de niveau). Cette page ne
+          duplique plus une action de clôture factice : elle y renvoie. */}
       <div className="bg-red-950/20 border border-red-500/20 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-red-400 flex items-center gap-2 mb-2"><Shield size={16} /> Zone dangereuse</h2>
-        <p className="text-red-300/60 text-xs mb-4">Ces actions sont irréversibles. Procédez avec la plus grande prudence.</p>
-        {!showDanger ? (
-          <button onClick={() => setShowDanger(true)} className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-2 text-sm hover:bg-red-500/20 transition-colors">
-            Clôturer l&apos;année académique 2024-2025
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-red-300/80 text-xs">Tapez <code className="text-red-400 font-mono">CLOTURE-2025</code> pour confirmer :</p>
-            <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="CLOTURE-2025" className="bg-zinc-50 dark:bg-black/40 border border-red-500/30 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-red-400/60 w-64" />
-            <div className="flex gap-3">
-              <button onClick={handleCloture} disabled={confirmText !== 'CLOTURE-2025'} className="bg-red-500 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 text-sm font-semibold transition-colors">Confirmer la clôture</button>
-              <button onClick={() => { setShowDanger(false); setConfirmText('') }} className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors">Annuler</button>
-            </div>
-          </div>
-        )}
+        <h2 className="text-sm font-semibold text-red-400 flex items-center gap-2 mb-2"><Shield size={16} /> Clôture de l&apos;année académique</h2>
+        <p className="text-red-300/60 text-xs mb-4">
+          La clôture est une opération irréversible (délibération, passage de niveau, redoublement).
+          Elle se pilote depuis son module dédié, étudiant par étudiant.
+        </p>
+        <Link href="/dashboard/admin/closing" className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-2 text-sm hover:bg-red-500/20 transition-colors">
+          Gérer la clôture de l&apos;année <ArrowRight size={14} />
+        </Link>
       </div>
 
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}

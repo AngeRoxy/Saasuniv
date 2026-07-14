@@ -1248,6 +1248,106 @@ export async function setSeuilAlerteConfig(
   })
 }
 
+// ─── Configuration académique de l'université (frais, calendrier, sous-domaine) ─
+// Tout vit sous /universities/{universityId}/config/* : ce nœud est déjà lisible
+// par les membres de l'université (cascade .read) et écrit par le seul admin
+// (database.rules.json → "config"). Aucune règle à redéployer.
+
+/** Frais de scolarité d'une filière. Le nom est dénormalisé pour l'affichage. */
+export interface FraisFiliere {
+  filiereId: string
+  filiereNom: string
+  montant: number
+}
+
+/**
+ * Frais par filiereId. Retourne un objet vide si l'université n'a rien configuré
+ * — jamais de montant inventé.
+ */
+export async function getFraisScolarite(
+  universityId: string
+): Promise<Record<string, FraisFiliere>> {
+  const snapshot = await get(ref(db, `universities/${universityId}/config/frais`))
+  if (!snapshot.exists()) return {}
+  const val = snapshot.val() as Record<string, FraisFiliere> | null
+  return val ?? {}
+}
+
+/**
+ * Remplace l'intégralité des frais (l'admin édite la liste complète des filières
+ * dans un seul formulaire). Rejette si les règles refusent l'écriture.
+ */
+export async function setFraisScolarite(
+  universityId: string,
+  frais: FraisFiliere[]
+): Promise<void> {
+  const payload: Record<string, FraisFiliere & { updatedAt: number }> = {}
+  const now = Date.now()
+  for (const f of frais) {
+    payload[f.filiereId] = { ...f, updatedAt: now }
+  }
+  await set(ref(db, `universities/${universityId}/config/frais`), payload)
+}
+
+/** Dates clés de l'année académique. Format ISO `YYYY-MM-DD` (input type="date"). */
+export interface CalendrierAcademique {
+  rentree: string
+  examsS1: string
+  vacances: string
+  examsS2: string
+  cloture: string
+}
+
+export const CALENDRIER_VIDE: CalendrierAcademique = {
+  rentree: '',
+  examsS1: '',
+  vacances: '',
+  examsS2: '',
+  cloture: '',
+}
+
+/** Calendrier configuré, ou toutes dates vides si l'université n'a rien saisi. */
+export async function getCalendrierAcademique(
+  universityId: string
+): Promise<CalendrierAcademique> {
+  const snapshot = await get(ref(db, `universities/${universityId}/config/calendrier`))
+  if (!snapshot.exists()) return { ...CALENDRIER_VIDE }
+  const val = snapshot.val() as Partial<CalendrierAcademique> | null
+  return { ...CALENDRIER_VIDE, ...(val ?? {}) }
+}
+
+export async function setCalendrierAcademique(
+  universityId: string,
+  calendrier: CalendrierAcademique
+): Promise<void> {
+  await set(ref(db, `universities/${universityId}/config/calendrier`), {
+    ...calendrier,
+    updatedAt: Date.now(),
+  })
+}
+
+/**
+ * Sous-domaine personnalisé (fonctionnalité Enterprise). Stocké sous `config`
+ * et non à la racine de l'université : les règles n'y autorisent que les champs
+ * name/slug/pays/type/annee, un champ racine supplémentaire serait rejeté.
+ */
+export async function getSousDomaine(universityId: string): Promise<string> {
+  const snapshot = await get(ref(db, `universities/${universityId}/config/sousDomaine`))
+  if (!snapshot.exists()) return ''
+  const val = snapshot.val()
+  return typeof val === 'string' ? val : (val?.valeur ?? '')
+}
+
+export async function setSousDomaine(
+  universityId: string,
+  sousDomaine: string
+): Promise<void> {
+  await set(ref(db, `universities/${universityId}/config/sousDomaine`), {
+    valeur: sousDomaine,
+    updatedAt: Date.now(),
+  })
+}
+
 /**
  * Nombre d'absences NON justifiées d'un étudiant, filtrable par matière.
  * Sans `matiere`, compte toutes matières confondues.
