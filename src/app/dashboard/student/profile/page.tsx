@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMember, type UniversityMember } from '@/lib/db'
 import { updateOwnProfile } from '@/lib/auth'
+import { AvatarUpload } from '@/components/ui/avatar-upload'
 
 function ReadOnlyRow({
   icon: Icon,
@@ -135,10 +136,23 @@ export default function StudentProfilePage() {
       <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 overflow-hidden">
         <div className="h-20 bg-orange-950/30 border-b border-zinc-200 dark:border-orange-500/10" />
         <div className="px-6 pb-6">
-          <div className="-mt-9 mb-4">
-            <div className="w-16 h-16 rounded-full bg-orange-500 border-4 border-zinc-200 dark:border-zinc-950 flex items-center justify-center shadow-lg">
-              <User className="h-8 w-8 text-white" />
-            </div>
+          {/* Photo de profil : cliquable pour la changer. La photo est le seul
+              champ d'identité que l'étudiant peut modifier lui-même. */}
+          <div className="-mt-9 mb-4 w-fit">
+            {profile?.universityId && user?.uid ? (
+              <AvatarUpload
+                universityId={profile.universityId}
+                uid={user.uid}
+                name={displayName}
+                photoUrl={member?.photoUrl}
+                size={64}
+                onUploaded={(url) => setMember((m) => (m ? { ...m, photoUrl: url } : m))}
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-orange-500 border-4 border-zinc-200 dark:border-zinc-950 flex items-center justify-center shadow-lg">
+                <User className="h-8 w-8 text-white" />
+              </div>
+            )}
           </div>
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{displayName}</h2>
           <p className="text-sm text-blue-600 dark:text-orange-400/70 mt-0.5">{email}</p>

@@ -22,6 +22,7 @@ import type { Filiere } from '@/types/filiere'
 import { STATUT_PARCOURS_LABELS, STATUT_PARCOURS_STYLES, redoublementBadgeLabel } from '@/types/parcours'
 import { createMemberViaApi } from '@/lib/members-client'
 import { EmailEditModal } from '@/components/admin/email-edit-modal'
+import { MemberAvatar } from '@/components/ui/member-avatar'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,8 @@ interface Student {
   niveau: string
   statut: StudentStatus
   parentUid?: string
+  /** Photo de profil (membres Firebase Auth uniquement — voir AvatarUpload). */
+  photoUrl?: string
 }
 
 interface ParentOption {
@@ -500,6 +503,7 @@ export default function StudentsPage() {
             niveau: m.niveau ?? '',
             statut: normalizeStatut(m.statut),
             parentUid: m.parentUid,
+            photoUrl: m.photoUrl,
           }
         })
         const fromManual: Student[] = manual.map((s) => {
@@ -806,6 +810,7 @@ export default function StudentsPage() {
                   {/* Nom complet + email */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
+                      <MemberAvatar photoUrl={student.photoUrl} name={`${student.prenom} ${student.nom}`} size={28} />
                       <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{student.prenom} {student.nom}</p>
                       {student.uid && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-medium">

@@ -10,6 +10,7 @@ import { getUniversityMembers, updateMemberProfile, getFilieres, getMatieres, re
 import type { Filiere, Matiere } from '@/types/filiere'
 import { createMemberViaApi } from '@/lib/members-client'
 import { EmailEditModal } from '@/components/admin/email-edit-modal'
+import { MemberAvatar } from '@/components/ui/member-avatar'
 
 interface Teacher {
   uid?: string
@@ -21,6 +22,7 @@ interface Teacher {
   filiereIds: string[]   // un enseignant peut intervenir dans PLUSIEURS filières
   matieres: string[]
   chargeHoraire: number
+  photoUrl?: string
 }
 
 type FormState = {
@@ -86,6 +88,7 @@ export default function TeachersPage() {
             filiereIds,
             matieres: m.matieres ?? [],
             chargeHoraire: m.chargeHoraire ?? 0,
+            photoUrl: m.photoUrl,
           }
         })
         setTeachers(fbTeachers)
@@ -336,7 +339,9 @@ export default function TeachersPage() {
         {teachers.map((teacher) => (
           <div key={teacher.id} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 space-y-4">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <MemberAvatar photoUrl={teacher.photoUrl} name={`${teacher.prenom} ${teacher.nom}`} size={36} />
+                <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-zinc-900 dark:text-white font-semibold">{teacher.nom} {teacher.prenom}</p>
                   {teacher.uid && (
@@ -346,7 +351,8 @@ export default function TeachersPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-zinc-500 text-xs mt-0.5">{teacher.email}</p>
+                <p className="text-zinc-500 text-xs mt-0.5 truncate">{teacher.email}</p>
+                </div>
               </div>
               <div className="flex gap-1">
                 {teacher.uid && (

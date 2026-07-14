@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMember, getFilieres, type UniversityMember } from '@/lib/db'
 import { updateOwnProfile } from '@/lib/auth'
+import { AvatarUpload } from '@/components/ui/avatar-upload'
 
 function ReadOnlyRow({
   icon: Icon,
@@ -176,9 +177,21 @@ export default function TeacherProfilePage() {
         <div className="h-20 bg-orange-950/30 border-b border-zinc-200 dark:border-orange-500/10" />
         <div className="px-6 pb-6">
           <div className="-mt-9 mb-4 flex items-end gap-4">
-            <div className="w-16 h-16 rounded-full bg-orange-500 border-4 border-zinc-200 dark:border-zinc-950 flex items-center justify-center shadow-lg shrink-0">
-              <User className="h-8 w-8 text-white" />
-            </div>
+            {/* Photo de profil cliquable. */}
+            {profile?.universityId && user?.uid ? (
+              <AvatarUpload
+                universityId={profile.universityId}
+                uid={user.uid}
+                name={displayName || 'Enseignant'}
+                photoUrl={member?.photoUrl}
+                size={64}
+                onUploaded={(url) => setMember((m) => (m ? { ...m, photoUrl: url } : m))}
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-orange-500 border-4 border-zinc-200 dark:border-zinc-950 flex items-center justify-center shadow-lg shrink-0">
+                <User className="h-8 w-8 text-white" />
+              </div>
+            )}
             <span className="mb-1 inline-flex items-center rounded-full bg-orange-500/15 border border-orange-500/30 px-3 py-0.5 text-xs font-semibold text-blue-600 dark:text-orange-400 uppercase tracking-wider">
               Enseignant
             </span>

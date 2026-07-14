@@ -89,6 +89,8 @@ export interface UniversityMember {
   premiereConnexion?: boolean
   parentUid?: string // étudiant → uid du parent lié
   enfantUids?: string[] // parent → uids des étudiants liés
+  /** URL Storage de la photo de profil (voir uploadAvatar). */
+  photoUrl?: string
 }
 
 export async function getUniversityMembers(
@@ -122,9 +124,23 @@ export async function updateMemberProfile(
   // `filiere` (nom unique) reste utilisé par les étudiants ; `filiereIds`
   // (tableau d'IDs) est réservé aux enseignants — le tableau complet est
   // toujours réécrit en une fois (pas d'ajout/retrait partiel).
-  data: Partial<Pick<UniversityMember, 'filiere' | 'filiereIds' | 'niveau' | 'telephone' | 'matricule' | 'statut' | 'displayName' | 'chargeHoraire' | 'matieres'>>
+  data: Partial<Pick<UniversityMember, 'filiere' | 'filiereIds' | 'niveau' | 'telephone' | 'matricule' | 'statut' | 'displayName' | 'chargeHoraire' | 'matieres' | 'photoUrl'>>
 ): Promise<void> {
   await update(ref(db, `universities/${universityId}/members/${uid}`), data)
+}
+
+/**
+ * Enregistre l'URL de la photo de profil d'un membre.
+ * Écrit sur `members/{uid}/photoUrl` : les règles RTDB autorisent déjà un membre
+ * à modifier sa propre fiche tant que les champs sensibles (email, rôle,
+ * filière, niveau, matricule) restent inchangés — aucune règle à redéployer.
+ */
+export async function updateMemberPhoto(
+  universityId: string,
+  uid: string,
+  photoUrl: string
+): Promise<void> {
+  await update(ref(db, `universities/${universityId}/members/${uid}`), { photoUrl })
 }
 
 // Supprime l'entrée `members/{uid}` (la source qui pilote les listes admin).

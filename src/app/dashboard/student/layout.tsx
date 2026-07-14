@@ -20,6 +20,8 @@ import {
 import { logout } from '@/lib/auth'
 import { useAuth } from '@/context/AuthContext'
 import { PremiereConnexionGuard } from '@/components/ui/premiere-connexion-guard'
+import { MemberAvatar } from '@/components/ui/member-avatar'
+import { useMemberPhoto } from '@/hooks/useMemberPhoto'
 
 const navLinks = [
   { href: '/dashboard/student', label: 'Accueil', icon: Home },
@@ -39,6 +41,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const router = useRouter()
   const { user, profile, loading } = useAuth()
   const loggingOut = useRef(false)
+  // Appelé AVANT tout retour anticipé : un hook doit s'exécuter à chaque rendu
+  // dans le même ordre (react-hooks/rules-of-hooks).
+  const photoUrl = useMemberPhoto(profile?.universityId, user?.uid)
 
   useEffect(() => {
     if (!loading && !user && !loggingOut.current) {
@@ -92,9 +97,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         <div className="border-t border-zinc-200 dark:border-orange-500/10 px-6 py-4">
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center shrink-0">
-              <User className="h-4 w-4 text-blue-600 dark:text-orange-400" />
-            </div>
+            <MemberAvatar photoUrl={photoUrl} name={displayName} size={32} />
             <div className="min-w-0">
               <p className="text-sm font-medium text-zinc-800 dark:text-orange-100/80 truncate">{displayName}</p>
               <p className="text-xs text-zinc-500 dark:text-orange-300/40 truncate">{universityId}</p>
