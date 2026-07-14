@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { User, BarChart3 } from 'lucide-react'
+import { User, BarChart3, CalendarX, CalendarClock, CreditCard } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMembers, type UniversityMember } from '@/lib/db'
 import { SemestreEnCours } from '@/components/ui/semestre-en-cours'
 import { ComingSoon } from '@/components/ui/coming-soon'
+import { KpiCard } from '@/components/ui/kpi-card'
+import { useStudentSummary } from '@/hooks/useStudentSummary'
+import { JOUR_LABEL } from '@/types/emploi-du-temps'
+import { formatFCFA } from '@/types/paiement'
 
 const ChatbotWidget = dynamic(() => import('@/components/ui/chatbot-widget'), { ssr: false })
 
@@ -42,6 +46,24 @@ export default function ParentDashboard() {
   }, [universityId, user?.uid])
 
   const selectedChild = children.find((c) => c.uid === selectedUid) ?? null
+
+  // Même synthèse que l'espace étudiant, mais pour l'enfant sélectionné : le
+  // parent voit exactement les chiffres que son enfant voit (source unique).
+  const {
+    moyenne,
+    moyenneForcee,
+    nbNotes,
+    absencesTotal,
+    absencesInjustifiees,
+    seuilAbsences,
+    prochainCours,
+    soldeDu,
+    paiementsEnRetard,
+    scolariteIncomplete,
+    loading: loadingSummary,
+  } = useStudentSummary(universityId, selectedChild?.uid)
+
+  const seuilDepasse = seuilAbsences > 0 && absencesInjustifiees >= seuilAbsences
 
   return (
     <div className="space-y-8">
@@ -103,14 +125,82 @@ export default function ParentDashboard() {
       {/* Semestre en cours — données réelles */}
       {universityId && selectedChild && <SemestreEnCours universityId={universityId} variant="full" />}
 
-      {/* Modules pas encore connectés */}
-      <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10">
-        <ComingSoon
-          icon={BarChart3}
-          title="Notes, absences et paiements"
-          description="Le suivi scolaire de votre enfant (notes, absences, paiements) s'affichera ici dès que l'université aura activé ces modules. Aucune donnée fictive n'est affichée."
-        />
-      </div>
+      {/* Suivi scolaire de l'enfant — KPI réels (notes, absences, emploi du temps,
+          paiements), identiques à ceux que voit l'étudiant lui-même. L'état vide
+          honnête est conservé UNIQUEMENT quand aucun enfant n'est rattaché : ce
+          n'est alors pas un module manquant, c'est une donnée manquante. */}
+      {selectedChild ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <KpiCard
+            label="Moyenne générale"
+            value={moyenne !== null ? `${moyenne.toFixed(2)}/20` : null}
+            icon={BarChart3}
+            hint={
+              moyenne === null
+                ? 'Aucune note publiée'
+                : `${nbNotes} note${nbNotes > 1 ? 's' : ''} ce semestre${moyenneForcee ? ' · moyenne forcée' : ''}`
+            }
+            href="/dashboard/parent/grades"
+            loading={loadingSummary}
+          />
+
+          <KpiCard
+            label="Absences"
+            value={absencesTotal}
+            icon={CalendarX}
+            tone={seuilDepasse ? 'alert' : 'default'}
+            hint={
+              absencesInjustifiees > 0
+                ? `${absencesInjustifiees} injustifiée${absencesInjustifiees > 1 ? 's' : ''}${seuilDepasse ? ` · seuil de ${seuilAbsences} atteint` : ''}`
+                : 'Aucune absence injustifiée'
+            }
+            href="/dashboard/parent/absences"
+            loading={loadingSummary}
+          />
+
+          <KpiCard
+            label="Prochain cours"
+            value={prochainCours ? prochainCours.matiere : null}
+            icon={CalendarClock}
+            hint={
+              prochainCours
+                ? `${JOUR_LABEL[prochainCours.jour]} ${prochainCours.heureDebut} · ${prochainCours.salle || 'salle non précisée'}`
+                : scolariteIncomplete
+                  ? 'Filière ou niveau non renseigné'
+                  : 'Aucun cours planifié'
+            }
+            href="/dashboard/parent/schedule"
+            loading={loadingSummary}
+          />
+
+          <KpiCard
+            label="Solde à payer"
+            value={formatFCFA(soldeDu)}
+            icon={CreditCard}
+            tone={paiementsEnRetard > 0 ? 'alert' : 'default'}
+            hint={
+              paiementsEnRetard > 0
+                ? `${paiementsEnRetard} échéance${paiementsEnRetard > 1 ? 's' : ''} en retard`
+                : soldeDu > 0
+                  ? 'Aucune échéance dépassée'
+                  : 'Vous êtes à jour'
+            }
+            href="/dashboard/parent/payments"
+            loading={loadingSummary}
+          />
+        </div>
+      ) : (
+        !loadingChildren && (
+          <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10">
+            <ComingSoon
+              icon={BarChart3}
+              title="Suivi scolaire"
+              description="Aucun enfant n'est rattaché à votre compte. Contactez l'administration de l'université pour lier votre enfant — son suivi (notes, absences, paiements) s'affichera alors ici."
+              badge="En attente de rattachement"
+            />
+          </div>
+        )
+      )}
 
       {/* Assistant IA flottant */}
       {universityId && <ChatbotWidget universityId={universityId} />}

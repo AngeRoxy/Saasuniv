@@ -6,7 +6,8 @@
       "Bash(curl -s --max-time 20 -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" http://localhost:3000/dashboard/admin)",
       "Bash(curl -s --max-time 20 -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://localhost:3000/api/session)",
       "Bash(curl -s --max-time 20 -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" http://localhost:3000/api/session)",
-      "Bash(node \"C:/Users/ROXANNE/AppData/Local/Temp/claude/r--gestuniv/de8ddbda-9261-4240-95b6-baab6ca02b90/scratchpad/lightmode.mjs\" --dry)"
+      "Bash(node \"C:/Users/ROXANNE/AppData/Local/Temp/claude/r--gestuniv/de8ddbda-9261-4240-95b6-baab6ca02b90/scratchpad/lightmode.mjs\" --dry)",
+      "Bash(npx eslint *)"
     ]
   }
 }

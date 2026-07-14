@@ -1,10 +1,13 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { GraduationCap } from 'lucide-react'
+import { BarChart3, CalendarX, CalendarClock, CreditCard } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { SemestreEnCours } from '@/components/ui/semestre-en-cours'
-import { ComingSoon } from '@/components/ui/coming-soon'
+import { KpiCard } from '@/components/ui/kpi-card'
+import { useStudentSummary } from '@/hooks/useStudentSummary'
+import { JOUR_LABEL } from '@/types/emploi-du-temps'
+import { formatFCFA } from '@/types/paiement'
 
 const ChatbotWidget = dynamic(() => import('@/components/ui/chatbot-widget'), { ssr: false })
 
@@ -12,6 +15,22 @@ export default function StudentDashboard() {
   const { user, profile } = useAuth()
   const displayName = profile?.displayName ?? user?.displayName ?? user?.email ?? 'Étudiant'
   const universityId = profile?.universityId
+
+  const {
+    moyenne,
+    moyenneForcee,
+    nbNotes,
+    absencesTotal,
+    absencesInjustifiees,
+    seuilAbsences,
+    prochainCours,
+    soldeDu,
+    paiementsEnRetard,
+    scolariteIncomplete,
+    loading,
+  } = useStudentSummary(universityId, user?.uid)
+
+  const seuilDepasse = seuilAbsences > 0 && absencesInjustifiees >= seuilAbsences
 
   return (
     <div className="space-y-8">
@@ -29,12 +48,67 @@ export default function StudentDashboard() {
       {/* Semestre en cours — données réelles */}
       {universityId && <SemestreEnCours universityId={universityId} variant="full" />}
 
-      {/* Modules académiques pas encore connectés */}
-      <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10">
-        <ComingSoon
-          icon={GraduationCap}
-          title="Notes, cours et paiements"
-          description="Votre suivi académique (notes, emploi du temps, paiements) s'affichera ici dès que votre université aura activé ces modules. Aucune donnée fictive n'est affichée."
+      {/* KPI réels : notes, absences, emploi du temps et paiements viennent tous
+          de Firebase, via les mêmes fonctions db.ts que les pages détaillées.
+          Une donnée absente s'affiche « — », jamais un 0 qui se lirait comme une
+          information. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard
+          label="Moyenne générale"
+          value={moyenne !== null ? `${moyenne.toFixed(2)}/20` : null}
+          icon={BarChart3}
+          hint={
+            moyenne === null
+              ? 'Aucune note publiée'
+              : `${nbNotes} note${nbNotes > 1 ? 's' : ''} ce semestre${moyenneForcee ? ' · moyenne forcée' : ''}`
+          }
+          href="/dashboard/student/grades"
+          loading={loading}
+        />
+
+        <KpiCard
+          label="Absences"
+          value={absencesTotal}
+          icon={CalendarX}
+          tone={seuilDepasse ? 'alert' : 'default'}
+          hint={
+            absencesInjustifiees > 0
+              ? `${absencesInjustifiees} injustifiée${absencesInjustifiees > 1 ? 's' : ''}${seuilDepasse ? ` · seuil de ${seuilAbsences} atteint` : ''}`
+              : 'Aucune absence injustifiée'
+          }
+          href="/dashboard/student/absences"
+          loading={loading}
+        />
+
+        <KpiCard
+          label="Prochain cours"
+          value={prochainCours ? prochainCours.matiere : null}
+          icon={CalendarClock}
+          hint={
+            prochainCours
+              ? `${JOUR_LABEL[prochainCours.jour]} ${prochainCours.heureDebut} · ${prochainCours.salle || 'salle non précisée'}`
+              : scolariteIncomplete
+                ? 'Filière ou niveau non renseigné'
+                : 'Aucun cours planifié'
+          }
+          href="/dashboard/student/schedule"
+          loading={loading}
+        />
+
+        <KpiCard
+          label="Solde à payer"
+          value={formatFCFA(soldeDu)}
+          icon={CreditCard}
+          tone={paiementsEnRetard > 0 ? 'alert' : 'default'}
+          hint={
+            paiementsEnRetard > 0
+              ? `${paiementsEnRetard} échéance${paiementsEnRetard > 1 ? 's' : ''} en retard`
+              : soldeDu > 0
+                ? 'Aucune échéance dépassée'
+                : 'Vous êtes à jour'
+          }
+          href="/dashboard/student/payments"
+          loading={loading}
         />
       </div>
 
