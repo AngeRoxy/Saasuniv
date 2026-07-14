@@ -925,7 +925,14 @@ export async function cleanupOrphanData(
 
 // ─── Notes (note /20 par étudiant + matière + semestre) ────────────────────────
 
-import { noteKey, SEUIL_VALIDATION, type NoteEntry } from '@/types/note'
+import {
+  noteKey,
+  SEUIL_VALIDATION,
+  EVALUATIONS,
+  calculerMoyenneMatiere,
+  type NoteEntry,
+  type DetailEvaluations,
+} from '@/types/note'
 
 export type { NoteEntry }
 
@@ -937,37 +944,76 @@ function todayISODate(): string {
   return `${d.getFullYear()}-${mois}-${jour}`
 }
 
+/** Entrée de saisie : 3 évaluations, plus `note` pour la compat historique. */
+export type SaveNoteEntry = Omit<
+  NoteEntry,
+  'id' | 'updatedAt' | 'note' | 'interro1' | 'interro2' | 'examen'
+> &
+  DetailEvaluations & {
+    /**
+     * Note directe, utilisée UNIQUEMENT si aucune évaluation détaillée n'est
+     * saisie (entrée historique rééditée sans passer aux 3 évaluations).
+     * Ignorée dès qu'au moins une évaluation est renseignée.
+     */
+    note?: number | null
+  }
+
 /**
- * Enregistre (upsert) un lot de notes via leur clé déterministe. Une note vide
- * (note === null) supprime l'entrée correspondante.
+ * Enregistre (upsert) un lot de notes via leur clé déterministe.
+ *
+ * La note de la matière (`note`) est DÉRIVÉE des 3 évaluations :
+ * (Interro1 + Interro2 + 2×Examen)/4, ou moyenne pondérée des seules
+ * évaluations saisies. Elle reste la référence unique consommée partout
+ * ailleurs (moyennes, clôture, éligibilité au rattrapage) — d'où le choix de
+ * la recalculer ici plutôt que de disperser le barème dans l'UI.
+ *
+ * Entrée entièrement vide (aucune évaluation ET aucune note directe) →
+ * l'entrée est supprimée.
  */
 export async function saveNotes(
   universityId: string,
-  entries: (Omit<NoteEntry, 'id' | 'updatedAt' | 'note'> & { note: number | null })[]
+  entries: SaveNoteEntry[]
 ): Promise<void> {
   const updates: Record<string, unknown> = {}
   const now = Date.now()
+
   for (const e of entries) {
     const key = noteKey(e.semestreId, e.matiereId, e.studentUid)
-    if (e.note === null || Number.isNaN(e.note)) {
+
+    const moyenne = calculerMoyenneMatiere(e)
+    // Aucune évaluation saisie → on retombe sur la note directe (schéma
+    // historique). Si les deux sont absentes, la note n'existe pas.
+    const noteFinale =
+      moyenne ?? (typeof e.note === 'number' && !Number.isNaN(e.note) ? e.note : null)
+
+    if (noteFinale === null) {
       updates[key] = null // suppression de l'entrée complète (rattrapage inclus)
-    } else {
-      // Écriture par SOUS-CHEMINS (merge) et non remplacement du nœud entier :
-      // préserve d'éventuels champs rattrapage déjà saisis sur cette entrée
-      // (noteRattrapage, dateRattrapage, …) — un re-save des notes normales ne
-      // doit jamais effacer un rattrapage. Les champs normaux, eux, sont bien
-      // tous réécrits (comportement identique à l'existant).
-      updates[`${key}/studentUid`] = e.studentUid
-      updates[`${key}/matiere`] = e.matiere
-      updates[`${key}/matiereId`] = e.matiereId
-      updates[`${key}/filiereId`] = e.filiereId
-      updates[`${key}/niveau`] = e.niveau
-      updates[`${key}/semestreId`] = e.semestreId
-      updates[`${key}/note`] = e.note
-      updates[`${key}/commentaire`] = e.commentaire ?? ''
-      updates[`${key}/updatedAt`] = now
+      continue
+    }
+
+    // Écriture par SOUS-CHEMINS (merge) et non remplacement du nœud entier :
+    // préserve d'éventuels champs rattrapage déjà saisis sur cette entrée
+    // (noteRattrapage, dateRattrapage, …) — un re-save des notes normales ne
+    // doit jamais effacer un rattrapage.
+    updates[`${key}/studentUid`] = e.studentUid
+    updates[`${key}/matiere`] = e.matiere
+    updates[`${key}/matiereId`] = e.matiereId
+    updates[`${key}/filiereId`] = e.filiereId
+    updates[`${key}/niveau`] = e.niveau
+    updates[`${key}/semestreId`] = e.semestreId
+    updates[`${key}/note`] = noteFinale
+    updates[`${key}/commentaire`] = e.commentaire ?? ''
+    updates[`${key}/updatedAt`] = now
+
+    // Détail des évaluations : `null` efface le sous-champ (une note effacée par
+    // l'enseignant doit disparaître, pas rester à son ancienne valeur).
+    for (const { champ } of EVALUATIONS) {
+      const valeur = e[champ]
+      updates[`${key}/${champ}`] =
+        typeof valeur === 'number' && !Number.isNaN(valeur) ? valeur : null
     }
   }
+
   if (Object.keys(updates).length > 0) {
     await update(ref(db, `universities/${universityId}/notes`), updates)
   }

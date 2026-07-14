@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { BarChart3 } from 'lucide-react'
 import { getNotesForStudent, getSemestres, getMoyennesManuelles } from '@/lib/db'
 import type { Semestre, NoteEntry } from '@/lib/db'
-import { getMention, getNoteRetenue, hasRattrapage } from '@/types/note'
+import { getMention, getNoteRetenue, hasRattrapage, EVALUATIONS } from '@/types/note'
 
 /** Consultation des notes d'un étudiant (réutilisée par l'étudiant et le parent). */
 export function GradeView({ universityId, studentUid }: { universityId: string; studentUid: string }) {
@@ -105,12 +105,23 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
           Aucune note publiée pour ce semestre.
         </div>
       ) : (
+        <>
+        <p className="text-[11px] text-zinc-500 dark:text-orange-200/30">
+          Moyenne d’une matière = (Interro 1 + Interro 2 + 2 × Examen) ÷ 4. Une évaluation non encore passée
+          n’est pas comptée comme un zéro.
+        </p>
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider border-b border-zinc-200 dark:border-orange-500/10">
                 <th className="px-4 py-3 text-left">Matière</th>
-                <th className="px-4 py-3 text-center w-24">Note /20</th>
+                {EVALUATIONS.map((e) => (
+                  <th key={e.champ} className="px-3 py-3 text-center w-24 whitespace-nowrap">
+                    {e.labelCourt}
+                    <span className="ml-1 normal-case text-zinc-500 dark:text-orange-300/40">×{e.poids}</span>
+                  </th>
+                ))}
+                <th className="px-4 py-3 text-center w-24">Moyenne</th>
                 <th className="px-4 py-3 text-center w-28">Mention</th>
                 <th className="px-4 py-3 text-left">Commentaire</th>
               </tr>
@@ -123,6 +134,21 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
                 return (
                   <tr key={n.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                     <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/80 font-medium">{n.matiere}</td>
+
+                    {/* Détail des 3 évaluations. Une note publiée avant leur mise
+                        en place n'en a pas : les colonnes affichent « — » et la
+                        moyenne reste la note d'origine. */}
+                    {EVALUATIONS.map((e) => {
+                      const v = n[e.champ]
+                      return (
+                        <td key={e.champ} className={`px-3 py-3 text-center text-sm ${
+                          typeof v === 'number' && v < 10 ? 'text-red-400' : 'text-zinc-800 dark:text-orange-100/70'
+                        }`}>
+                          {typeof v === 'number' ? v : '—'}
+                        </td>
+                      )
+                    })}
+
                     <td className={`px-4 py-3 text-center font-bold ${retenue < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>
                       <span className="inline-flex items-center gap-1.5">
                         {retenue}/20
@@ -146,6 +172,7 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

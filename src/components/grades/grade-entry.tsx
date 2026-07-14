@@ -12,13 +12,22 @@ import {
   saveNotes,
 } from '@/lib/db'
 import type { Filiere, Matiere, Semestre, UniversityMember } from '@/lib/db'
-import { getMention } from '@/types/note'
+import { getMention, calculerMoyenneMatiere, EVALUATIONS } from '@/types/note'
 
 interface Row {
   studentUid: string
   nom: string
   matricule: string
-  note: string
+  /** Saisie brute des 3 évaluations (chaîne : '' = non saisie). */
+  interro1: string
+  interro2: string
+  examen: string
+  /**
+   * Note historique d'une entrée saisie AVANT les 3 évaluations. Conservée
+   * telle quelle tant que l'enseignant ne saisit aucune évaluation : rééditer
+   * un commentaire ne doit pas effacer une note existante.
+   */
+  noteHistorique: number | null
   commentaire: string
 }
 
@@ -27,6 +36,23 @@ function parseNote(raw: string): number | null {
   const n = Number(raw)
   if (Number.isNaN(n)) return null
   return Math.min(20, Math.max(0, n))
+}
+
+/** Détail parsé d'une ligne, prêt pour le calcul de moyenne. */
+function detailDe(r: Row) {
+  return {
+    interro1: parseNote(r.interro1),
+    interro2: parseNote(r.interro2),
+    examen: parseNote(r.examen),
+  }
+}
+
+/**
+ * Note affichée pour une ligne : la moyenne pondérée des évaluations saisies,
+ * ou à défaut la note historique (entrée créée avant les 3 évaluations).
+ */
+function noteFinaleDe(r: Row): number | null {
+  return calculerMoyenneMatiere(detailDe(r)) ?? r.noteHistorique
 }
 
 /**
@@ -122,11 +148,17 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
         setRows(
           cohorte.map((s: UniversityMember) => {
             const existing = noteByStudent.get(s.uid)
+            // Une note historique n'a pas de détail : les 3 champs restent vides
+            // et sa note d'origine est conservée dans `noteHistorique`. Elle
+            // s'affiche donc normalement, sans migration ni perte.
             return {
               studentUid: s.uid,
               nom: s.displayName,
               matricule: s.matricule ?? '',
-              note: existing ? String(existing.note) : '',
+              interro1: existing?.interro1 !== undefined ? String(existing.interro1) : '',
+              interro2: existing?.interro2 !== undefined ? String(existing.interro2) : '',
+              examen: existing?.examen !== undefined ? String(existing.examen) : '',
+              noteHistorique: existing ? existing.note : null,
               commentaire: existing?.commentaire ?? '',
             }
           })
@@ -144,11 +176,15 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
     setRows((prev) => prev.map((r) => (r.studentUid === uid ? { ...r, ...patch } : r)))
   }
 
+  // Moyenne de la classe : moyenne des notes FINALES (pondérées) de chaque
+  // étudiant, pas des évaluations prises isolément.
   const average = useMemo(() => {
-    const vals = rows.map((r) => parseNote(r.note)).filter((n): n is number => n !== null)
+    const vals = rows.map(noteFinaleDe).filter((n): n is number => n !== null)
     if (vals.length === 0) return null
     return vals.reduce((a, b) => a + b, 0) / vals.length
   }, [rows])
+
+  const nbNotees = useMemo(() => rows.filter((r) => noteFinaleDe(r) !== null).length, [rows])
 
   async function handleSave() {
     if (!ready || !selectedMatiere) return
@@ -156,21 +192,29 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
     try {
       await saveNotes(
         universityId,
-        rows.map((r) => ({
-          studentUid: r.studentUid,
-          matiere: selectedMatiere.nom,
-          matiereId,
-          filiereId,
-          niveau,
-          semestreId,
-          note: parseNote(r.note),
-          commentaire: r.commentaire,
-        }))
+        rows.map((r) => {
+          const detail = detailDe(r)
+          return {
+            studentUid: r.studentUid,
+            matiere: selectedMatiere.nom,
+            matiereId,
+            filiereId,
+            niveau,
+            semestreId,
+            ...detail,
+            // Reprise de la note historique tant qu'aucune évaluation n'est
+            // saisie ; dès qu'une l'est, la moyenne pondérée prend le relais
+            // (saveNotes ignore alors ce champ).
+            note: r.noteHistorique,
+            commentaire: r.commentaire,
+          }
+        })
       )
       setToast('Notes enregistrées avec succès.')
       setTimeout(() => setToast(null), 3000)
-    } catch {
-      setToast('Échec de l’enregistrement.')
+    } catch (err) {
+      console.error('saveNotes a échoué', err)
+      setToast('Échec de l’enregistrement — aucune note n’a été sauvegardée.')
       setTimeout(() => setToast(null), 4000)
     } finally {
       setSaving(false)
@@ -229,11 +273,17 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-zinc-500 flex items-center gap-1.5">
-              <BarChart3 size={13} className="text-blue-600 dark:text-orange-400" />
-              {rows.length} étudiant{rows.length > 1 ? 's' : ''} · {selectedMatiere?.nom}
-            </p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-zinc-500 flex items-center gap-1.5">
+                <BarChart3 size={13} className="text-blue-600 dark:text-orange-400" />
+                {rows.length} étudiant{rows.length > 1 ? 's' : ''} · {selectedMatiere?.nom}
+              </p>
+              {/* Barème affiché : l'enseignant ne doit pas avoir à deviner la pondération. */}
+              <p className="text-[11px] text-zinc-500 dark:text-orange-200/30">
+                Moyenne = (Interro 1 + Interro 2 + 2 × Examen) ÷ 4 · une évaluation non saisie n’est pas comptée comme un zéro
+              </p>
+            </div>
             {readOnly ? (
               <span className="text-xs text-zinc-600 dark:text-orange-200/50 border border-orange-500/20 bg-orange-500/5 rounded-lg px-3 py-1.5">
                 Lecture seule — seul l’enseignant peut modifier les notes
@@ -253,30 +303,63 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
                 <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider border-b border-zinc-200 dark:border-orange-500/10">
                   <th className="px-4 py-3 text-left">Étudiant</th>
                   <th className="px-4 py-3 text-left">Matricule</th>
-                  <th className="px-4 py-3 text-center w-28">Note /20</th>
+                  {EVALUATIONS.map((e) => (
+                    <th key={e.champ} className="px-3 py-3 text-center w-24 whitespace-nowrap">
+                      {e.labelCourt}
+                      <span className="ml-1 normal-case text-zinc-500 dark:text-orange-300/40">×{e.poids}</span>
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-center w-28">Moyenne /20</th>
                   <th className="px-4 py-3 text-center w-28">Mention</th>
                   <th className="px-4 py-3 text-left">Commentaire</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
-                  const n = parseNote(r.note)
+                  const n = noteFinaleDe(r)
                   const mention = getMention(n)
+                  const historiqueSeule = n !== null && !EVALUATIONS.some((e) => parseNote(r[e.champ]) !== null)
                   return (
                     <tr key={r.studentUid} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                       <td className="px-4 py-2.5 text-zinc-800 dark:text-orange-100/80 font-medium whitespace-nowrap">{r.nom}</td>
                       <td className="px-4 py-2.5 text-blue-600 dark:text-orange-400/70 font-mono text-xs whitespace-nowrap">{r.matricule || '—'}</td>
+
+                      {/* Les 3 évaluations, saisies séparément. */}
+                      {EVALUATIONS.map((e) => {
+                        const v = parseNote(r[e.champ])
+                        return (
+                          <td key={e.champ} className="px-3 py-2.5 text-center">
+                            {readOnly ? (
+                              <span className={`font-semibold ${v !== null && v < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>
+                                {v !== null ? v : '—'}
+                              </span>
+                            ) : (
+                              <input type="number" min={0} max={20} step={0.25} value={r[e.champ]}
+                                onChange={(ev) => updateRow(r.studentUid, { [e.champ]: ev.target.value })}
+                                aria-label={`${e.label} — ${r.nom}`}
+                                className={`w-16 bg-zinc-50 dark:bg-black/40 border rounded-lg px-2 py-1 text-center text-sm font-semibold focus:outline-none transition-colors ${
+                                  v !== null && v < 10 ? 'border-red-500/40 text-red-400' : 'border-orange-500/20 text-zinc-900 dark:text-white focus:border-orange-400/60'
+                                }`} placeholder="—" />
+                            )}
+                          </td>
+                        )
+                      })}
+
+                      {/* Moyenne : dérivée, jamais saisie à la main. */}
                       <td className="px-4 py-2.5 text-center">
-                        {readOnly ? (
-                          <span className={`font-semibold ${n !== null && n < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>{n !== null ? `${n}/20` : '—'}</span>
-                        ) : (
-                          <input type="number" min={0} max={20} step={0.25} value={r.note}
-                            onChange={(e) => updateRow(r.studentUid, { note: e.target.value })}
-                            className={`w-20 bg-zinc-50 dark:bg-black/40 border rounded-lg px-2 py-1 text-center text-sm font-semibold focus:outline-none transition-colors ${
-                              n !== null && n < 10 ? 'border-red-500/40 text-red-400' : 'border-orange-500/20 text-zinc-900 dark:text-white focus:border-orange-400/60'
-                            }`} placeholder="—" />
+                        <span className={`font-bold ${n !== null && n < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>
+                          {n !== null ? `${n}/20` : '—'}
+                        </span>
+                        {historiqueSeule && (
+                          <span
+                            className="ml-1.5 text-[10px] font-semibold text-blue-600 dark:text-amber-400 border border-amber-500/40 bg-amber-500/10 rounded px-1 py-0.5 cursor-help align-middle"
+                            title="Note saisie avant le passage aux 3 évaluations. Saisir une interrogation ou l'examen la remplacera par la moyenne pondérée."
+                          >
+                            Historique
+                          </span>
                         )}
                       </td>
+
                       <td className="px-4 py-2.5 text-center">
                         {mention ? (
                           <span className={`inline-block text-xs font-semibold border rounded-full px-2.5 py-0.5 ${mention.cls}`}>{mention.abbr}</span>
@@ -298,10 +381,10 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
               </tbody>
               <tfoot>
                 <tr className="border-t border-orange-500/20 bg-zinc-50 dark:bg-black/30">
-                  <td colSpan={2} className="px-4 py-3 text-blue-700 dark:text-orange-300/70 text-xs font-semibold uppercase tracking-wider">Moyenne de la classe</td>
+                  <td colSpan={2 + EVALUATIONS.length} className="px-4 py-3 text-blue-700 dark:text-orange-300/70 text-xs font-semibold uppercase tracking-wider">Moyenne de la classe</td>
                   <td className="px-4 py-3 text-center font-bold text-zinc-900 dark:text-white">{average !== null ? `${average.toFixed(2)}/20` : '—'}</td>
                   <td colSpan={2} className="px-4 py-3 text-zinc-500 dark:text-orange-200/30 text-xs">
-                    {rows.filter((r) => parseNote(r.note) !== null).length}/{rows.length} notes saisies
+                    {nbNotees}/{rows.length} notes saisies
                   </td>
                 </tr>
               </tfoot>

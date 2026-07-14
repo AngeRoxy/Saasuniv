@@ -75,7 +75,10 @@
           ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
           "$noteId": {
             "note": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
-            "noteRattrapage": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" }
+            "noteRattrapage": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+            "interro1": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+            "interro2": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+            "examen": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" }
           }
         },
         "moyennes": {
