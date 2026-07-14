@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Upload, Download, FileSpreadsheet, CheckCircle, AlertTriangle, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { getUniversityMembers } from '@/lib/db'
+import { getUniversityMembers, getFilieres } from '@/lib/db'
+import type { Filiere } from '@/types/filiere'
 import { createMemberViaApi } from '@/lib/members-client'
 import { PlanGate } from '@/components/ui/plan-gate'
 
@@ -13,8 +14,13 @@ interface ParsedRow {
   prenom: string
   nom: string
   email: string
+  /** Étudiant : filière unique (nom). */
   filiere: string
   niveau: string
+  /** Enseignant : noms de filières saisis dans la cellule (séparés par `;`). */
+  filieresNoms: string[]
+  /** Enseignant : IDs résolus depuis les filières réelles de l'université. */
+  filiereIds: string[]
   valid: boolean
   reason?: string
 }
@@ -26,13 +32,24 @@ interface ImportResult {
 }
 
 const HEADERS_ETU = ['prenom', 'nom', 'email', 'filiere', 'niveau']
-const HEADERS_ENS = ['prenom', 'nom', 'email']
+// Un enseignant peut intervenir dans PLUSIEURS filières (cf. filiereIds sur
+// UniversityMember) : la colonne est au pluriel, séparateur `;` DANS la cellule
+// — la virgule est déjà le séparateur de colonnes du CSV.
+const HEADERS_ENS = ['prenom', 'nom', 'email', 'filieres']
+
+/** Séparateur des filières multiples à l'intérieur d'une cellule. */
+const SEP_FILIERES = ';'
 
 function stripAccents(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-function parseCSV(text: string, tab: Tab): ParsedRow[] {
+/** Clé de comparaison d'un nom de filière : insensible à la casse et aux accents. */
+function cleFiliere(nom: string): string {
+  return stripAccents(nom.trim().toLowerCase())
+}
+
+function parseCSV(text: string, tab: Tab, filieres: Filiere[]): ParsedRow[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '')
   if (lines.length < 2) return []
   const headers = lines[0].split(',').map((h) => stripAccents(h.trim().toLowerCase()))
@@ -42,6 +59,10 @@ function parseCSV(text: string, tab: Tab): ParsedRow[] {
   const iEmail = idx('email')
   const iFiliere = idx('filiere')
   const iNiveau = idx('niveau')
+  const iFilieres = idx('filieres')
+
+  // Résolution nom → id sur les filières RÉELLES de l'université.
+  const idParNom = new Map(filieres.map((f) => [cleFiliere(f.nom), f.id]))
 
   return lines.slice(1).map((line) => {
     const cells = line.split(',').map((c) => c.trim())
@@ -50,18 +71,50 @@ function parseCSV(text: string, tab: Tab): ParsedRow[] {
     const email = iEmail >= 0 ? cells[iEmail] ?? '' : ''
     const filiere = iFiliere >= 0 ? cells[iFiliere] ?? '' : ''
     const niveau = iNiveau >= 0 ? cells[iNiveau] ?? '' : ''
+
+    // Enseignant : « Informatique;Mathématiques » → ['Informatique', 'Mathématiques']
+    const brut = iFilieres >= 0 ? cells[iFilieres] ?? '' : ''
+    const filieresNoms = brut
+      .split(SEP_FILIERES)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    const filiereIds: string[] = []
+    const inconnues: string[] = []
+    for (const n of filieresNoms) {
+      const id = idParNom.get(cleFiliere(n))
+      if (id) filiereIds.push(id)
+      else inconnues.push(n)
+    }
+
     let valid = true
     let reason: string | undefined
     if (!email || !email.includes('@')) { valid = false; reason = 'Email manquant ou invalide' }
     else if (!prenom && !nom) { valid = false; reason = 'Nom manquant' }
     else if (tab === 'etudiants' && (!filiere || !niveau)) { valid = false; reason = 'Filière ou niveau manquant' }
-    return { prenom, nom, email, filiere, niveau, valid, reason }
+    // La colonne `filieres` est FACULTATIVE (un enseignant peut n'être affecté à
+    // aucune filière), mais un nom saisi qui n'existe pas est une erreur : sans
+    // ça, l'affectation serait silencieusement perdue à l'import.
+    else if (tab === 'enseignants' && inconnues.length > 0) {
+      valid = false
+      reason = `Filière inconnue : ${inconnues.map((n) => `« ${n} »`).join(', ')}`
+    }
+
+    return { prenom, nom, email, filiere, niveau, filieresNoms, filiereIds, valid, reason }
   })
 }
 
 function downloadTemplate(tab: Tab) {
   const headers = tab === 'etudiants' ? HEADERS_ETU : HEADERS_ENS
-  const blob = new Blob([headers.join(',') + '\n'], { type: 'text/csv;charset=utf-8;' })
+  // Ligne d'exemple pour les enseignants : le séparateur `;` de la colonne
+  // `filieres` n'est pas devinable depuis un en-tête seul. Elle est commentée
+  // (préfixe #) pour qu'un oubli de suppression ne crée pas un compte fantôme —
+  // parseCSV n'a pas d'email valide sur cette ligne, elle est donc rejetée.
+  const exemple =
+    tab === 'enseignants'
+      ? '#exemple,,,Informatique;Mathematiques\n'
+      : ''
+  const blob = new Blob([headers.join(',') + '\n' + exemple], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -81,19 +134,25 @@ export default function ImportPage() {
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [results, setResults] = useState<ImportResult[] | null>(null)
   const [matriculeBase, setMatriculeBase] = useState(0)
+  const [filieres, setFilieres] = useState<Filiere[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Numérotation matricule : repart du max existant.
+  // Numérotation matricule + filières réelles (pour résoudre la colonne
+  // `filieres` des enseignants en IDs).
   useEffect(() => {
     if (!universityId) return
     let active = true
     ;(async () => {
-      const studs = await getUniversityMembers(universityId, 'student')
+      const [studs, fils] = await Promise.all([
+        getUniversityMembers(universityId, 'student'),
+        getFilieres(universityId),
+      ])
       if (!active) return
       const nums = studs
         .map((s) => parseInt((s.matricule ?? '').split('-')[2] ?? '0', 10))
         .filter(Number.isFinite)
       setMatriculeBase(nums.length ? Math.max(...nums) : 0)
+      setFilieres(fils)
     })()
     return () => { active = false }
   }, [universityId])
@@ -109,7 +168,7 @@ export default function ImportPage() {
     setResults(null)
     setFileName(file.name)
     const reader = new FileReader()
-    reader.onload = () => setRows(parseCSV(String(reader.result ?? ''), tab))
+    reader.onload = () => setRows(parseCSV(String(reader.result ?? ''), tab, filieres))
     reader.readAsText(file)
   }
 
@@ -135,7 +194,14 @@ export default function ImportPage() {
             matricule: `STU-${year}-${String(next).padStart(4, '0')}`,
           })
         } else {
-          await createMemberViaApi({ universityId, email: r.email, displayName, role: 'teacher' })
+          await createMemberViaApi({
+            universityId,
+            email: r.email,
+            displayName,
+            role: 'teacher',
+            // Multi-filières : IDs déjà résolus et validés au parsing.
+            ...(r.filiereIds.length > 0 && { filiereIds: r.filiereIds }),
+          })
         }
         out.push({ email: r.email, ok: true, message: 'Compte créé' })
       } catch (e) {
@@ -205,7 +271,24 @@ export default function ImportPage() {
       <p className="text-zinc-500 dark:text-orange-200/30 text-xs">
         Colonnes attendues : <code className="text-blue-600 dark:text-orange-400">{(tab === 'etudiants' ? HEADERS_ETU : HEADERS_ENS).join(', ')}</code>
         {' '}(la filière et le niveau doivent correspondre à ceux déjà créés). Évitez les virgules dans les valeurs.
+        {tab === 'enseignants' && (
+          <>
+            {' '}La colonne <code className="text-blue-600 dark:text-orange-400">filieres</code> est facultative et accepte
+            plusieurs filières séparées par un point-virgule, par exemple{' '}
+            <code className="text-blue-600 dark:text-orange-400">Informatique;Mathématiques</code>.
+          </>
+        )}
       </p>
+
+      {tab === 'enseignants' && filieres.length === 0 && (
+        <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
+          <AlertTriangle size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-zinc-600 dark:text-orange-200/70">
+            Aucune filière n’existe encore : la colonne <code>filieres</code> sera refusée sur toutes les lignes
+            qui la renseignent. Créez d’abord vos filières.
+          </p>
+        </div>
+      )}
 
       {/* Aperçu */}
       {rows.length > 0 && !results && (
@@ -236,6 +319,7 @@ export default function ImportPage() {
                   <th className="px-4 py-2.5 text-left">Email</th>
                   {tab === 'etudiants' && <th className="px-4 py-2.5 text-left">Filière</th>}
                   {tab === 'etudiants' && <th className="px-4 py-2.5 text-left">Niveau</th>}
+                  {tab === 'enseignants' && <th className="px-4 py-2.5 text-left">Filières</th>}
                   <th className="px-4 py-2.5 text-center">État</th>
                 </tr>
               </thead>
@@ -246,6 +330,21 @@ export default function ImportPage() {
                     <td className="px-4 py-2 text-zinc-800 dark:text-orange-100/60">{r.email || '—'}</td>
                     {tab === 'etudiants' && <td className="px-4 py-2 text-zinc-800 dark:text-orange-100/60">{r.filiere || '—'}</td>}
                     {tab === 'etudiants' && <td className="px-4 py-2 text-zinc-800 dark:text-orange-100/60">{r.niveau || '—'}</td>}
+                    {tab === 'enseignants' && (
+                      <td className="px-4 py-2">
+                        {r.filieresNoms.length === 0 ? (
+                          <span className="text-zinc-500 dark:text-orange-200/30">—</span>
+                        ) : (
+                          <span className="flex flex-wrap gap-1">
+                            {r.filieresNoms.map((n) => (
+                              <span key={n} className="text-[11px] bg-orange-500/10 border border-orange-500/20 text-blue-700 dark:text-orange-300 rounded-full px-2 py-0.5">
+                                {n}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-2 text-center">
                       {r.valid ? <span className="text-green-400 text-xs">✓ Valide</span>
                         : <span className="text-red-400 text-xs" title={r.reason}>✕ {r.reason}</span>}
