@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Règles Firebase Storage — GestUniv
+//
+// ⚠️ LIMITE STRUCTURELLE À CONNAÎTRE
+// Les règles Storage ne peuvent PAS lire la Realtime Database. Or le rôle et
+// l'universityId d'un utilisateur vivent dans /users/{uid} (RTDB), et le projet
+// n'utilise pas firebase-admin — il n'y a donc aucun custom claim sur le token.
+// Conséquence : « écriture réservée aux enseignants de CETTE université » n'est
+// pas exprimable ici. Ce qui EST vérifiable côté Storage :
+//   - l'utilisateur est authentifié ;
+//   - pour un avatar : il en est le propriétaire (auth.uid == uid du chemin) ;
+//   - le type MIME et la taille du fichier.
+//
+// Le contrôle de rôle/tenant reste donc applicatif (l'UI n'expose l'upload de
+// ressources qu'aux enseignants) — c'est un risque résiduel ASSUMÉ, de même
+// nature que le proxy optimiste décrit dans SECURITY_AUDIT.md : un utilisateur
+// authentifié d'une autre université qui devinerait un chemin exact pourrait
+// lire un fichier, ou écrire une ressource.
+// Le jour où firebase-admin est intégré, poser un custom claim
+// {universityId, role} et remplacer les conditions ci-dessous par une
+// vérification de `request.auth.token.universityId == universityId`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function estConnecte() {
+      return request.auth != null;
+    }
+
+    function tailleMax(mo) {
+      return request.resource.size <= mo * 1024 * 1024;
+    }
+
+    function estDocumentAutorise() {
+      return request.resource.contentType.matches('application/pdf')
+          || request.resource.contentType.matches('application/msword')
+          || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+          || request.resource.contentType.matches('application/vnd.ms-powerpoint')
+          || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.presentationml.presentation')
+          || request.resource.contentType.matches('image/jpeg')
+          || request.resource.contentType.matches('image/png');
+    }
+
+    function estImage() {
+      return request.resource.contentType.matches('image/jpeg')
+          || request.resource.contentType.matches('image/png');
+    }
+
+    // ─── Ressources pédagogiques ─────────────────────────────────────────────
+    // Lecture : tout utilisateur authentifié (le filtrage par université est
+    // applicatif — cf. limite ci-dessus).
+    // Écriture : authentifié + format et taille (≤ 20 Mo) valides.
+    // Suppression : authentifié (l'UI ne l'expose qu'à l'enseignant).
+    match /universities/{universityId}/resources/{matiere}/{fichier} {
+      allow read: if estConnecte();
+      allow write: if estConnecte() && tailleMax(20) && estDocumentAutorise();
+      allow delete: if estConnecte();
+    }
+
+    // ─── Photos de profil ────────────────────────────────────────────────────
+    // Lecture : tout utilisateur authentifié (les avatars s'affichent dans les
+    // listes admin, l'emploi du temps, la sidebar…).
+    // Écriture : le PROPRIÉTAIRE uniquement — seule règle de rôle réellement
+    // vérifiable ici, puisque l'uid est dans le chemin ET dans le token.
+    // (L'admin ne peut donc pas remplacer la photo d'un membre : ce n'est pas
+    // un oubli, c'est la limite exposée en tête de fichier.)
+    match /universities/{universityId}/avatars/{uid} {
+      allow read: if estConnecte();
+      allow write: if estConnecte()
+                   && request.auth.uid == uid
+                   && tailleMax(5)
+                   && estImage();
+      allow delete: if estConnecte() && request.auth.uid == uid;
+    }
+
+    // Tout le reste est refusé.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

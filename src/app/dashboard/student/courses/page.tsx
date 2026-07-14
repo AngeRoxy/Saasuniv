@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { BookOpen, ExternalLink, Link2 } from 'lucide-react'
+import { BookOpen, ExternalLink, Link2, Download, FileText } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMember, getFilieres, getRessources, type Ressource } from '@/lib/db'
+import { formatTaille } from '@/lib/storage'
 
 export default function StudentCoursesPage() {
   const { user, profile } = useAuth()
@@ -64,21 +65,44 @@ export default function StudentCoursesPage() {
           Aucune ressource disponible pour le moment.
         </div>
       ) : (
+        // Une ressource peut porter un lien ET un fichier : la carte n'est donc
+        // plus un <a> global (deux destinations possibles, et un lien imbriqué
+        // dans un lien est du HTML invalide) mais expose ses actions séparément.
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibles.map((r) => (
-            <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
-              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 hover:border-orange-500/25 rounded-xl p-5 flex flex-col gap-2 transition-colors group">
+            <div key={r.id}
+              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 hover:border-orange-500/25 rounded-xl p-5 flex flex-col gap-2 transition-colors">
               <div className="flex items-center gap-2">
-                <Link2 size={14} className="text-blue-600 dark:text-orange-400 shrink-0" />
+                {r.fichierUrl
+                  ? <FileText size={14} className="text-blue-600 dark:text-orange-400 shrink-0" />
+                  : <Link2 size={14} className="text-blue-600 dark:text-orange-400 shrink-0" />}
                 <h3 className="text-zinc-900 dark:text-white font-semibold text-sm truncate">{r.titre}</h3>
               </div>
               {r.description && <p className="text-zinc-800 dark:text-orange-100/50 text-xs line-clamp-2">{r.description}</p>}
               <div className="flex flex-wrap gap-1.5">
                 {r.matiere && <span className="text-[11px] bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 rounded-full px-2 py-0.5">{r.matiere}</span>}
               </div>
-              <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-orange-400 group-hover:text-blue-900 dark:group-hover:text-orange-300">Ouvrir <ExternalLink size={11} /></span>
+
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                {r.fichierUrl && (
+                  <a href={r.fichierUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-orange-400 hover:bg-orange-500/20 transition-colors">
+                    <Download size={11} /> Télécharger
+                    {r.fichierTaille !== undefined && (
+                      <span className="font-normal text-zinc-500">({formatTaille(r.fichierTaille)})</span>
+                    )}
+                  </a>
+                )}
+                {r.url && (
+                  <a href={r.url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-orange-400 hover:text-blue-900 dark:hover:text-orange-300 transition-colors">
+                    Ouvrir le lien <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
+
               <span className="text-[11px] text-zinc-500 dark:text-orange-200/30">Par {r.auteur}</span>
-            </a>
+            </div>
           ))}
         </div>
       )}

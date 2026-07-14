@@ -1428,6 +1428,7 @@ export async function saveDeliberation(
 // ─── Ressources pédagogiques ───────────────────────────────────────────────────
 
 import type { Ressource, RessourceFormData } from '@/types/ressource'
+import { supprimerFichier } from './storage'
 
 export type { Ressource, RessourceFormData }
 
@@ -1436,7 +1437,8 @@ export async function createRessource(
   data: RessourceFormData
 ): Promise<string> {
   const newRef = push(ref(db, `universities/${universityId}/ressources`))
-  await set(newRef, { ...data, createdAt: Date.now() })
+  // Les champs de fichier sont optionnels : `undefined` ferait échouer set().
+  await set(newRef, { ...stripUndefined(data), createdAt: Date.now() })
   return newRef.key!
 }
 
@@ -1450,10 +1452,24 @@ export async function getRessources(universityId: string): Promise<Ressource[]> 
   return result.sort((a, b) => b.createdAt - a.createdAt)
 }
 
+/**
+ * Supprime la ressource ET son fichier Storage s'il y en a un — sans quoi le
+ * bucket accumulerait des fichiers orphelins, invisibles et facturés.
+ * L'entrée RTDB n'est retirée qu'après la suppression du fichier : en cas
+ * d'échec, la ressource reste visible et l'erreur remonte (pas de faux succès).
+ */
 export async function deleteRessource(
   universityId: string,
   ressourceId: string
 ): Promise<void> {
+  const snapshot = await get(ref(db, `universities/${universityId}/ressources/${ressourceId}`))
+  const fichierPath = snapshot.exists()
+    ? (snapshot.val() as Ressource).fichierPath
+    : undefined
+
+  if (fichierPath) {
+    await supprimerFichier(fichierPath)
+  }
   await remove(ref(db, `universities/${universityId}/ressources/${ressourceId}`))
 }
 
