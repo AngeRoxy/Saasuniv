@@ -12,9 +12,22 @@ dans les plans mais non implémentées** (PDF, emails, API, multi-campus) et **l
 
 1. **Redéployer les règles RTDB** — `firebase deploy --only database`
    (validation 0-20 ajoutée sur `interro1` / `interro2` / `examen` ; sans ça les évaluations sont rejetées).
-2. **Activer Firebase Storage** sur le projet, puis **déployer ses règles** —
-   `firebase deploy --only storage` (nouveau fichier `storage.rules`, enregistré dans `firebase.json`).
-3. Décider si l'import CSV reste inclus dans le plan Standard (cf. « Écarts plans » plus bas).
+   **Indépendant de Storage, toujours requis.**
+2. Décider si l'import CSV reste inclus dans le plan Standard (cf. « Écarts plans » plus bas).
+
+### Firebase Storage — DÉSACTIVÉ (plan Blaze indisponible)
+
+Storage n'a **pas pu être activé** (le plan Blaze requis n'accepte pas les cartes prépayées de la
+cliente). Tout ce qui en dépend est **neutralisé proprement derrière un flag**, sans rien supprimer :
+
+- Flag unique `STORAGE_ENABLED = false` dans [storage.ts](src/lib/storage.ts).
+- Upload de fichiers (ressources) et photos de profil : **masqués**. Le champ lien URL des ressources
+  et l'avatar par défaut (initiales/icône) restent pleinement fonctionnels.
+- `storage.rules` et `firebase.json` conservés mais **non déployés** (inoffensifs tant qu'inutilisés).
+
+**Réactivation quand un moyen de paiement Blaze sera disponible** : Console → Blaze → activer Storage,
+puis passer `STORAGE_ENABLED` à `true` (une seule ligne), puis `firebase deploy --only storage`.
+Procédure détaillée en tête de `storage.rules`.
 
 ---
 
@@ -110,9 +123,9 @@ Tableau de bord à KPI réels (étudiants, MRR, taux de conversion, alertes), li
 | 2 | Faux succès de `/admin/settings` | Frais + calendrier **réellement persistés** (`config/frais`, `config/calendrier`) ; fausse clôture remplacée par un lien vers `/admin/closing` |
 | 3 | `ComingSoon` périmés des accueils | Vrais KPI étudiant / enseignant / parent (`useStudentSummary`, `useTeacherSummary`, `KpiCard`) |
 | 4 | Fuite de fonctionnalité payante | `PlanGate` sur la messagerie interne et l'import CSV |
-| 5 | Firebase Storage | Upload de fichiers pour les ressources (20 Mo, progression réelle), `storage.rules` |
+| 5 | Firebase Storage | Upload de fichiers pour les ressources — **codé puis désactivé** (flag, Blaze indispo, voir plus haut) |
 | 6 | Notes | 3 évaluations par matière : (I1 + I2 + 2×E) / 4 |
-| 7 | Photos de profil | Upload avatar (500×500, 5 Mo), affiché profils / sidebars / listes admin |
+| 7 | Photos de profil | Upload avatar codé puis **désactivé** avec le même flag ; avatar par défaut (initiales) partout |
 | 8 | Import CSV enseignants | Colonne `filieres` multi-valuée (séparateur `;`), résolution par nom |
 
 Bonus trouvés en chemin et corrigés : le bouton « Sauvegarder » du sous-domaine n'avait **aucun handler**,
