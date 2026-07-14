@@ -9,6 +9,7 @@ import {
   validerFichier,
   redimensionnerImage,
   UploadError,
+  STORAGE_ENABLED,
   AVATAR_ACCEPT,
   AVATAR_EXTENSIONS,
   AVATAR_MAX_BYTES,
@@ -45,6 +46,13 @@ export function AvatarUpload({
   const inputRef = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Firebase Storage désactivé : on rend un avatar simple, non cliquable, sans
+  // aucun appel Storage. `photoUrl` (absent en pratique) retombe proprement sur
+  // les initiales / l'icône via MemberAvatar. Réactivation = STORAGE_ENABLED.
+  if (!STORAGE_ENABLED) {
+    return <MemberAvatar photoUrl={photoUrl} name={name} size={size} />
+  }
 
   const enCours = progress !== null
 

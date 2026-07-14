@@ -1,6 +1,24 @@
 rules_version = '2';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ⚠️ STORAGE NON ACTIVÉ — plan Blaze requis, pas encore souscrit.
+//
+// Firebase Storage n'est PAS activé sur le projet. Ce fichier est prêt mais
+// n'est PAS déployé, et l'UI n'expose aucun upload (flag STORAGE_ENABLED = false
+// dans src/lib/storage.ts). Il ne gêne rien tant qu'il n'est pas déployé.
+//
+// POUR RÉACTIVER, quand un moyen de paiement compatible Blaze sera disponible :
+//   1. Console Firebase → passer le projet en plan Blaze → activer Storage.
+//   2. Vérifier NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET dans .env.local (le nom
+//      affiché par la console doit correspondre).
+//   3. Dans le code, passer STORAGE_ENABLED à `true` (src/lib/storage.ts) :
+//      c'est le seul flag à changer, il rallume les uploads (ressources + avatars).
+//   4. firebase deploy --only storage
+//   (La règle RTDB des notes — firebase deploy --only database — est INDÉPENDANTE
+//    de Storage et reste requise séparément.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Règles Firebase Storage — GestUniv
 //
 // ⚠️ LIMITE STRUCTURELLE À CONNAÎTRE

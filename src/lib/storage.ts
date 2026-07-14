@@ -6,6 +6,27 @@ import {
 } from 'firebase/storage'
 import { storage } from './firebase'
 
+// ─── Interrupteur global Firebase Storage ──────────────────────────────────────
+//
+// Cloud Storage N'EST PAS activé sur le projet Firebase (plan Blaze requis, pas
+// encore souscrit). Tant que ce flag est `false`, l'UI n'expose aucun upload :
+// les composants concernés lisent cette constante pour se masquer. Le code
+// d'upload reste intact — rien n'est supprimé — pour une réactivation en une
+// seule ligne.
+//
+// POUR RÉACTIVER (quand Storage sera disponible) :
+//   1. Console Firebase → passer en Blaze → activer Storage.
+//   2. Vérifier NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET dans .env.local.
+//   3. Passer STORAGE_ENABLED à `true` ici (seule ligne de code à changer).
+//   4. firebase deploy --only storage
+//
+// Ce flag ne garde QUE l'affichage des points d'upload. Les fonctions
+// d'upload/suppression ci-dessous restent appelables et échouent proprement
+// (message clair) si on les invoque alors que Storage est indisponible.
+// Typé `boolean` (et non le littéral `false`) volontairement : sinon TypeScript
+// considère les branches « Storage activé » comme du code mort et les signale.
+export const STORAGE_ENABLED: boolean = false
+
 // ─── Contraintes d'upload ─────────────────────────────────────────────────────
 // Elles sont appliquées ICI (avant l'envoi, pour un message d'erreur clair) ET
 // dans storage.rules (autorité réelle : un client modifié ne peut pas les

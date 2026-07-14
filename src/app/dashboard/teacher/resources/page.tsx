@@ -9,6 +9,7 @@ import {
   validerFichier,
   formatTaille,
   UploadError,
+  STORAGE_ENABLED,
   RESSOURCE_ACCEPT,
   RESSOURCE_EXTENSIONS,
   RESSOURCE_MAX_BYTES,
@@ -230,62 +231,71 @@ export default function TeacherResourcesPage() {
                 <input value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} placeholder="https://…" className={inputCls} />
               </div>
 
-              {/* Fichier joint — alternative OU complément au lien. */}
-              <div>
-                <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">
-                  Fichier (option.)
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={RESSOURCE_ACCEPT}
-                  onChange={(e) => handleFileChange(e.target.files?.[0])}
-                  className="hidden"
-                />
-                {!file ? (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 border border-dashed border-orange-500/30 rounded-xl px-4 py-3 text-sm text-zinc-600 dark:text-orange-200/60 hover:border-orange-500/60 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50"
-                  >
-                    <Upload size={15} /> Choisir un fichier
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2.5">
-                    <FileText size={15} className="shrink-0 text-blue-600 dark:text-orange-400" />
-                    <span className="min-w-0 flex-1 truncate text-sm text-zinc-800 dark:text-orange-100/80">{file.name}</span>
-                    <span className="shrink-0 text-xs text-zinc-500">{formatTaille(file.size)}</span>
-                    {!saving && (
-                      <button
-                        type="button"
-                        onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
-                        className="shrink-0 text-zinc-500 hover:text-red-400"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                )}
-                <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-orange-200/30">
-                  PDF, Word, PowerPoint, JPG ou PNG · {formatTaille(RESSOURCE_MAX_BYTES)} maximum
-                </p>
-
-                {/* Progression RÉELLE de l'upload (octets transférés). */}
-                {progress !== null && (
-                  <div className="mt-2">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-orange-500 transition-[width] duration-200"
-                        style={{ width: `${progress}%` }}
-                      />
+              {/* Fichier joint — alternative OU complément au lien.
+                  Masqué tant que Firebase Storage n'est pas activé
+                  (STORAGE_ENABLED). Le code reste intact pour réactivation. */}
+              {STORAGE_ENABLED ? (
+                <div>
+                  <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">
+                    Fichier (option.)
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={RESSOURCE_ACCEPT}
+                    onChange={(e) => handleFileChange(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                  {!file ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={saving}
+                      className="w-full flex items-center justify-center gap-2 border border-dashed border-orange-500/30 rounded-xl px-4 py-3 text-sm text-zinc-600 dark:text-orange-200/60 hover:border-orange-500/60 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Upload size={15} /> Choisir un fichier
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2.5">
+                      <FileText size={15} className="shrink-0 text-blue-600 dark:text-orange-400" />
+                      <span className="min-w-0 flex-1 truncate text-sm text-zinc-800 dark:text-orange-100/80">{file.name}</span>
+                      <span className="shrink-0 text-xs text-zinc-500">{formatTaille(file.size)}</span>
+                      {!saving && (
+                        <button
+                          type="button"
+                          onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                          className="shrink-0 text-zinc-500 hover:text-red-400"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
-                    <p className="mt-1 text-[11px] text-zinc-500 dark:text-orange-200/40">
-                      Envoi du fichier… {progress}%
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                  <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-orange-200/30">
+                    PDF, Word, PowerPoint, JPG ou PNG · {formatTaille(RESSOURCE_MAX_BYTES)} maximum
+                  </p>
+
+                  {/* Progression RÉELLE de l'upload (octets transférés). */}
+                  {progress !== null && (
+                    <div className="mt-2">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-orange-500 transition-[width] duration-200"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <p className="mt-1 text-[11px] text-zinc-500 dark:text-orange-200/40">
+                        Envoi du fichier… {progress}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="flex items-center gap-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-white/10 px-3 py-2.5 text-[11px] text-zinc-500 dark:text-orange-200/40">
+                  <FileText size={13} className="shrink-0" />
+                  L’envoi de fichiers sera bientôt disponible. En attendant, partagez un lien (Drive, PDF en ligne…).
+                </p>
+              )}
 
               {error && (
                 <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5">

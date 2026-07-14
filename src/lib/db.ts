@@ -1490,7 +1490,7 @@ export async function saveDeliberation(
 // ─── Ressources pédagogiques ───────────────────────────────────────────────────
 
 import type { Ressource, RessourceFormData } from '@/types/ressource'
-import { supprimerFichier } from './storage'
+import { supprimerFichier, STORAGE_ENABLED } from './storage'
 
 export type { Ressource, RessourceFormData }
 
@@ -1519,18 +1519,24 @@ export async function getRessources(universityId: string): Promise<Ressource[]> 
  * bucket accumulerait des fichiers orphelins, invisibles et facturés.
  * L'entrée RTDB n'est retirée qu'après la suppression du fichier : en cas
  * d'échec, la ressource reste visible et l'erreur remonte (pas de faux succès).
+ *
+ * Storage désactivé (STORAGE_ENABLED = false) : aucune ressource ne peut porter
+ * de fichier, mais par sécurité on saute carrément l'appel Storage — un bucket
+ * injoignable ne doit jamais empêcher de supprimer une ressource (qui, elle, ne
+ * dépend que de la RTDB, toujours disponible).
  */
 export async function deleteRessource(
   universityId: string,
   ressourceId: string
 ): Promise<void> {
-  const snapshot = await get(ref(db, `universities/${universityId}/ressources/${ressourceId}`))
-  const fichierPath = snapshot.exists()
-    ? (snapshot.val() as Ressource).fichierPath
-    : undefined
-
-  if (fichierPath) {
-    await supprimerFichier(fichierPath)
+  if (STORAGE_ENABLED) {
+    const snapshot = await get(ref(db, `universities/${universityId}/ressources/${ressourceId}`))
+    const fichierPath = snapshot.exists()
+      ? (snapshot.val() as Ressource).fichierPath
+      : undefined
+    if (fichierPath) {
+      await supprimerFichier(fichierPath)
+    }
   }
   await remove(ref(db, `universities/${universityId}/ressources/${ressourceId}`))
 }
