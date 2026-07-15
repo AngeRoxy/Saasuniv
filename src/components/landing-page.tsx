@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import {
   GraduationCap, BookOpen, Users, BarChart3, Shield, Bell,
   Star, ArrowRight, Building2, Globe, CreditCard, CheckCircle2,
-  FileText, Lock, TrendingUp, ChevronDown, Check, X
+  FileText, Lock, TrendingUp, ChevronDown, Check, X, Clock
 } from 'lucide-react'
 import {
   motion, animate, useInView, useReducedMotion, useScroll, useSpring,
@@ -31,19 +31,22 @@ const limiteRows: { label: string; value: (f: PlanFeatures) => string }[] = [
 ]
 
 // Groupe "Fonctionnalités" : libellé + clé booléenne. `ia` => pill "IA".
-const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean }[] = [
+// `soon` => fonctionnalité prévue mais pas encore livrée : badge "Bientôt"
+// (roadmap assumée, cf. featureRow render). NE PAS marquer `soon` sur une
+// fonctionnalité réellement disponible sous peine de la dévaloriser.
+const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean; soon?: boolean }[] = [
   { label: 'Import depuis Excel', key: 'importCSV' },
-  { label: 'Export PDF', key: 'exportPDF' },
-  { label: 'Bulletins PDF', key: 'bulletinsPDF' },
+  { label: 'Export PDF', key: 'exportPDF', soon: true },
+  { label: 'Bulletins PDF', key: 'bulletinsPDF', soon: true },
   { label: 'Messagerie interne', key: 'messagerieInterne' },
-  { label: 'Notifications email', key: 'notificationsEmail' },
+  { label: 'Notifications email', key: 'notificationsEmail', soon: true },
   { label: 'Assistant virtuel intelligent', key: 'chatbotIA', ia: true },
   { label: 'Suggestions automatiques (intelligence artificielle)', key: 'recommandationsIA', ia: true },
   { label: 'Journal des activités', key: 'auditLogs' },
   { label: 'Support prioritaire', key: 'supportPrioritaire' },
-  { label: 'Gestion de plusieurs campus/sites', key: 'multiCampus' },
-  { label: 'Connexion avec vos autres logiciels', key: 'apiAccess' },
-  { label: 'Adresse web à votre nom', key: 'sousDomainePerso' },
+  { label: 'Gestion de plusieurs campus/sites', key: 'multiCampus', soon: true },
+  { label: 'Connexion avec vos autres logiciels', key: 'apiAccess', soon: true },
+  { label: 'Adresse web à votre nom', key: 'sousDomainePerso', soon: true },
 ]
 
 const features = [
@@ -630,19 +633,40 @@ export default function LandingPage() {
                   <ul className="space-y-2.5 mb-8 flex-1">
                     {featureRows.map((row) => {
                       const included = Boolean(plan.features[row.key])
+                      // "Bientôt" ne se montre que là où la fonctionnalité est
+                      // vendue comme incluse : inutile de l'afficher sur un plan
+                      // qui ne la propose de toute façon pas (croix barrée).
+                      const soon = Boolean(row.soon) && included
                       return (
                         <li key={row.key} className="flex items-center gap-2 text-sm">
                           {included ? (
-                            <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                            soon ? (
+                              <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                            ) : (
+                              <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                            )
                           ) : (
                             <X className="w-4 h-4 text-zinc-600 dark:text-zinc-400 dark:text-zinc-600 shrink-0" />
                           )}
-                          <span className={included ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 dark:text-zinc-600 line-through'}>
+                          <span
+                            className={
+                              !included
+                                ? 'text-zinc-600 dark:text-zinc-400 dark:text-zinc-600 line-through'
+                                : soon
+                                  ? 'text-zinc-500 dark:text-zinc-400'
+                                  : 'text-zinc-900 dark:text-white'
+                            }
+                          >
                             {row.label}
                           </span>
                           {row.ia && included && (
                             <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-orange-500/20 dark:text-orange-300">
                               IA
+                            </span>
+                          )}
+                          {soon && (
+                            <span className="ml-auto shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                              Bientôt
                             </span>
                           )}
                         </li>

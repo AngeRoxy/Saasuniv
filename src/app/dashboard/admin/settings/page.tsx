@@ -262,7 +262,12 @@ export default function SettingsPage() {
 
       {/* Sous-domaine personnalisé */}
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2 mb-4"><Globe size={16} className="text-blue-600 dark:text-orange-400" /> Sous-domaine personnalisé</h2>
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2 mb-4">
+          <Globe size={16} className="text-blue-600 dark:text-orange-400" /> Sous-domaine personnalisé
+          <span className="ml-1 shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            Bientôt disponible
+          </span>
+        </h2>
         <PlanGate feature="sousDomainePerso" universityId={universityId}>
           <div className="space-y-4">
             <div>
@@ -271,6 +276,9 @@ export default function SettingsPage() {
                 <input value={sousDomaine} onChange={e => setSousDomaineInput(e.target.value)} placeholder="mon-universite" className="flex-1 bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60" />
                 <span className="text-zinc-500 dark:text-orange-200/40 text-sm">.gestuniv.app</span>
               </div>
+              <p className="text-zinc-500 dark:text-orange-200/40 text-xs mt-1.5">
+                Votre choix est enregistré dès maintenant ; l&apos;adresse personnalisée sera activée dès la mise en ligne de cette fonctionnalité.
+              </p>
             </div>
             <button onClick={handleSaveSousDomaine} disabled={savingSousDomaine || !universityId} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"><Save size={14} /> {savingSousDomaine ? 'Enregistrement…' : 'Sauvegarder'}</button>
           </div>
