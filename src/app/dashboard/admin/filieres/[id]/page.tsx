@@ -336,6 +336,7 @@ export default function FiliereDetailPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 dark:border-white/5 text-zinc-500 dark:text-orange-200/40 text-xs uppercase tracking-wider">
@@ -404,6 +405,7 @@ export default function FiliereDetailPage() {
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       )}
 

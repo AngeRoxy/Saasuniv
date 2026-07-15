@@ -229,6 +229,7 @@ export default function SuperAdminPage() {
             Tout gérer <ArrowRight size={12} />
           </Link>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
@@ -271,6 +272,7 @@ export default function SuperAdminPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

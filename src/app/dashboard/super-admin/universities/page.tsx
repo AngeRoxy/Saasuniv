@@ -148,6 +148,7 @@ export default function UniversitiesPage() {
       </div>
 
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
@@ -211,6 +212,7 @@ export default function UniversitiesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {detail && (

@@ -95,6 +95,7 @@ export default function RevenuePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-zinc-200 dark:border-orange-500/10"><h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Revenus par université</h2></div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-zinc-50 dark:bg-black/40 text-blue-700 dark:text-orange-300/60 text-xs uppercase tracking-wider">
@@ -119,6 +120,7 @@ export default function RevenuePage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 h-fit">
