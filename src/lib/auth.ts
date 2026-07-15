@@ -3,8 +3,6 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   deleteUser,
-  signInWithPopup,
-  GoogleAuthProvider,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
@@ -80,11 +78,6 @@ export async function registerMember(
   }
 
   return credential
-}
-
-export async function loginWithGoogle() {
-  const provider = new GoogleAuthProvider()
-  return signInWithPopup(auth, provider)
 }
 
 export async function logout() {

@@ -79,7 +79,7 @@ plusieurs modules récents (absences, examens, rattrapage, parcours, sessions_di
 ## Ce qui est fait et branché sur Firebase
 
 ### Authentification & cycle de vie
-- Connexion email/mot de passe + Google, mot de passe oublié, confirmation de réinitialisation.
+- Connexion email/mot de passe, mot de passe oublié, confirmation de réinitialisation.
 - Inscription membre (étudiant / enseignant / parent — le rôle super-admin est neutralisé).
 - Création d'université (tunnel 3 étapes) avec ouverture automatique de la **période d'essai**.
 - Garde « première connexion » (`premiere-connexion-guard.tsx`), verrouillage après échecs de

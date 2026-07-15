@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { loginWithEmail, loginWithGoogle } from '@/lib/auth'
+import { loginWithEmail } from '@/lib/auth'
 import {
   getUserProfile,
   checkLoginLocked,
@@ -31,8 +31,6 @@ function getErrorMessage(code: string): string {
     case 'auth/invalid-credential':  return 'Email ou mot de passe incorrect.'
     case 'auth/too-many-requests':   return 'Trop de tentatives. Réessayez dans quelques minutes.'
     case 'auth/user-disabled':       return 'Ce compte a été désactivé.'
-    case 'auth/popup-closed-by-user': return 'Connexion annulée.'
-    case 'auth/cancelled-popup-request': return 'Connexion annulée.'
     default:                         return 'Une erreur est survenue. Veuillez réessayer.'
   }
 }
@@ -58,7 +56,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
   // Anti brute-force : minutes restantes de verrouillage (null = non verrouillé)
   // et compteur local d'échecs (hint « X tentatives restantes » ; le verrou fait
   // autorité côté serveur via /loginAttempts).
@@ -122,48 +119,10 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogle() {
-    setError('')
-    setGoogleLoading(true)
-    try {
-      const credential = await loginWithGoogle()
-      await resolveAndRedirect(credential.user.uid, router)
-    } catch (err: unknown) {
-      setError(getErrorMessage((err as { code?: string }).code ?? ''))
-      setGoogleLoading(false)
-    }
-  }
-
   return (
     <div className="bg-white dark:bg-white/5 border border-orange-500/20 rounded-2xl p-8 shadow-lg shadow-zinc-300/40 dark:shadow-none">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1">Connexion</h1>
       <p className="text-zinc-600 dark:text-orange-200/60 text-sm mb-8">Accédez à votre espace universitaire</p>
-
-      {/* Google button */}
-      <button
-        type="button"
-        onClick={handleGoogle}
-        disabled={loading || googleLoading}
-        className="w-full flex items-center justify-center gap-3 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 text-zinc-900 dark:text-white rounded-xl py-3 mb-4 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
-      >
-        {googleLoading ? (
-          <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 48 48">
-            <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.6 26.8 36 24 36c-5.3 0-9.6-2.9-11.3-7l-6.5 5C9.8 39.9 16.4 44 24 44z"/>
-            <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C41 35.1 44 30 44 24c0-1.3-.1-2.7-.4-4z"/>
-          </svg>
-        )}
-        Continuer avec Google
-      </button>
-
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 h-px bg-zinc-100 dark:bg-white/10" />
-        <span className="text-xs text-zinc-500 dark:text-orange-200/30">ou</span>
-        <div className="flex-1 h-px bg-zinc-100 dark:bg-white/10" />
-      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
@@ -179,7 +138,7 @@ export default function LoginPage() {
             }}
             placeholder="vous@exemple.com"
             required
-            disabled={loading || googleLoading}
+            disabled={loading}
             className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
           />
         </div>
@@ -200,7 +159,7 @@ export default function LoginPage() {
             onChange={e => setPassword(e.target.value)}
             placeholder="••••••••"
             required
-            disabled={loading || googleLoading}
+            disabled={loading}
             className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 disabled:opacity-50"
           />
         </div>
@@ -229,7 +188,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={loading || googleLoading || lockedMinutes !== null}
+          disabled={loading || lockedMinutes !== null}
           className="mt-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 transition-colors flex items-center justify-center gap-2"
         >
           {loading && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
