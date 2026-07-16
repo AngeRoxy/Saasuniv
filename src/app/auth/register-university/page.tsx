@@ -228,7 +228,11 @@ export default function RegisterUniversityPage() {
         <div className="flex flex-col gap-4">
           <p className="text-blue-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider mb-1">Compte administrateur</p>
 
-          <div className="flex gap-3">
+          {/* Empilé sous `sm` : deux <input> côte à côte ne tiennent pas dans la
+              carte (min-width intrinsèque d'un input ≈ 200px, ~294px utiles sur
+              un mobile de 390px), et le layout auth est en overflow-hidden — le
+              champ débordant serait clippé, donc invisible. */}
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex flex-col gap-1.5 flex-1">
               <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Prénom</label>
               <input type="text" value={step2.firstName} onChange={e => setStep2(prev => ({ ...prev, firstName: e.target.value }))} placeholder="Jean"
