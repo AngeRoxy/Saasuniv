@@ -1,5 +1,6 @@
 import { verifyFirebaseToken } from '@/lib/verify-token'
 import { fetchCallerProfile, bearerToken } from '@/lib/server/caller'
+import { buildUserDataSummary } from '@/lib/server/chatbot-context'
 import type { ChatMessage, ChatContext } from '@/types/chatbot'
 
 interface ChatbotRequestBody {
@@ -47,12 +48,28 @@ export async function POST(request: Request): Promise<Response> {
       )
     }
 
-    const semestreEnCours = context.semestreEnCours ?? 'non précisé'
-    const filiere = context.filiere ?? 'non précisée'
+    // d. Données RÉELLES de l'appelant, lues dans Firebase selon son rôle (avec
+    //    SON token : le chatbot ne peut rien lire de plus que lui). Le rôle vient
+    //    du profil authentique, jamais du context envoyé par le client.
+    const dataSummary = await buildUserDataSummary(caller, bearerToken(request), {
+      enfantUid: context.enfantUid,
+    })
 
-    const systemPrompt = `Tu es l'assistant IA de ${context.nomUniversite}, un système de gestion universitaire. Tu réponds uniquement en français. Tu aides les utilisateurs avec leurs questions sur leurs cours, notes, emploi du temps et procédures administratives. Tu n'as accès qu'aux données de ${context.nomUniversite}. Rôle de l'utilisateur : ${context.role}. Semestre en cours : ${semestreEnCours}. Filière : ${filiere}. Tu ne dois jamais inventer de notes ou de données. Si tu ne sais pas, dis-le.`
+    const contexteDonnees = dataSummary
+      ? `Voici les informations RÉELLES de l'utilisateur, extraites à l'instant de la base de données de l'établissement. Utilise-les pour répondre :\n${dataSummary}`
+      : `Aucune donnée personnelle n'a pu être chargée pour cet utilisateur. Tu ne disposes donc d'AUCUNE information sur ses notes, son emploi du temps, ses absences ou ses paiements : dis-le clairement s'il pose une question dessus, et invite-le à consulter son tableau de bord.`
 
-    // d. Appel de l'API Anthropic via fetch natif (jamais côté client).
+    const systemPrompt = `Tu es l'assistant IA de ${context.nomUniversite}, un système de gestion universitaire. Tu réponds uniquement en français. Tu aides les utilisateurs avec leurs questions sur leurs cours, notes, emploi du temps, absences et procédures administratives. Tu n'as accès qu'aux données de ${context.nomUniversite}. Rôle de l'utilisateur : ${caller.role}.
+
+${contexteDonnees}
+
+Règles impératives :
+- Réponds en te basant sur les données réelles fournies ci-dessus. Cite les chiffres tels quels, sans les recalculer ni les arrondir différemment.
+- Si la question porte sur une information qui n'est pas dans ce contexte, dis clairement que tu ne disposes pas de cette information, et n'invente pas de réponse.
+- Tu ne dois JAMAIS inventer une note, une moyenne, une date, un horaire, une salle, un montant ou un nom qui ne figure pas dans le contexte ci-dessus. Une donnée annoncée comme absente ("aucune note saisie", "aucun examen programmé") est une information exacte : rapporte-la telle quelle, ne la comble pas.
+- Les questions générales sur le fonctionnement de l'application (rattrapage, justification d'une absence, procédures…) restent les bienvenues : réponds-y normalement, même sans données personnelles.`
+
+    // e. Appel de l'API Anthropic via fetch natif (jamais côté client).
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -72,13 +89,13 @@ export async function POST(request: Request): Promise<Response> {
       throw new Error(`Anthropic API a répondu avec le statut ${res.status}`)
     }
 
-    // e. Extraire la réponse texte.
+    // f. Extraire la réponse texte.
     const data = (await res.json()) as AnthropicMessagesResponse
     const text = data.content?.[0]?.text ?? ''
 
     return Response.json({ reply: text })
   } catch {
-    // f. Catch global : message d'erreur en français.
+    // g. Catch global : message d'erreur en français.
     return Response.json(
       { error: "Une erreur est survenue lors de la communication avec l'assistant." },
       { status: 500 }

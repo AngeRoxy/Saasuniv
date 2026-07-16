@@ -15,6 +15,12 @@ export interface ChatContext {
   semestreEnCours?: string
   filiere?: string
   notes?: Array<{ matiere: string; note: number; credits: number }>
+  /**
+   * Parent : enfant actuellement sélectionné dans le tableau de bord, pour que
+   * l'assistant parle du bon enfant. Simple indication — le serveur vérifie que
+   * cet uid est bien rattaché au parent avant de charger quoi que ce soit.
+   */
+  enfantUid?: string
 }
 
 export type RecommandationType =

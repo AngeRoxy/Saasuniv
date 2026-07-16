@@ -14,7 +14,12 @@ import {
 } from '@/lib/db'
 import { getNoteRetenue } from '@/types/note'
 import { statutAffiche } from '@/types/paiement'
-import { JOURS, type Creneau, type JourSemaine } from '@/types/emploi-du-temps'
+import { trouverProchainCours, type Creneau } from '@/types/emploi-du-temps'
+
+// Réexport : `trouverProchainCours` vit désormais dans types/emploi-du-temps.ts
+// (fonction pure, partagée avec le contexte serveur du chatbot). Les importeurs
+// existants (useTeacherSummary) continuent de la trouver ici.
+export { trouverProchainCours }
 
 export interface StudentSummary {
   /** Moyenne du semestre en cours, ou null si aucune note publiée. */
@@ -54,34 +59,6 @@ const EMPTY: StudentSummary = {
 /** 'YYYY-MM-DD' du jour, pour dériver le statut « En retard » d'un paiement. */
 function todayISO(d: Date): string {
   return d.toISOString().slice(0, 10)
-}
-
-/**
- * Prochain créneau à venir dans la semaine type, en partant de maintenant.
- * L'emploi du temps est hebdomadaire et se répète : on parcourt les jours à
- * partir d'aujourd'hui et on boucle sur la semaine suivante si nécessaire.
- * `null` si l'étudiant n'a aucun créneau.
- */
-export function trouverProchainCours(creneaux: Creneau[], now: Date): Creneau | null {
-  if (creneaux.length === 0) return null
-
-  // getDay() : 0 = dimanche. JOURS commence au lundi.
-  const jourIndexAujourdhui = (now.getDay() + 6) % 7
-  const heureActuelle = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-
-  for (let offset = 0; offset < 7; offset++) {
-    const idx = (jourIndexAujourdhui + offset) % 7
-    const jour = JOURS[idx] as JourSemaine | undefined
-    if (!jour) continue // dimanche : pas de cours dans la grille
-
-    const duJour = creneaux
-      .filter((c) => c.jour === jour)
-      .filter((c) => offset > 0 || c.heureDebut > heureActuelle)
-      .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
-
-    if (duJour.length > 0) return duJour[0]
-  }
-  return null
 }
 
 /**

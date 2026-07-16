@@ -13,6 +13,11 @@ import { cn } from '@/lib/utils'
 
 interface ChatbotWidgetProps {
   universityId: string
+  /**
+   * Parent : uid de l'enfant sélectionné dans le tableau de bord, pour que
+   * l'assistant réponde sur le bon enfant. Ignoré pour les autres rôles.
+   */
+  enfantUid?: string
   className?: string
 }
 
@@ -42,7 +47,7 @@ function AiAvatar({ size = 'md' }: { size?: 'sm' | 'md' }) {
   )
 }
 
-export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
+export function ChatbotWidget({ universityId, enfantUid, className }: ChatbotWidgetProps) {
   const { user, profile } = useAuth()
   const [plan, setPlan] = useState<string | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
@@ -82,8 +87,9 @@ export function ChatbotWidget({ universityId, className }: ChatbotWidgetProps) {
       userId: user?.uid ?? '',
       role: profile?.role ?? '',
       nomUniversite: universityName ?? universityId,
+      enfantUid,
     }),
-    [universityId, user?.uid, profile?.role, universityName]
+    [universityId, user?.uid, profile?.role, universityName, enfantUid]
   )
 
   const { messages, loading, error, sendMessage } = useChatbot(context)

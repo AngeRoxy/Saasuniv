@@ -37,6 +37,37 @@ export interface Creneau {
 
 export type CreneauFormData = Omit<Creneau, 'id' | 'createdAt' | 'updatedAt'>
 
+/**
+ * Prochain créneau à venir dans la semaine type, en partant de maintenant.
+ * L'emploi du temps est hebdomadaire et se répète : on parcourt les jours à
+ * partir d'aujourd'hui et on boucle sur la semaine suivante si nécessaire.
+ * `null` si la liste ne contient aucun créneau.
+ *
+ * Fonction PURE, sans dépendance Firebase : utilisable côté client (hooks des
+ * tableaux de bord) comme côté serveur (contexte du chatbot).
+ */
+export function trouverProchainCours(creneaux: Creneau[], now: Date): Creneau | null {
+  if (creneaux.length === 0) return null
+
+  // getDay() : 0 = dimanche. JOURS commence au lundi.
+  const jourIndexAujourdhui = (now.getDay() + 6) % 7
+  const heureActuelle = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+  for (let offset = 0; offset < 7; offset++) {
+    const idx = (jourIndexAujourdhui + offset) % 7
+    const jour = JOURS[idx] as JourSemaine | undefined
+    if (!jour) continue // dimanche : pas de cours dans la grille
+
+    const duJour = creneaux
+      .filter((c) => c.jour === jour)
+      .filter((c) => offset > 0 || c.heureDebut > heureActuelle)
+      .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
+
+    if (duJour.length > 0) return duJour[0]
+  }
+  return null
+}
+
 // ─── Détection de conflits (RÈGLE 3) ────────────────────────────────────────────
 // Deux créneaux entrent en conflit lorsqu'ils se chevauchent le même jour DANS LE
 // MÊME SEMESTRE et partagent : la même salle, le même enseignant, ou le même

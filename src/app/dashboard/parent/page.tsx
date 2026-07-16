@@ -202,8 +202,10 @@ export default function ParentDashboard() {
         )
       )}
 
-      {/* Assistant IA flottant */}
-      {universityId && <ChatbotWidget universityId={universityId} />}
+      {/* Assistant IA flottant — suit l'enfant sélectionné ci-dessus */}
+      {universityId && (
+        <ChatbotWidget universityId={universityId} enfantUid={selectedChild?.uid} />
+      )}
     </div>
   )
 }
