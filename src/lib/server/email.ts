@@ -100,7 +100,7 @@ export async function sendAccessEmail(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'GestUniv <noreply@gestuniv.com>',
+        from: 'GestUniv <noreply@gestuniv.online>',
         to: params.to,
         subject: `Vos accès GestUniv — ${params.nomUniversite}`,
         html: buildHtml(params),
@@ -208,7 +208,7 @@ export async function sendEmailChangeNotification(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'GestUniv <noreply@gestuniv.com>',
+        from: 'GestUniv <noreply@gestuniv.online>',
         to: params.to,
         subject: `Changement d'adresse email — ${params.nomUniversite}`,
         html: buildEmailChangeHtml(params),

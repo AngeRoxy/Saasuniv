@@ -117,6 +117,7 @@ function ResetConfirmInner() {
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
             >
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}

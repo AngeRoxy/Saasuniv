@@ -297,6 +297,7 @@ export default function AdminProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowCurrent((v) => !v)}
+                  aria-label={showCurrent ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
                 >
                   {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -317,6 +318,7 @@ export default function AdminProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowNew((v) => !v)}
+                  aria-label={showNew ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
                 >
                   {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -337,6 +339,7 @@ export default function AdminProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
+                  aria-label={showConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
                 >
                   {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}

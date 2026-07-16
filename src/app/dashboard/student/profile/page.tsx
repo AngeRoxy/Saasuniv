@@ -198,7 +198,7 @@ export default function StudentProfilePage() {
                   placeholder="••••••••"
                   className="w-full bg-[#fafafa] dark:bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 pr-10 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
-                <button type="button" onClick={() => setShowCurrent((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300">
+                <button type="button" onClick={() => setShowCurrent((v) => !v)} aria-label={showCurrent ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300">
                   {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
@@ -214,7 +214,7 @@ export default function StudentProfilePage() {
                   placeholder="••••••••"
                   className="w-full bg-[#fafafa] dark:bg-black border border-orange-500/20 rounded-xl px-4 py-2.5 pr-10 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50"
                 />
-                <button type="button" onClick={() => setShowNew((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300">
+                <button type="button" onClick={() => setShowNew((v) => !v)} aria-label={showNew ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300">
                   {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>

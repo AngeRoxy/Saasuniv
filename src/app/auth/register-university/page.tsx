@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, ArrowLeft, Gift } from 'lucide-react'
+import { Check, ArrowLeft, Gift, Eye, EyeOff } from 'lucide-react'
 import { registerAdmin } from '@/lib/auth'
 import { createUniversity, initTrial } from '@/lib/db'
 import { syncSessionCookie } from '@/lib/session-client'
@@ -83,6 +83,8 @@ export default function RegisterUniversityPage() {
 
   const [step1, setStep1] = useState<Step1Data>({ universityName: '', slug: '', country: '', type: '' })
   const [step2, setStep2] = useState<Step2Data>({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' })
+  const [showPw, setShowPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
 
   function handleUniversityNameChange(value: string) {
     setStep1(prev => ({ ...prev, universityName: value, slug: slugify(value) }))
@@ -247,14 +249,28 @@ export default function RegisterUniversityPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Mot de passe</label>
-            <input type="password" value={step2.password} onChange={e => setStep2(prev => ({ ...prev, password: e.target.value }))} placeholder="••••••••"
-              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+            <div className="relative">
+              <input type={showPw ? 'text' : 'password'} value={step2.password} onChange={e => setStep2(prev => ({ ...prev, password: e.target.value }))} placeholder="••••••••"
+                className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 pr-10 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+              <button type="button" onClick={() => setShowPw(v => !v)}
+                aria-label={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-zinc-600 dark:text-orange-200/60 text-sm font-medium">Confirmer le mot de passe</label>
-            <input type="password" value={step2.confirmPassword} onChange={e => setStep2(prev => ({ ...prev, confirmPassword: e.target.value }))} placeholder="••••••••"
-              className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+            <div className="relative">
+              <input type={showConfirmPw ? 'text' : 'password'} value={step2.confirmPassword} onChange={e => setStep2(prev => ({ ...prev, confirmPassword: e.target.value }))} placeholder="••••••••"
+                className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 pr-10 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60" />
+              <button type="button" onClick={() => setShowConfirmPw(v => !v)}
+                aria-label={showConfirmPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
+                {showConfirmPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
           </div>
 
           {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
