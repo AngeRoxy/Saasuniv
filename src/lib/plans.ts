@@ -9,8 +9,8 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
   standard: {
     id: 'standard',
     nom: 'Standard',
-    prixMensuel: 49_000,
-    prixAnnuel: Math.round(49_000 * 12 * 0.8),
+    prixMensuel: 50_000,
+    prixAnnuel: Math.round(50_000 * 12 * 0.8),
     couleur: 'zinc-400',
     features: {
       maxEtudiants: 200,
@@ -36,8 +36,8 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
   premium: {
     id: 'premium',
     nom: 'Premium',
-    prixMensuel: 149_000,
-    prixAnnuel: Math.round(149_000 * 12 * 0.8),
+    prixMensuel: 200_000,
+    prixAnnuel: Math.round(200_000 * 12 * 0.8),
     couleur: 'orange-500',
     badge: 'Recommandé',
     features: {
