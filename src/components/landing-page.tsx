@@ -318,7 +318,7 @@ export default function LandingPage() {
       {!reduce && (
         <motion.div
           style={{ scaleX: progress }}
-          className="fixed top-0 left-0 right-0 z-[60] h-0.5 origin-left bg-blue-600 dark:bg-blue-500"
+          className="fixed top-0 left-0 right-0 z-60 h-0.5 origin-left bg-blue-600 dark:bg-blue-500"
         />
       )}
 
@@ -646,7 +646,7 @@ export default function LandingPage() {
                               <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
                             )
                           ) : (
-                            <X className="w-4 h-4 text-zinc-600 dark:text-zinc-400 dark:text-zinc-600 shrink-0" />
+                            <X className="w-4 h-4 text-zinc-600 dark:text-zinc-600 dark:text-zinc-600 shrink-0" />
                           )}
                           <span
                             className={
