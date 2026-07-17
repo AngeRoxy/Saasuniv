@@ -371,8 +371,8 @@ export default function ParentsPage() {
       {/* Create / Edit modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editingUid ? 'Modifier le parent' : 'Ajouter un parent'}
               </h2>
@@ -381,7 +381,8 @@ export default function ParentsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div>
                 <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nom complet</label>
                 <input
@@ -472,7 +473,9 @@ export default function ParentsPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -524,8 +527,8 @@ export default function ParentsPage() {
       {/* Confirmation de suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-            <div className="flex items-start gap-4 mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-start gap-4 mb-6 flex-1 min-h-0 overflow-y-auto">
               <div className="p-2 bg-red-500/10 rounded-xl shrink-0">
                 <AlertTriangle size={20} className="text-red-400" />
               </div>
@@ -546,7 +549,7 @@ export default function ParentsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 shrink-0">
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}

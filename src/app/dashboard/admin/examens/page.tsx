@@ -545,13 +545,14 @@ export default function ExamensAdminPage() {
       {/* Modal ajout / édition */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier l’examen' : 'Planifier un examen'}</h2>
               <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"><X size={20} /></button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Filière</label>
@@ -668,7 +669,9 @@ export default function ExamensAdminPage() {
                 <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>
               )}
 
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">
                   Annuler
                 </button>
@@ -685,13 +688,14 @@ export default function ExamensAdminPage() {
       {/* Confirmation ANNULATION (garde une trace, statut → annulé) */}
       {cancelTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-amber-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-amber-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div className="flex items-center gap-3 mb-4 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
                 <Ban size={18} className="text-blue-600 dark:text-amber-400" />
               </div>
               <h2 className="text-base font-bold text-zinc-900 dark:text-white">Annuler cet examen ?</h2>
             </div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
             <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-2">
               {cancelTarget.matiereNom} — {capitalize(formatDateLong(cancelTarget.date))} {cancelTarget.heureDebut}–{cancelTarget.heureFin}
             </p>
@@ -699,7 +703,8 @@ export default function ExamensAdminPage() {
               L’examen reste visible (statut « Annulé ») pour informer les étudiants — il n’est pas supprimé.
             </p>
             {actionError && <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2 mb-3">{actionError}</p>}
-            <div className="flex gap-3">
+            </div>
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => { setCancelTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Retour</button>
               <button onClick={handleCancel} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Annuler l’examen</button>
             </div>
@@ -710,13 +715,14 @@ export default function ExamensAdminPage() {
       {/* Confirmation SUPPRESSION définitive */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div className="flex items-center gap-3 mb-4 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
               <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer définitivement ?</h2>
             </div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
             <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-2">
               {deleteTarget.matiereNom} — {capitalize(formatDateLong(deleteTarget.date))} {deleteTarget.heureDebut}–{deleteTarget.heureFin}
             </p>
@@ -724,7 +730,8 @@ export default function ExamensAdminPage() {
               Cette action est irréversible. Pour garder une trace, préférez « Annuler l’examen ».
             </p>
             {actionError && <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2 mb-3">{actionError}</p>}
-            <div className="flex gap-3">
+            </div>
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => { setDeleteTarget(null); setActionError(null) }} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Retour</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
             </div>

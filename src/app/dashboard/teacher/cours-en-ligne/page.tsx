@@ -371,14 +371,15 @@ export default function TeacherCoursEnLignePage() {
       {/* Modal nouveau cours */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Nouveau cours en direct</h2>
               <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div>
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Filière</label>
                 <select value={form.filiereId} onChange={(e) => handleFiliereChange(e.target.value)} className={selectCls}>
@@ -434,7 +435,9 @@ export default function TeacherCoursEnLignePage() {
               {formError && (
                 <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>
               )}
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button
                   onClick={closeModal}
                   disabled={saving}

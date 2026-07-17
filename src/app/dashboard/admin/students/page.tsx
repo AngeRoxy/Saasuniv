@@ -188,9 +188,9 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+      <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 shrink-0">
           <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
             {mode === 'add' ? 'Ajouter un étudiant' : 'Modifier l\'étudiant'}
           </h2>
@@ -202,7 +202,8 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
           {/* Prénom / Nom */}
           <div className="grid grid-cols-2 gap-4">
             <FieldInput label="Prénom" value={form.prenom} onChange={set('prenom')} placeholder="Yves" required />
@@ -291,8 +292,10 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
             </div>
           )}
 
+          </div>
+
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-6 shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -321,8 +324,8 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
 function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: Student; deleting: boolean; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-        <div className="flex items-start gap-4 mb-6">
+      <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-start gap-4 mb-6 flex-1 min-h-0 overflow-y-auto">
           <div className="p-2 bg-red-500/10 rounded-xl shrink-0">
             <AlertTriangle size={20} className="text-red-400" />
           </div>
@@ -335,7 +338,7 @@ function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: St
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 shrink-0">
           <button
             onClick={onCancel}
             disabled={deleting}
@@ -379,8 +382,8 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-lg shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-5 shrink-0">
           <div>
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Parcours académique</h2>
             <p className="text-zinc-500 text-xs mt-0.5">{student.prenom} {student.nom}</p>
@@ -390,6 +393,7 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
           </button>
         </div>
 
+        <div className="flex-1 min-h-0 overflow-y-auto">
         {list === null ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -425,6 +429,7 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
             ))}
           </ol>
         )}
+        </div>
       </div>
     </div>
   )

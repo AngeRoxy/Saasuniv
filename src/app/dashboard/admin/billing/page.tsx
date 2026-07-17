@@ -284,8 +284,9 @@ export default function BillingPage() {
       {/* ── Dialog de confirmation ────────────────────────────────────────── */}
       {pending && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-orange-500/20 bg-white dark:bg-zinc-950 p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Confirmer votre choix</h3>
+          <div className="w-full max-w-md rounded-2xl border border-orange-500/20 bg-white dark:bg-zinc-950 p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white shrink-0">Confirmer votre choix</h3>
+            <div className="flex-1 min-h-0 overflow-y-auto">
             <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
               Vous êtes sur le point de passer au plan{' '}
               <span className="font-semibold text-blue-700 dark:text-orange-300">
@@ -304,7 +305,9 @@ export default function BillingPage() {
               Le paiement réel sera intégré ultérieurement — la conversion est
               ici simulée.
             </p>
-            <div className="mt-6 flex gap-3">
+            </div>
+
+            <div className="mt-6 flex gap-3 shrink-0">
               <button
                 onClick={() => setPending(null)}
                 disabled={submitting}

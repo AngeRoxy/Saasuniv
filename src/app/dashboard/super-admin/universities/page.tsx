@@ -217,14 +217,14 @@ export default function UniversitiesPage() {
 
       {detail && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{detail.name}</h2>
               <button onClick={() => setDetail(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm flex-1 min-h-0 overflow-y-auto">
               {[
                 ['Code', detail.slug],
                 ['Plan', detail.plan || '—'],
@@ -248,8 +248,8 @@ export default function UniversitiesPage() {
         const label = next === 'suspended' ? 'Suspendre' : 'Réactiver'
         return (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md">
-              <div className="flex items-start gap-3 mb-5">
+            <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md flex flex-col max-h-[90vh]">
+              <div className="flex items-start gap-3 mb-5 flex-1 min-h-0 overflow-y-auto">
                 <div className={`p-2 rounded-xl shrink-0 ${next === 'suspended' ? 'bg-red-500/15 text-red-400' : 'bg-green-500/15 text-green-400'}`}>
                   <AlertTriangle size={20} />
                 </div>
@@ -264,12 +264,12 @@ export default function UniversitiesPage() {
               </div>
 
               {actionError && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-4">
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-4 shrink-0">
                   {actionError}
                 </p>
               )}
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-3 justify-end shrink-0">
                 <button
                   onClick={() => { setConfirmTarget(null); setActionError(null) }}
                   disabled={acting}

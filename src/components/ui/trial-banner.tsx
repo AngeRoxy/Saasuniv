@@ -37,8 +37,8 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
   if (isTrialExpired) {
     return (
       <div className="fixed inset-0 z-100 bg-zinc-950/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-red-500/20 shadow-2xl shadow-black/50 overflow-hidden text-center">
-          <div className="px-7 py-8">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-red-500/20 shadow-2xl shadow-black/50 overflow-hidden text-center flex flex-col max-h-[90vh]">
+          <div className="px-7 py-8 flex-1 min-h-0 overflow-y-auto">
             <div className="mx-auto w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mb-4">
               <XCircle className="h-6 w-6 text-red-400" />
             </div>

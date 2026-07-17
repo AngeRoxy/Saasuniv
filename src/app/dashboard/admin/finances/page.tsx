@@ -251,12 +251,13 @@ export default function FinancesPage() {
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier le paiement' : 'Ajouter un paiement'}</h2>
               <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <Field label="Étudiant">
                 <select value={form.studentUid} onChange={(e) => setForm((f) => ({ ...f, studentUid: e.target.value }))} className={selectCls}>
                   <option value="">{students.length ? 'Choisir…' : 'Aucun étudiant inscrit'}</option>
@@ -285,7 +286,9 @@ export default function FinancesPage() {
                 </Field>
               </div>
               {formError && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>}
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
                 <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
@@ -300,10 +303,10 @@ export default function FinancesPage() {
       {/* Confirmation suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2">Supprimer ce paiement ?</h2>
-            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">{deleteTarget.studentNom} — {formatFCFA(deleteTarget.montant)} ({deleteTarget.type})</p>
-            <div className="flex gap-3">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2 shrink-0">Supprimer ce paiement ?</h2>
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6 flex-1 min-h-0 overflow-y-auto">{deleteTarget.studentNom} — {formatFCFA(deleteTarget.montant)} ({deleteTarget.type})</p>
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Annuler</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
             </div>

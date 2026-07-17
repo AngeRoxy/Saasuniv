@@ -376,10 +376,10 @@ export default function AdminProfilePage() {
             onClick={() => setModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-md bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-6 space-y-5 shadow-2xl">
+          <div className="relative w-full max-w-md bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-6 space-y-5 shadow-2xl flex flex-col max-h-[90vh]">
 
             {/* Modal header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Pencil size={16} className="text-blue-600 dark:text-orange-400" />
                 <h3 className="text-zinc-900 dark:text-white font-semibold">Modifier le profil</h3>
@@ -393,7 +393,7 @@ export default function AdminProfilePage() {
             </div>
 
             {/* Fields */}
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -463,7 +463,7 @@ export default function AdminProfilePage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3 pt-1 shrink-0">
               <button
                 onClick={() => setModalOpen(false)}
                 className="flex-1 py-2.5 rounded-xl border border-orange-500/20 text-zinc-600 dark:text-zinc-400 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"

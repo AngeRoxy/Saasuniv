@@ -104,8 +104,8 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
   if (state === 'required') {
     return (
       <div className="fixed inset-0 z-100 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-orange-500/20 shadow-2xl shadow-black/50 overflow-hidden">
-          <div className="px-7 pt-7 pb-5 text-center border-b border-zinc-200 dark:border-orange-500/10">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-950 border border-orange-500/20 shadow-2xl shadow-black/50 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="px-7 pt-7 pb-5 text-center border-b border-zinc-200 dark:border-orange-500/10 shrink-0">
             <div className="mx-auto w-12 h-12 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center mb-4">
               <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-orange-400" />
             </div>
@@ -116,7 +116,8 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-7 py-6 space-y-4">
+          <form onSubmit={handleSubmit} className="px-7 py-6 flex flex-col flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs text-zinc-600 dark:text-orange-200/60 font-medium">Nouveau mot de passe</label>
               <div className="relative">
@@ -159,10 +160,12 @@ export function PremiereConnexionGuard({ children }: { children: React.ReactNode
               </p>
             )}
 
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 transition-colors mt-4 shrink-0"
             >
               {submitting && (
                 <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />

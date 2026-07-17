@@ -209,12 +209,13 @@ export default function TeacherAbsencesPage() {
       {/* Modal marquer une absence */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Marquer une absence</h2>
               <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div>
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Créneau</label>
                 <select value={form.creneauId} onChange={(e) => setForm((f) => ({ ...f, creneauId: e.target.value, studentUid: '' }))} className={selectCls}>
@@ -242,7 +243,9 @@ export default function TeacherAbsencesPage() {
               </div>
               <p className="text-[11px] text-zinc-500 dark:text-orange-200/40">L’absence est enregistrée comme <span className="text-red-400/80">non justifiée</span>. Seule l’administration peut la justifier.</p>
               {formError && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>}
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
                 <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}

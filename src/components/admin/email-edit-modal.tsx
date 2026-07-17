@@ -61,8 +61,8 @@ export function EmailEditModal({ target, universityId, onClose, onUpdated }: Pro
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-8 w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-6 shrink-0">
           <h2 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
             <Mail size={18} className="text-blue-600 dark:text-orange-400" />
             Corriger l&apos;email
@@ -80,7 +80,8 @@ export function EmailEditModal({ target, universityId, onClose, onUpdated }: Pro
           Membre : <span className="text-zinc-900 dark:text-white font-medium">{target.displayName}</span>
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
           <div>
             <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nouvelle adresse email</label>
             <input
@@ -109,7 +110,9 @@ export function EmailEditModal({ target, universityId, onClose, onUpdated }: Pro
             </p>
           )}
 
-          <div className="flex gap-3 pt-1">
+          </div>
+
+          <div className="flex gap-3 pt-5 shrink-0">
             <button
               type="button"
               onClick={onClose}

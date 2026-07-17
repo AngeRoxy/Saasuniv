@@ -216,12 +216,13 @@ export default function TeacherResourcesPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Nouvelle ressource</h2>
               <button onClick={() => setModalOpen(false)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div>
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Titre</label>
                 <input value={form.titre} onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} placeholder="Ex: Cours Algorithmique - Chapitre 3" className={inputCls} />
@@ -327,7 +328,9 @@ export default function TeacherResourcesPage() {
                   <input value={form.matiere} onChange={(e) => setForm((f) => ({ ...f, matiere: e.target.value }))} placeholder="Option." className={inputCls} />
                 </div>
               </div>
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button onClick={() => setModalOpen(false)} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
                 <button onClick={handleSave} disabled={saving || !form.titre.trim() || !contenuFourni} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
@@ -341,15 +344,17 @@ export default function TeacherResourcesPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2">Supprimer cette ressource ?</h2>
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2 shrink-0">Supprimer cette ressource ?</h2>
+            <div className="flex-1 min-h-0 overflow-y-auto">
             <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">« {deleteTarget.titre} »</p>
             {deleteTarget.fichierUrl && (
               <p className="text-zinc-500 dark:text-orange-200/40 text-xs mb-4 -mt-3">
                 Le fichier joint sera également supprimé.
               </p>
             )}
-            <div className="flex gap-3">
+            </div>
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
               <button onClick={handleDelete} disabled={deleting} className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">{deleting ? 'Suppression…' : 'Supprimer'}</button>
             </div>

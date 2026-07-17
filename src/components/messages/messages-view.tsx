@@ -147,16 +147,16 @@ export function MessagesView() {
       {/* Lecture */}
       {open && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg">
-            <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-start justify-between gap-3 mb-4 shrink-0">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{open.sujet}</h2>
                 <p className="text-xs text-zinc-500 dark:text-orange-200/40 mt-1">De {open.fromNom} · À {open.toNom} · {new Date(open.createdAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</p>
               </div>
               <button onClick={() => setOpen(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white shrink-0"><X size={20} /></button>
             </div>
-            <p className="text-zinc-800 dark:text-orange-100/80 text-sm leading-relaxed whitespace-pre-wrap">{open.corps}</p>
-            <div className="flex justify-end mt-6">
+            <p className="text-zinc-800 dark:text-orange-100/80 text-sm leading-relaxed whitespace-pre-wrap flex-1 min-h-0 overflow-y-auto">{open.corps}</p>
+            <div className="flex justify-end mt-6 shrink-0">
               <button onClick={() => handleDelete(open)} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 hover:text-red-400 transition-colors"><Trash2 size={13} /> Supprimer</button>
             </div>
           </div>
@@ -166,12 +166,13 @@ export function MessagesView() {
       {/* Composer */}
       {composeOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Nouveau message</h2>
               <button onClick={() => setComposeOpen(false)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               <div>
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Destinataire</label>
                 <select value={form.toUid} onChange={(e) => setForm((f) => ({ ...f, toUid: e.target.value }))} className={selectCls}>
@@ -187,7 +188,9 @@ export function MessagesView() {
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Message</label>
                 <textarea value={form.corps} onChange={(e) => setForm((f) => ({ ...f, corps: e.target.value }))} rows={5} className={`${inputCls} resize-none`} />
               </div>
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button onClick={() => setComposeOpen(false)} disabled={sending} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
                 <button onClick={handleSend} disabled={sending || !form.toUid || !form.sujet.trim() || !form.corps.trim()} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {sending ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Send size={14} />}

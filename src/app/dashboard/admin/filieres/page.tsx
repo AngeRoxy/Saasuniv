@@ -365,8 +365,8 @@ export default function FilieresPage() {
       {/* ── Modal création / modification ─────────────────────────────────────── */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editId ? 'Modifier la filière' : 'Nouvelle filière'}
               </h2>
@@ -375,7 +375,8 @@ export default function FilieresPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               {/* Nom + Code */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -496,8 +497,10 @@ export default function FilieresPage() {
                 </span>
               </div>
 
+              </div>
+
               {/* Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button
                   onClick={closeModal}
                   className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
@@ -520,17 +523,17 @@ export default function FilieresPage() {
       {/* ── Dialog suppression ────────────────────────────────────────────────── */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div className="flex items-center gap-3 mb-4 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
               <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer cette filière&nbsp;?</h2>
             </div>
-            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6 flex-1 min-h-0 overflow-y-auto">
               Cette action est irréversible. La filière et <strong className="text-blue-700 dark:text-orange-300">toutes ses matières</strong> seront définitivement supprimées.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 shrink-0">
               <button
                 onClick={() => setDeleteId(null)}
                 className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"

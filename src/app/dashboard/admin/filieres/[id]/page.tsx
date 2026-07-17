@@ -412,8 +412,8 @@ export default function FiliereDetailPage() {
       {/* ── Modal ajout / modification matière ───────────────────────────────── */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
                 {editMatiereId ? 'Modifier la matière' : 'Ajouter une matière'}
               </h2>
@@ -422,7 +422,8 @@ export default function FiliereDetailPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               {/* Nom + Code */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -508,8 +509,10 @@ export default function FiliereDetailPage() {
                 </label>
               </div>
 
+              </div>
+
               {/* Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-6 shrink-0">
                 <button
                   onClick={closeModal}
                   className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"
@@ -532,17 +535,17 @@ export default function FiliereDetailPage() {
       {/* ── Dialog suppression matière ────────────────────────────────────────── */}
       {deleteMatiereId && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div className="flex items-center gap-3 mb-4 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <Trash2 size={18} className="text-red-400" />
               </div>
               <h2 className="text-base font-bold text-zinc-900 dark:text-white">Supprimer cette matière&nbsp;?</h2>
             </div>
-            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6 flex-1 min-h-0 overflow-y-auto">
               Cette action est irréversible. La matière sera définitivement supprimée de la filière.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 shrink-0">
               <button
                 onClick={() => setDeleteMatiereId(null)}
                 className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors"

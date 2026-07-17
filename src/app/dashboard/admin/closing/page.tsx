@@ -396,15 +396,15 @@ export default function ClosingPage() {
       {/* Confirmation clôture du semestre (archivage global existant) */}
       {confirmClose && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-md">
-            <div className="flex items-start gap-3 mb-4">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex items-start gap-3 mb-4 flex-1 min-h-0 overflow-y-auto">
               <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-base font-bold text-zinc-900 dark:text-white">Clôturer {selectedSemestre?.nom} ?</h2>
                 <p className="text-zinc-800 dark:text-orange-100/55 text-sm mt-1">Le semestre passera au statut « terminé » et les décisions seront archivées. Vous pourrez toujours les rouvrir depuis la gestion des semestres.</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => setConfirmClose(false)} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
               <button onClick={handleCloture} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors disabled:opacity-50">
                 {saving && <span className="w-4 h-4 border-2 border-zinc-300 dark:border-white/30 border-t-white rounded-full animate-spin" />}
@@ -418,7 +418,8 @@ export default function ClosingPage() {
       {/* Confirmation clôture individuelle de l'année (parcours / redoublement) */}
       {clotureTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-md">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl p-7 w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="flex items-start gap-3 mb-4">
               <div className={`p-2 rounded-xl shrink-0 ${clotureTarget.decision === 'Redoublant' ? 'bg-amber-500/10' : clotureTarget.decision === 'Diplômé' ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
                 {clotureTarget.decision === 'Redoublant'
@@ -485,7 +486,9 @@ export default function ClosingPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
+            </div>
+
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => { setClotureTarget(null); setClotureError(null) }} disabled={processing} className="flex-1 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
               <button onClick={handleConfirmCloture} disabled={processing} className={`flex-1 flex items-center justify-center gap-2 font-semibold rounded-xl py-2.5 text-sm transition-colors disabled:opacity-50 ${clotureTarget.decision === 'Admis' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                 {processing && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}

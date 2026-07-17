@@ -139,10 +139,10 @@ export default function NotificationsPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2">Supprimer cette annonce ?</h2>
-            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6">« {deleteTarget.titre} »</p>
-            <div className="flex gap-3">
+          <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-7 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-2 shrink-0">Supprimer cette annonce ?</h2>
+            <p className="text-zinc-800 dark:text-orange-100/55 text-sm mb-6 flex-1 min-h-0 overflow-y-auto">« {deleteTarget.titre} »</p>
+            <div className="flex gap-3 shrink-0">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Annuler</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors flex items-center justify-center gap-2"><X size={14} /> Supprimer</button>
             </div>
