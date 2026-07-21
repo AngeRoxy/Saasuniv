@@ -46,14 +46,29 @@ export interface Creneau {
   remplacantActifDate?: string
   /** Motif du remplacement (maladie, formation…), libre et optionnel. */
   remplacantMotif?: string
+
+  // ── Annulation PONCTUELLE (jour férié, grève, imprévu) ──────────────────────
+  // Le créneau récurrent doit continuer d'exister les autres semaines : on ne le
+  // supprime pas, on liste les dates précises où il est annulé.
+  /** Dates « YYYY-MM-DD » où ce créneau récurrent est annulé (occurrences éteintes). */
+  datesAnnulees?: string[]
+  /** Motif d'annulation par date (« YYYY-MM-DD » → texte). Optionnel et parallèle. */
+  motifsAnnulation?: Record<string, string>
 }
 
-// Les champs de remplacement sont pilotés par des écritures dédiées (voir
-// db.ts : setRemplacement / clearRemplacement) et non par le formulaire
-// d'édition standard : Omit les exclut donc du type du formulaire de base.
+// Les champs datés (remplacement, annulation) sont pilotés par des écritures
+// dédiées (db.ts : setRemplacement / annulerCreneauDate…) et non par le
+// formulaire d'édition standard : Omit les exclut du type du formulaire de base.
 export type CreneauFormData = Omit<
   Creneau,
-  'id' | 'createdAt' | 'updatedAt' | 'remplacantNom' | 'remplacantActifDate' | 'remplacantMotif'
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'remplacantNom'
+  | 'remplacantActifDate'
+  | 'remplacantMotif'
+  | 'datesAnnulees'
+  | 'motifsAnnulation'
 >
 
 /**
@@ -138,6 +153,16 @@ export function estDansSemaine(dateISO: string, lundi: Date): boolean {
 /** Nom du remplaçant si un remplacement est actif à cette date précise, sinon `null`. */
 export function remplacantLe(c: Creneau, dateISO: string): string | null {
   return c.remplacantActifDate === dateISO && c.remplacantNom ? c.remplacantNom : null
+}
+
+/** Ce créneau récurrent est-il annulé à cette date précise ? */
+export function estAnnuleLe(c: Creneau, dateISO: string): boolean {
+  return c.datesAnnulees?.includes(dateISO) ?? false
+}
+
+/** Motif d'annulation pour cette date précise, ou `null` si non renseigné. */
+export function motifAnnulationLe(c: Creneau, dateISO: string): string | null {
+  return c.motifsAnnulation?.[dateISO] ?? null
 }
 
 // ─── Détection de conflits (RÈGLE 3) ────────────────────────────────────────────

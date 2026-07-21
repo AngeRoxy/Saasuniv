@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { CalendarClock, Clock, MapPin, Layers, UserCog } from 'lucide-react'
+import { CalendarClock, CalendarX, Clock, MapPin, Layers, UserCog } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getFilieres, getSemestres, getCreneaux } from '@/lib/db'
 import type { Filiere, Semestre } from '@/lib/db'
@@ -12,6 +12,8 @@ import {
   dateDuJour,
   jourDeDate,
   estDansSemaine,
+  estAnnuleLe,
+  motifAnnulationLe,
   remplacantLe,
   type Creneau,
   type JourSemaine,
@@ -25,6 +27,10 @@ type TeacherItem = {
   role: 'titulaire' | 'remplacant'
   /** Pour un titulaire : nom du remplaçant qui le couvre CE jour précis, sinon null. */
   couvertPar: string | null
+  /** Cette occurrence est-elle annulée (jour férié, grève…) ? Prime sur tout le reste. */
+  annule: boolean
+  /** Motif d'annulation, si renseigné. */
+  motifAnnul: string | null
 }
 
 export default function TeacherSchedulePage() {
@@ -79,11 +85,14 @@ export default function TeacherSchedulePage() {
     for (const c of creneaux) {
       if (c.enseignant !== teacherName) continue
       if (semestreId && c.semestreId !== semestreId) continue
-      const rempl = remplacantLe(c, dateDuJour(lundiSemaine, c.jour))
+      const dISO = dateDuJour(lundiSemaine, c.jour)
+      const rempl = remplacantLe(c, dISO)
       parJour.get(c.jour)!.push({
         creneau: c,
         role: 'titulaire',
         couvertPar: rempl && rempl !== teacherName ? rempl : null,
+        annule: estAnnuleLe(c, dISO),
+        motifAnnul: motifAnnulationLe(c, dISO),
       })
     }
 
@@ -94,7 +103,15 @@ export default function TeacherSchedulePage() {
       if (c.remplacantNom !== teacherName || !c.remplacantActifDate) continue
       if (!estDansSemaine(c.remplacantActifDate, lundiSemaine)) continue
       const jour = jourDeDate(c.remplacantActifDate)
-      if (jour) parJour.get(jour)!.push({ creneau: c, role: 'remplacant', couvertPar: null })
+      if (jour) {
+        parJour.get(jour)!.push({
+          creneau: c,
+          role: 'remplacant',
+          couvertPar: null,
+          annule: estAnnuleLe(c, c.remplacantActifDate),
+          motifAnnul: motifAnnulationLe(c, c.remplacantActifDate),
+        })
+      }
     }
 
     for (const j of JOURS) {
@@ -152,33 +169,41 @@ export default function TeacherSchedulePage() {
                 {items.length === 0 ? (
                   <p className="text-center text-zinc-500 dark:text-orange-200/20 text-xs py-4">—</p>
                 ) : (
-                  items.map(({ creneau: c, role, couvertPar }) => {
+                  items.map(({ creneau: c, role, couvertPar, annule, motifAnnul }) => {
                     const estRemplacement = role === 'remplacant'
                     return (
                       <div
                         key={`${role}-${c.id}`}
                         className={`rounded-lg border p-2.5 ${
-                          estRemplacement
-                            ? 'bg-teal-500/10 border-teal-500/40'
-                            : 'bg-orange-500/5 border-orange-500/15'
+                          annule
+                            ? 'bg-zinc-100 dark:bg-white/5 border-zinc-300 dark:border-white/10 opacity-70'
+                            : estRemplacement
+                              ? 'bg-teal-500/10 border-teal-500/40'
+                              : 'bg-orange-500/5 border-orange-500/15'
                         }`}
                       >
-                        {estRemplacement && (
+                        {/* L'annulation prime : on la signale d'abord, peu importe le rôle. */}
+                        {annule ? (
+                          <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                            <CalendarX size={9} /> Annulé
+                          </span>
+                        ) : estRemplacement ? (
                           <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-teal-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
                             <UserCog size={9} /> Remplacement
                           </span>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 dark:text-orange-400">
+                        ) : null}
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-mono ${annule ? 'text-zinc-500' : 'text-blue-600 dark:text-orange-400'}`}>
                           <Clock size={10} /> {c.heureDebut}–{c.heureFin}
                         </span>
-                        <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1 leading-snug">{c.matiere}</p>
+                        <p className={`text-sm font-medium mt-1 leading-snug ${annule ? 'text-zinc-500 line-through decoration-rose-500/60' : 'text-zinc-900 dark:text-white'}`}>{c.matiere}</p>
                         <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
                           <Layers size={9} /> {filiereNom(c.filiereId)} · {c.niveau}
                         </p>
                         {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
-                        {/* Titulaire couvert par un remplaçant ce jour précis : le cours reste le sien
-                            mais il est assuré par quelqu'un d'autre — on l'indique clairement. */}
-                        {estRemplacement ? (
+                        {/* Priorité d'affichage : annulé > remplacement > couvert par un tiers. */}
+                        {annule ? (
+                          motifAnnul && <p className="text-[11px] text-zinc-500 mt-0.5">{motifAnnul}</p>
+                        ) : estRemplacement ? (
                           <p className="text-[11px] text-teal-700 dark:text-teal-300/80 mt-0.5">
                             Vous remplacez {c.enseignant || 'le titulaire'}
                           </p>

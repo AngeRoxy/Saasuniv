@@ -826,6 +826,50 @@ export async function clearRemplacement(
   })
 }
 
+// ─── Annulation ponctuelle d'un créneau (jour férié, grève, imprévu) ─────────────
+// On NE supprime PAS le créneau récurrent : on ajoute/retire une date dans son
+// tableau `datesAnnulees` (motif optionnel dans la map parallèle). Un tableau vide
+// ou une map vide est écrit à `null` pour ne laisser aucune clé résiduelle.
+
+/** Annule ce créneau pour une date précise (idempotent : re-annuler ne duplique pas). */
+export async function annulerCreneauDate(
+  universityId: string,
+  creneauId: string,
+  dateISO: string,
+  motif?: string
+): Promise<void> {
+  const all = await getCreneaux(universityId)
+  const c = all.find((x) => x.id === creneauId)
+  const dates = new Set(c?.datesAnnulees ?? [])
+  dates.add(dateISO)
+  const motifs: Record<string, string> = { ...(c?.motifsAnnulation ?? {}) }
+  const m = motif?.trim()
+  if (m) motifs[dateISO] = m
+  await update(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`), {
+    datesAnnulees: [...dates].sort(),
+    motifsAnnulation: Object.keys(motifs).length ? motifs : null,
+    updatedAt: Date.now(),
+  })
+}
+
+/** Réactive ce créneau pour une date précise (retire la date et son motif). */
+export async function reactiverCreneauDate(
+  universityId: string,
+  creneauId: string,
+  dateISO: string
+): Promise<void> {
+  const all = await getCreneaux(universityId)
+  const c = all.find((x) => x.id === creneauId)
+  const dates = (c?.datesAnnulees ?? []).filter((d) => d !== dateISO)
+  const motifs: Record<string, string> = { ...(c?.motifsAnnulation ?? {}) }
+  delete motifs[dateISO]
+  await update(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`), {
+    datesAnnulees: dates.length ? dates : null,
+    motifsAnnulation: Object.keys(motifs).length ? motifs : null,
+    updatedAt: Date.now(),
+  })
+}
+
 /**
  * Vide le champ `enseignant` de plusieurs créneaux (le cours reste actif, juste
  * sans enseignant assigné). Écriture directe par sous-chemin — pas de contrôle de

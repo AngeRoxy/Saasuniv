@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, X, Pencil, Trash2, Clock, MapPin, User, UserCog, CalendarClock, AlertTriangle } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Clock, MapPin, User, UserCog, CalendarClock, CalendarX, RotateCcw, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
   getFilieres,
@@ -15,6 +15,8 @@ import {
   deleteCreneau,
   setRemplacement,
   clearRemplacement,
+  annulerCreneauDate,
+  reactiverCreneauDate,
 } from '@/lib/db'
 import type { Filiere, Matiere, Semestre } from '@/lib/db'
 import {
@@ -76,6 +78,12 @@ export default function SchedulePage() {
   const [remplForm, setRemplForm] = useState({ date: '', remplacant: '', motif: '' })
   const [remplSaving, setRemplSaving] = useState(false)
   const [remplError, setRemplError] = useState<string | null>(null)
+
+  // Modal annulation ponctuelle d'un créneau (jour férié, grève, imprévu).
+  const [annulTarget, setAnnulTarget] = useState<Creneau | null>(null)
+  const [annulForm, setAnnulForm] = useState({ date: '', motif: '' })
+  const [annulSaving, setAnnulSaving] = useState(false)
+  const [annulError, setAnnulError] = useState<string | null>(null)
 
   // Chargement initial
   useEffect(() => {
@@ -276,6 +284,59 @@ export default function SchedulePage() {
     }
   }
 
+  // ── Annulation ponctuelle d'un créneau ──────────────────────────────────────
+  function openAnnul(c: Creneau) {
+    setAnnulTarget(c)
+    setAnnulForm({ date: toDateISO(new Date()), motif: '' })
+    setAnnulError(null)
+  }
+
+  function closeAnnul() {
+    setAnnulTarget(null)
+    setAnnulForm({ date: '', motif: '' })
+    setAnnulError(null)
+  }
+
+  // Recharge les créneaux et resynchronise la cible ouverte dans la modale, pour
+  // que la liste des dates annulées reflète immédiatement l'ajout/le retrait.
+  async function reloadAndSyncAnnul(creneauId: string) {
+    if (!universityId) return
+    const fresh = await getCreneaux(universityId)
+    setCreneaux(fresh)
+    setAnnulTarget(fresh.find((x) => x.id === creneauId) ?? null)
+  }
+
+  async function handleAnnuler() {
+    if (!universityId || !annulTarget) return
+    if (!annulForm.date) { setAnnulError('Choisissez la date à annuler.'); return }
+
+    setAnnulSaving(true)
+    setAnnulError(null)
+    try {
+      await annulerCreneauDate(universityId, annulTarget.id, annulForm.date, annulForm.motif)
+      await reloadAndSyncAnnul(annulTarget.id)
+      setAnnulForm((f) => ({ ...f, motif: '' })) // prêt pour une éventuelle 2e date
+    } catch {
+      setAnnulError('Échec de l’enregistrement. Réessayez.')
+    } finally {
+      setAnnulSaving(false)
+    }
+  }
+
+  async function handleReactiver(dateISO: string) {
+    if (!universityId || !annulTarget) return
+    setAnnulSaving(true)
+    setAnnulError(null)
+    try {
+      await reactiverCreneauDate(universityId, annulTarget.id, dateISO)
+      await reloadAndSyncAnnul(annulTarget.id)
+    } catch {
+      setAnnulError('Échec de la réactivation. Réessayez.')
+    } finally {
+      setAnnulSaving(false)
+    }
+  }
+
   // Garde d'accès
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
     return (
@@ -379,6 +440,7 @@ export default function SchedulePage() {
                               </span>
                               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => openRempl(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-teal-500" title="Remplacer l’enseignant (ponctuel)"><UserCog size={11} /></button>
+                                <button onClick={() => openAnnul(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-rose-500" title="Annuler pour une date"><CalendarX size={11} /></button>
                                 <button onClick={() => openEdit(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400" title="Modifier"><Pencil size={11} /></button>
                                 <button onClick={() => setDeleteTarget(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-red-400" title="Supprimer"><Trash2 size={11} /></button>
                               </div>
@@ -396,6 +458,21 @@ export default function SchedulePage() {
                                 <UserCog size={9} className="shrink-0" />
                                 <span className="truncate">{c.remplacantNom} · {formatDateFr(c.remplacantActifDate)}</span>
                               </p>
+                            )}
+                            {/* Annulations programmées : badge rose daté (clic = gérer via la modale). */}
+                            {c.datesAnnulees && c.datesAnnulees.length > 0 && (
+                              <button
+                                onClick={() => openAnnul(c)}
+                                className="mt-1 w-full flex items-center gap-1 rounded-md bg-rose-500/10 border border-rose-500/25 px-1.5 py-0.5 text-[10px] text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 transition-colors"
+                                title="Gérer les annulations"
+                              >
+                                <CalendarX size={9} className="shrink-0" />
+                                <span className="truncate">
+                                  {c.datesAnnulees.length === 1
+                                    ? `Annulé le ${formatDateFr(c.datesAnnulees[0])}`
+                                    : `${c.datesAnnulees.length} dates annulées`}
+                                </span>
+                              </button>
                             )}
                           </div>
                         ))
@@ -602,6 +679,107 @@ export default function SchedulePage() {
                 <button onClick={handleSaveRempl} disabled={remplSaving} className="flex-1 flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
                   {remplSaving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
                   Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal annulation ponctuelle d'un créneau */}
+      {annulTarget && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-rose-500/30 rounded-2xl p-7 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-2 shrink-0">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <CalendarX size={18} className="text-rose-500" /> Annuler pour une date
+              </h2>
+              <button onClick={closeAnnul} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"><X size={20} /></button>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-orange-200/50 mb-5 shrink-0">
+              {annulTarget.matiere} · {JOUR_LABEL[annulTarget.jour]} {annulTarget.heureDebut}–{annulTarget.heureFin}
+            </p>
+
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+                <div className="rounded-lg bg-rose-500/5 border border-rose-500/20 px-3 py-2 text-[11px] text-rose-600 dark:text-rose-400/90 leading-relaxed">
+                  Le créneau récurrent <strong>reste actif les autres semaines</strong> : on n’éteint que la
+                  date précise choisie.
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Date à annuler</label>
+                    <input
+                      type="date"
+                      value={annulForm.date}
+                      onChange={(e) => setAnnulForm((f) => ({ ...f, date: e.target.value }))}
+                      className={`${inputCls} scheme-dark`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Motif (optionnel)</label>
+                    <select
+                      value={annulForm.motif}
+                      onChange={(e) => setAnnulForm((f) => ({ ...f, motif: e.target.value }))}
+                      className={selectCls}
+                    >
+                      <option value="">Aucun…</option>
+                      <option value="Jour férié">Jour férié</option>
+                      <option value="Grève">Grève</option>
+                      <option value="Imprévu">Imprévu</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleAnnuler}
+                  disabled={annulSaving}
+                  className="w-full flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
+                >
+                  {annulSaving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
+                  Annuler cette date
+                </button>
+
+                {annulError && (
+                  <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{annulError}</p>
+                )}
+
+                {/* Dates déjà annulées, avec réactivation (retrait) si erreur. */}
+                {annulTarget.datesAnnulees && annulTarget.datesAnnulees.length > 0 && (
+                  <div>
+                    <p className={labelCls}>Dates annulées</p>
+                    <ul className="space-y-1.5">
+                      {annulTarget.datesAnnulees.map((d) => (
+                        <li key={d} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2">
+                          <span className="min-w-0 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                            <CalendarX size={13} className="text-rose-500 shrink-0" />
+                            <span className="truncate">
+                              {formatDateFr(d)}
+                              {annulTarget.motifsAnnulation?.[d] && (
+                                <span className="text-zinc-500"> · {annulTarget.motifsAnnulation[d]}</span>
+                              )}
+                            </span>
+                          </span>
+                          <button
+                            onClick={() => handleReactiver(d)}
+                            disabled={annulSaving}
+                            className="shrink-0 flex items-center gap-1 text-xs text-blue-600 dark:text-orange-400 hover:underline disabled:opacity-50"
+                            title="Réactiver ce cours à cette date"
+                          >
+                            <RotateCcw size={12} /> Réactiver
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
+                <button onClick={closeAnnul} disabled={annulSaving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">
+                  Fermer
                 </button>
               </div>
             </div>

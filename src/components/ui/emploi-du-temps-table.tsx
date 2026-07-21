@@ -6,6 +6,8 @@ import {
   JOUR_LABEL,
   dateDuJour,
   remplacantLe,
+  estAnnuleLe,
+  motifAnnulationLe,
   type Creneau,
   type JourSemaine,
 } from '@/types/emploi-du-temps'
@@ -189,19 +191,24 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes, lundiSemaine 
 
                   if (p) {
                     const { creneau: c, span } = p
-                    // Remplacement actif pour la date réelle de cette colonne (si une
-                    // semaine est ancrée). Le remplaçant s'affiche À LA PLACE du titulaire.
+                    // États datés pour la date réelle de cette colonne (si une semaine est
+                    // ancrée). L'annulation PRIME sur le remplacement : un cours annulé ne
+                    // se tient pas, peu importe qui devait l'assurer.
                     const dISO = dateColonne(jour)
-                    const remplacant = dISO ? remplacantLe(c, dISO) : null
-                    const titre = [
-                      c.matiere,
-                      c.salle,
-                      remplacant ? `${remplacant} (remplace ${c.enseignant || '—'})` : c.enseignant,
-                      remplacant ? `Remplacement${c.remplacantMotif ? ` : ${c.remplacantMotif}` : ''}` : '',
-                      `${c.heureDebut}-${c.heureFin}`,
-                    ]
-                      .filter(Boolean)
-                      .join(' — ')
+                    const annule = dISO ? estAnnuleLe(c, dISO) : false
+                    const motifAnnul = annule && dISO ? motifAnnulationLe(c, dISO) : null
+                    const remplacant = !annule && dISO ? remplacantLe(c, dISO) : null
+                    const titre = annule
+                      ? [`${c.matiere} — ANNULÉ`, motifAnnul, `${c.heureDebut}-${c.heureFin}`].filter(Boolean).join(' — ')
+                      : [
+                          c.matiere,
+                          c.salle,
+                          remplacant ? `${remplacant} (remplace ${c.enseignant || '—'})` : c.enseignant,
+                          remplacant ? `Remplacement${c.remplacantMotif ? ` : ${c.remplacantMotif}` : ''}` : '',
+                          `${c.heureDebut}-${c.heureFin}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' — ')
 
                     return (
                       <td
@@ -213,7 +220,11 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes, lundiSemaine 
                         <div
                           title={titre}
                           className={`mx-auto flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border px-1.5 py-1 text-center ${
-                            remplacant ? 'border-teal-500/40 bg-teal-500/10' : 'border-orange-500/20 bg-orange-500/10'
+                            annule
+                              ? 'border-zinc-300 dark:border-white/10 bg-zinc-100 dark:bg-white/5 opacity-70'
+                              : remplacant
+                                ? 'border-teal-500/40 bg-teal-500/10'
+                                : 'border-orange-500/20 bg-orange-500/10'
                           }`}
                           style={{
                             maxWidth: LARGEUR_BLOC,
@@ -224,36 +235,53 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes, lundiSemaine 
                             height: span * HAUTEUR_LIGNE - PADDING_VERTICAL,
                           }}
                         >
-                          {/* Badge « Remplacement » discret en teal (distinct de l'accent bleu). */}
-                          {remplacant && (
-                            <span className="flex items-center gap-0.5 rounded-full bg-teal-500/15 px-1.5 text-[8px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
-                              <UserCog className="h-2.5 w-2.5 shrink-0" /> Remplacement
-                            </span>
+                          {annule ? (
+                            <>
+                              {/* Cours annulé : bloc grisé, matière barrée, mention « Annulé ». */}
+                              <span className="flex items-center gap-0.5 rounded-full bg-rose-500/10 px-1.5 text-[8px] font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                                <CalendarX className="h-2.5 w-2.5 shrink-0" /> Annulé
+                              </span>
+                              <p className="line-clamp-2 max-w-full break-words text-[10px] font-semibold leading-[1.2] text-zinc-500 line-through decoration-rose-500/60">
+                                {c.matiere}
+                              </p>
+                              {motifAnnul && (
+                                <span className="max-w-full truncate text-[9px] leading-tight text-zinc-500">{motifAnnul}</span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {/* Badge « Remplacement » discret en teal (distinct de l'accent bleu). */}
+                              {remplacant && (
+                                <span className="flex items-center gap-0.5 rounded-full bg-teal-500/15 px-1.5 text-[8px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                                  <UserCog className="h-2.5 w-2.5 shrink-0" /> Remplacement
+                                </span>
+                              )}
+                              {/* Matière + salle + enseignant TOUJOURS affichés, quelle que soit la
+                                  durée du cours (même 1h) : la ligne fait désormais 60px pour que les
+                                  3 infos tiennent. Polices compactes + line-clamp/truncate empêchent
+                                  tout débordement quand le nom ou l'intitulé est long. */}
+                              <p className="line-clamp-2 max-w-full break-words text-[10px] font-semibold leading-[1.2] text-zinc-900 dark:text-white">
+                                {c.matiere}
+                              </p>
+                              {c.salle && (
+                                <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300">
+                                  <MapPin className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{c.salle}</span>
+                                </span>
+                              )}
+                              {remplacant ? (
+                                <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-teal-700 dark:text-teal-300">
+                                  <User className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{remplacant}</span>
+                                </span>
+                              ) : c.enseignant ? (
+                                <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300/80">
+                                  <User className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{c.enseignant}</span>
+                                </span>
+                              ) : null}
+                            </>
                           )}
-                          {/* Matière + salle + enseignant TOUJOURS affichés, quelle que soit la
-                              durée du cours (même 1h) : la ligne fait désormais 60px pour que les
-                              3 infos tiennent. Polices compactes + line-clamp/truncate empêchent
-                              tout débordement quand le nom ou l'intitulé est long. */}
-                          <p className="line-clamp-2 max-w-full break-words text-[10px] font-semibold leading-[1.2] text-zinc-900 dark:text-white">
-                            {c.matiere}
-                          </p>
-                          {c.salle && (
-                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300">
-                              <MapPin className="h-2.5 w-2.5 shrink-0" />
-                              <span className="truncate">{c.salle}</span>
-                            </span>
-                          )}
-                          {remplacant ? (
-                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-teal-700 dark:text-teal-300">
-                              <User className="h-2.5 w-2.5 shrink-0" />
-                              <span className="truncate">{remplacant}</span>
-                            </span>
-                          ) : c.enseignant ? (
-                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300/80">
-                              <User className="h-2.5 w-2.5 shrink-0" />
-                              <span className="truncate">{c.enseignant}</span>
-                            </span>
-                          ) : null}
                         </div>
                       </td>
                     )
@@ -288,20 +316,33 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes, lundiSemaine 
               ) : (
                 <div className="space-y-2">
                   {items.map((c) => {
-                    const remplacant = dISO ? remplacantLe(c, dISO) : null
+                    const annule = dISO ? estAnnuleLe(c, dISO) : false
+                    const motifAnnul = annule && dISO ? motifAnnulationLe(c, dISO) : null
+                    const remplacant = !annule && dISO ? remplacantLe(c, dISO) : null
                     return (
                       <div
                         key={c.id}
                         className={`rounded-lg border p-3 ${
-                          remplacant ? 'border-teal-500/40 bg-teal-500/10' : 'border-orange-500/20 bg-orange-500/10'
+                          annule
+                            ? 'border-zinc-300 dark:border-white/10 bg-zinc-100 dark:bg-white/5 opacity-70'
+                            : remplacant
+                              ? 'border-teal-500/40 bg-teal-500/10'
+                              : 'border-orange-500/20 bg-orange-500/10'
                         }`}
                       >
-                        <p className="font-mono text-xs text-blue-600 dark:text-orange-400">
+                        {annule && (
+                          <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                            <CalendarX className="h-3 w-3 shrink-0" /> Annulé
+                          </span>
+                        )}
+                        <p className={`font-mono text-xs ${annule ? 'text-zinc-500' : 'text-blue-600 dark:text-orange-400'}`}>
                           {c.heureDebut} - {c.heureFin}
                         </p>
-                        <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">{c.matiere}</p>
+                        <p className={`mt-1 text-sm font-semibold ${annule ? 'text-zinc-500 line-through decoration-rose-500/60' : 'text-zinc-900 dark:text-white'}`}>{c.matiere}</p>
                         {c.salle && <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{c.salle}</p>}
-                        {remplacant ? (
+                        {annule ? (
+                          motifAnnul && <p className="mt-0.5 text-xs text-zinc-500">{motifAnnul}</p>
+                        ) : remplacant ? (
                           <p className="mt-0.5 flex items-center gap-1 text-xs text-teal-700 dark:text-teal-300">
                             <UserCog className="h-3 w-3 shrink-0" />
                             {remplacant}
