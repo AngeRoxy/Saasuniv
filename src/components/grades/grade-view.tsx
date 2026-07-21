@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { BarChart3 } from 'lucide-react'
 import { getNotesForStudent, getSemestres, getMoyennesManuelles } from '@/lib/db'
 import type { Semestre, NoteEntry } from '@/lib/db'
-import { getMention, getNoteRetenue, hasRattrapage, EVALUATIONS } from '@/types/note'
+import { getMention, getNoteRetenue, hasRattrapage, aDesEvaluations, EVALUATIONS } from '@/types/note'
+import { EvalPending } from './eval-pending'
 
 /** Consultation des notes d'un étudiant (réutilisée par l'étudiant et le parent). */
 export function GradeView({ universityId, studentUid }: { universityId: string; studentUid: string }) {
@@ -131,20 +132,27 @@ export function GradeView({ universityId, studentUid }: { universityId: string; 
                 const retenue = getNoteRetenue(n)
                 const rattrapee = hasRattrapage(n)
                 const mention = getMention(retenue)
+                // Note au NOUVEAU format (≥1 des 3 évaluations saisie) : une case
+                // manquante est « en attente ». Sinon note HISTORIQUE : les
+                // colonnes d'évaluation ne s'appliquent pas → « — ».
+                const nouveauFormat = aDesEvaluations(n)
                 return (
                   <tr key={n.id} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                     <td className="px-4 py-3 text-zinc-800 dark:text-orange-100/80 font-medium">{n.matiere}</td>
 
-                    {/* Détail des 3 évaluations. Une note publiée avant leur mise
-                        en place n'en a pas : les colonnes affichent « — » et la
-                        moyenne reste la note d'origine. */}
+                    {/* Détail des 3 évaluations. Une évaluation pas encore
+                        saisie (nouveau format) → « En attente » neutre, jamais un
+                        0. Une note publiée avant les 3 évaluations n'en a aucune :
+                        les colonnes affichent « — » et la moyenne reste la note
+                        d'origine. */}
                     {EVALUATIONS.map((e) => {
                       const v = n[e.champ]
+                      const saisie = typeof v === 'number'
                       return (
                         <td key={e.champ} className={`px-3 py-3 text-center text-sm ${
-                          typeof v === 'number' && v < 10 ? 'text-red-400' : 'text-zinc-800 dark:text-orange-100/70'
+                          saisie && v < 10 ? 'text-red-400' : 'text-zinc-800 dark:text-orange-100/70'
                         }`}>
-                          {typeof v === 'number' ? v : '—'}
+                          {saisie ? v : nouveauFormat ? <EvalPending /> : '—'}
                         </td>
                       )
                     })}

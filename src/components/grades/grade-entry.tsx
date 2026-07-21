@@ -13,6 +13,7 @@ import {
 } from '@/lib/db'
 import type { Filiere, Matiere, Semestre, UniversityMember } from '@/lib/db'
 import { getMention, calculerMoyenneMatiere, EVALUATIONS } from '@/types/note'
+import { EvalPending } from './eval-pending'
 
 interface Row {
   studentUid: string
@@ -318,7 +319,10 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
                 {rows.map((r) => {
                   const n = noteFinaleDe(r)
                   const mention = getMention(n)
-                  const historiqueSeule = n !== null && !EVALUATIONS.some((e) => parseNote(r[e.champ]) !== null)
+                  const aDesEvals = EVALUATIONS.some((e) => parseNote(r[e.champ]) !== null)
+                  // Note historique = une note d'origine existe mais aucune des 3
+                  // évaluations n'est saisie (schéma pré-3-évaluations).
+                  const historiqueSeule = n !== null && !aDesEvals
                   return (
                     <tr key={r.studentUid} className="border-t border-orange-500/5 hover:bg-orange-500/5 transition-colors">
                       <td className="px-4 py-2.5 text-zinc-800 dark:text-orange-100/80 font-medium whitespace-nowrap">{r.nom}</td>
@@ -330,16 +334,25 @@ export function GradeEntry({ universityId, readOnly = false }: { universityId: s
                         return (
                           <td key={e.champ} className="px-3 py-2.5 text-center">
                             {readOnly ? (
-                              <span className={`font-semibold ${v !== null && v < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>
-                                {v !== null ? v : '—'}
-                              </span>
+                              // Consultation admin : distinguer une vraie note
+                              // d'un « — » historique et d'une éval « En attente »
+                              // (jamais un 0/20 fictif).
+                              v !== null ? (
+                                <span className={`font-semibold ${v < 10 ? 'text-red-400' : 'text-zinc-900 dark:text-white'}`}>{v}</span>
+                              ) : historiqueSeule ? (
+                                <span className="text-zinc-500 dark:text-orange-200/30">—</span>
+                              ) : (
+                                <EvalPending />
+                              )
                             ) : (
+                              // Champ vide = neutre (jamais de bordure rouge) : une
+                              // évaluation non saisie n'est pas une erreur.
                               <input type="number" min={0} max={20} step={0.25} value={r[e.champ]}
                                 onChange={(ev) => updateRow(r.studentUid, { [e.champ]: ev.target.value })}
                                 aria-label={`${e.label} — ${r.nom}`}
-                                className={`w-16 bg-zinc-50 dark:bg-black/40 border rounded-lg px-2 py-1 text-center text-sm font-semibold focus:outline-none transition-colors ${
+                                className={`w-16 bg-zinc-50 dark:bg-black/40 border rounded-lg px-2 py-1 text-center text-sm font-semibold focus:outline-none transition-colors placeholder:text-[10px] placeholder:font-normal placeholder:text-zinc-400 dark:placeholder:text-zinc-500 ${
                                   v !== null && v < 10 ? 'border-red-500/40 text-red-400' : 'border-orange-500/20 text-zinc-900 dark:text-white focus:border-orange-400/60'
-                                }`} placeholder="—" />
+                                }`} placeholder="À saisir" />
                             )}
                           </td>
                         )
