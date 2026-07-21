@@ -10,9 +10,10 @@ import {
   getCreneaux,
 } from '@/lib/db'
 import type { Semestre } from '@/lib/db'
-import { type Creneau } from '@/types/emploi-du-temps'
+import { lundiDeLaSemaine, type Creneau } from '@/types/emploi-du-temps'
 import { ComingSoon } from '@/components/ui/coming-soon'
 import { EmploiDuTempsTable } from '@/components/ui/emploi-du-temps-table'
+import { SelecteurSemaine } from '@/components/ui/selecteur-semaine'
 
 export default function StudentSchedulePage() {
   const { user, profile } = useAuth()
@@ -25,6 +26,9 @@ export default function StudentSchedulePage() {
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [semestreId, setSemestreId] = useState('')
   const [creneaux, setCreneaux] = useState<Creneau[]>([])
+  // Semaine calendaire affichée (ancrée au lundi) — donne un sens aux états datés
+  // (remplacement ponctuel, annulation) sur une grille par ailleurs récurrente.
+  const [lundiSemaine, setLundiSemaine] = useState(() => lundiDeLaSemaine(new Date()))
 
   useEffect(() => {
     if (!universityId || !user?.uid) return
@@ -104,18 +108,21 @@ export default function StudentSchedulePage() {
             {filiereNom} · {niveau}
           </p>
         </div>
-        {semestres.length > 0 && (
-          <select
-            value={semestreId}
-            onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
-          >
-            {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
-          </select>
-        )}
+        <div className="flex flex-col items-start sm:items-end gap-3">
+          {semestres.length > 0 && (
+            <select
+              value={semestreId}
+              onChange={(e) => setSemestreId(e.target.value)}
+              className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
+            >
+              {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+            </select>
+          )}
+          <SelecteurSemaine lundi={lundiSemaine} onChange={setLundiSemaine} />
+        </div>
       </div>
 
-      <EmploiDuTempsTable creneaux={creneauxFiltres} creneauxPourBornes={creneauxBornes} />
+      <EmploiDuTempsTable creneaux={creneauxFiltres} creneauxPourBornes={creneauxBornes} lundiSemaine={lundiSemaine} />
     </div>
   )
 }

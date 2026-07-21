@@ -1,11 +1,31 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { CalendarClock, Clock, MapPin, Layers } from 'lucide-react'
+import { CalendarClock, Clock, MapPin, Layers, UserCog } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getFilieres, getSemestres, getCreneaux } from '@/lib/db'
 import type { Filiere, Semestre } from '@/lib/db'
-import { JOURS, JOUR_LABEL, type Creneau } from '@/types/emploi-du-temps'
+import {
+  JOURS,
+  JOUR_LABEL,
+  lundiDeLaSemaine,
+  dateDuJour,
+  jourDeDate,
+  estDansSemaine,
+  remplacantLe,
+  type Creneau,
+  type JourSemaine,
+} from '@/types/emploi-du-temps'
+import { SelecteurSemaine } from '@/components/ui/selecteur-semaine'
+
+// Élément d'emploi du temps enseignant : soit un créneau dont il est titulaire
+// (récurrent), soit une occurrence ponctuelle où il est remplaçant.
+type TeacherItem = {
+  creneau: Creneau
+  role: 'titulaire' | 'remplacant'
+  /** Pour un titulaire : nom du remplaçant qui le couvre CE jour précis, sinon null. */
+  couvertPar: string | null
+}
 
 export default function TeacherSchedulePage() {
   const { user, profile } = useAuth()
@@ -17,6 +37,8 @@ export default function TeacherSchedulePage() {
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [semestreId, setSemestreId] = useState('')
   const [creneaux, setCreneaux] = useState<Creneau[]>([])
+  // Semaine calendaire affichée : ancre les états datés (remplacements ponctuels).
+  const [lundiSemaine, setLundiSemaine] = useState(() => lundiDeLaSemaine(new Date()))
 
   useEffect(() => {
     if (!universityId) return
@@ -48,16 +70,38 @@ export default function TeacherSchedulePage() {
   }, [filieres])
 
   const byDay = useMemo(() => {
-    const mine = creneaux.filter(
-      (c) => c.enseignant === teacherName && (!semestreId || c.semestreId === semestreId)
-    )
-    return JOURS.map((jour) => ({
-      jour,
-      items: mine
-        .filter((c) => c.jour === jour)
-        .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut)),
-    }))
-  }, [creneaux, teacherName, semestreId])
+    const parJour = new Map<JourSemaine, TeacherItem[]>()
+    for (const j of JOURS) parJour.set(j, [])
+
+    // 1. Mes créneaux TITULAIRES (récurrents, du semestre sélectionné), placés sur
+    //    leur jour habituel. Marqués « remplacé ce jour » si un autre enseignant me
+    //    couvre à la date réelle de cette colonne.
+    for (const c of creneaux) {
+      if (c.enseignant !== teacherName) continue
+      if (semestreId && c.semestreId !== semestreId) continue
+      const rempl = remplacantLe(c, dateDuJour(lundiSemaine, c.jour))
+      parJour.get(c.jour)!.push({
+        creneau: c,
+        role: 'titulaire',
+        couvertPar: rempl && rempl !== teacherName ? rempl : null,
+      })
+    }
+
+    // 2. Occurrences ponctuelles où JE suis le remplaçant, pour une date tombant
+    //    dans la semaine affichée — placées sur le jour réel de cette date. Non
+    //    filtrées par semestre : c'est un évènement daté concret, pas un modèle.
+    for (const c of creneaux) {
+      if (c.remplacantNom !== teacherName || !c.remplacantActifDate) continue
+      if (!estDansSemaine(c.remplacantActifDate, lundiSemaine)) continue
+      const jour = jourDeDate(c.remplacantActifDate)
+      if (jour) parJour.get(jour)!.push({ creneau: c, role: 'remplacant', couvertPar: null })
+    }
+
+    for (const j of JOURS) {
+      parJour.get(j)!.sort((a, b) => a.creneau.heureDebut.localeCompare(b.creneau.heureDebut))
+    }
+    return JOURS.map((jour) => ({ jour, items: parJour.get(jour)! }))
+  }, [creneaux, teacherName, semestreId, lundiSemaine])
 
   const total = byDay.reduce((n, d) => n + d.items.length, 0)
 
@@ -79,15 +123,18 @@ export default function TeacherSchedulePage() {
           </h1>
           <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Vos cours, tous niveaux confondus</p>
         </div>
-        {semestres.length > 0 && (
-          <select
-            value={semestreId}
-            onChange={(e) => setSemestreId(e.target.value)}
-            className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
-          >
-            {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
-          </select>
-        )}
+        <div className="flex flex-col items-start sm:items-end gap-3">
+          {semestres.length > 0 && (
+            <select
+              value={semestreId}
+              onChange={(e) => setSemestreId(e.target.value)}
+              className="bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
+            >
+              {semestres.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+            </select>
+          )}
+          <SelecteurSemaine lundi={lundiSemaine} onChange={setLundiSemaine} />
+        </div>
       </div>
 
       {total === 0 ? (
@@ -105,18 +152,44 @@ export default function TeacherSchedulePage() {
                 {items.length === 0 ? (
                   <p className="text-center text-zinc-500 dark:text-orange-200/20 text-xs py-4">—</p>
                 ) : (
-                  items.map((c) => (
-                    <div key={c.id} className="rounded-lg bg-orange-500/5 border border-orange-500/15 p-2.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 dark:text-orange-400">
-                        <Clock size={10} /> {c.heureDebut}–{c.heureFin}
-                      </span>
-                      <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1 leading-snug">{c.matiere}</p>
-                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
-                        <Layers size={9} /> {filiereNom(c.filiereId)} · {c.niveau}
-                      </p>
-                      {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
-                    </div>
-                  ))
+                  items.map(({ creneau: c, role, couvertPar }) => {
+                    const estRemplacement = role === 'remplacant'
+                    return (
+                      <div
+                        key={`${role}-${c.id}`}
+                        className={`rounded-lg border p-2.5 ${
+                          estRemplacement
+                            ? 'bg-teal-500/10 border-teal-500/40'
+                            : 'bg-orange-500/5 border-orange-500/15'
+                        }`}
+                      >
+                        {estRemplacement && (
+                          <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-teal-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                            <UserCog size={9} /> Remplacement
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 dark:text-orange-400">
+                          <Clock size={10} /> {c.heureDebut}–{c.heureFin}
+                        </span>
+                        <p className="text-sm font-medium text-zinc-900 dark:text-white mt-1 leading-snug">{c.matiere}</p>
+                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
+                          <Layers size={9} /> {filiereNom(c.filiereId)} · {c.niveau}
+                        </p>
+                        {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
+                        {/* Titulaire couvert par un remplaçant ce jour précis : le cours reste le sien
+                            mais il est assuré par quelqu'un d'autre — on l'indique clairement. */}
+                        {estRemplacement ? (
+                          <p className="text-[11px] text-teal-700 dark:text-teal-300/80 mt-0.5">
+                            Vous remplacez {c.enseignant || 'le titulaire'}
+                          </p>
+                        ) : couvertPar ? (
+                          <p className="text-[11px] text-teal-700 dark:text-teal-300/80 mt-0.5 flex items-center gap-1">
+                            <UserCog size={9} /> Remplacé ce jour par {couvertPar}
+                          </p>
+                        ) : null}
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </div>

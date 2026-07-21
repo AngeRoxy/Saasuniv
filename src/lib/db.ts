@@ -791,6 +791,41 @@ export async function deleteCreneau(
   await remove(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`))
 }
 
+// ─── Remplacement ponctuel d'enseignant ─────────────────────────────────────────
+// Écriture DIRECTE par sous-chemin (pas de contrôle de conflit RÈGLE 3) : poser un
+// remplaçant sur une occurrence ne change ni l'horaire ni la salle ni le groupe,
+// donc ne peut créer aucun conflit d'emploi du temps. Toute erreur remonte à
+// l'appelant — jamais de faux succès silencieux.
+
+/** Pose (ou remplace) le remplaçant ponctuel d'un créneau pour une date précise. */
+export async function setRemplacement(
+  universityId: string,
+  creneauId: string,
+  data: { remplacantNom: string; remplacantActifDate: string; remplacantMotif?: string }
+): Promise<void> {
+  const motif = data.remplacantMotif?.trim()
+  await update(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`), {
+    remplacantNom: data.remplacantNom,
+    remplacantActifDate: data.remplacantActifDate,
+    // `null` supprime la clé côté RTDB : pas de motif ⇒ pas de champ résiduel.
+    remplacantMotif: motif ? motif : null,
+    updatedAt: Date.now(),
+  })
+}
+
+/** Retire le remplacement d'un créneau (annulation d'un remplacement erroné). */
+export async function clearRemplacement(
+  universityId: string,
+  creneauId: string
+): Promise<void> {
+  await update(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`), {
+    remplacantNom: null,
+    remplacantActifDate: null,
+    remplacantMotif: null,
+    updatedAt: Date.now(),
+  })
+}
+
 /**
  * Vide le champ `enseignant` de plusieurs créneaux (le cours reste actif, juste
  * sans enseignant assigné). Écriture directe par sous-chemin — pas de contrôle de

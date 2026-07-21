@@ -1,7 +1,14 @@
 'use client'
 
-import { CalendarX, MapPin, User } from 'lucide-react'
-import { JOURS, JOUR_LABEL, type Creneau, type JourSemaine } from '@/types/emploi-du-temps'
+import { CalendarX, MapPin, User, UserCog } from 'lucide-react'
+import {
+  JOURS,
+  JOUR_LABEL,
+  dateDuJour,
+  remplacantLe,
+  type Creneau,
+  type JourSemaine,
+} from '@/types/emploi-du-temps'
 
 interface EmploiDuTempsTableProps {
   /** Créneaux affichés dans les cellules (déjà filtrés pour la personne concernée). */
@@ -13,6 +20,13 @@ interface EmploiDuTempsTableProps {
    * non le seul sous-ensemble de la personne. Si omis : fallback sur `creneaux`.
    */
   creneauxPourBornes?: Creneau[]
+  /**
+   * Lundi (00:00 local) de la semaine calendaire affichée. Sert UNIQUEMENT à
+   * résoudre chaque colonne-jour en date réelle pour décorer les états datés
+   * (remplacement ponctuel). Si omis : grille récurrente générique, aucune
+   * décoration datée — comportement historique strictement inchangé.
+   */
+  lundiSemaine?: Date | null
 }
 
 /** Largeur fixe de la colonne « Horaire ». */
@@ -61,7 +75,12 @@ interface Placement {
  *
  * Composant strictement en lecture seule : il ne fait qu'afficher `creneaux`.
  */
-export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTempsTableProps) {
+export function EmploiDuTempsTable({ creneaux, creneauxPourBornes, lundiSemaine }: EmploiDuTempsTableProps) {
+  // Date « YYYY-MM-DD » réelle d'une colonne-jour pour la semaine ancrée, ou
+  // `null` si aucune semaine n'est fournie (mode récurrent générique).
+  const dateColonne = (jour: JourSemaine): string | null =>
+    lundiSemaine ? dateDuJour(lundiSemaine, jour) : null
+
   // État totalement vide : message centré, pas de tableau.
   if (creneaux.length === 0) {
     return (
@@ -170,10 +189,15 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
 
                   if (p) {
                     const { creneau: c, span } = p
+                    // Remplacement actif pour la date réelle de cette colonne (si une
+                    // semaine est ancrée). Le remplaçant s'affiche À LA PLACE du titulaire.
+                    const dISO = dateColonne(jour)
+                    const remplacant = dISO ? remplacantLe(c, dISO) : null
                     const titre = [
                       c.matiere,
                       c.salle,
-                      c.enseignant,
+                      remplacant ? `${remplacant} (remplace ${c.enseignant || '—'})` : c.enseignant,
+                      remplacant ? `Remplacement${c.remplacantMotif ? ` : ${c.remplacantMotif}` : ''}` : '',
                       `${c.heureDebut}-${c.heureFin}`,
                     ]
                       .filter(Boolean)
@@ -188,7 +212,9 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                       >
                         <div
                           title={titre}
-                          className="mx-auto flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border border-orange-500/20 bg-orange-500/10 px-1.5 py-1 text-center"
+                          className={`mx-auto flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border px-1.5 py-1 text-center ${
+                            remplacant ? 'border-teal-500/40 bg-teal-500/10' : 'border-orange-500/20 bg-orange-500/10'
+                          }`}
                           style={{
                             maxWidth: LARGEUR_BLOC,
                             // Hauteur EXPLICITE = nombre de lignes fusionnées × hauteur de ligne
@@ -198,6 +224,12 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                             height: span * HAUTEUR_LIGNE - PADDING_VERTICAL,
                           }}
                         >
+                          {/* Badge « Remplacement » discret en teal (distinct de l'accent bleu). */}
+                          {remplacant && (
+                            <span className="flex items-center gap-0.5 rounded-full bg-teal-500/15 px-1.5 text-[8px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                              <UserCog className="h-2.5 w-2.5 shrink-0" /> Remplacement
+                            </span>
+                          )}
                           {/* Matière + salle + enseignant TOUJOURS affichés, quelle que soit la
                               durée du cours (même 1h) : la ligne fait désormais 60px pour que les
                               3 infos tiennent. Polices compactes + line-clamp/truncate empêchent
@@ -211,12 +243,17 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                               <span className="truncate">{c.salle}</span>
                             </span>
                           )}
-                          {c.enseignant && (
+                          {remplacant ? (
+                            <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-teal-700 dark:text-teal-300">
+                              <User className="h-2.5 w-2.5 shrink-0" />
+                              <span className="truncate">{remplacant}</span>
+                            </span>
+                          ) : c.enseignant ? (
                             <span className="flex max-w-full items-center justify-center gap-0.5 text-[9px] leading-tight text-blue-700 dark:text-orange-300/80">
                               <User className="h-2.5 w-2.5 shrink-0" />
                               <span className="truncate">{c.enseignant}</span>
                             </span>
-                          )}
+                          ) : null}
                         </div>
                       </td>
                     )
@@ -240,6 +277,7 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
           const items = creneaux
             .filter((c) => c.jour === jour)
             .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
+          const dISO = dateColonne(jour)
           return (
             <div key={jour}>
               <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-orange-400">
@@ -249,19 +287,32 @@ export function EmploiDuTempsTable({ creneaux, creneauxPourBornes }: EmploiDuTem
                 <p className="text-xs italic text-zinc-600">Aucun cours</p>
               ) : (
                 <div className="space-y-2">
-                  {items.map((c) => (
-                    <div
-                      key={c.id}
-                      className="rounded-lg border border-orange-500/20 bg-orange-500/10 p-3"
-                    >
-                      <p className="font-mono text-xs text-blue-600 dark:text-orange-400">
-                        {c.heureDebut} - {c.heureFin}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">{c.matiere}</p>
-                      {c.salle && <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{c.salle}</p>}
-                      {c.enseignant && <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">{c.enseignant}</p>}
-                    </div>
-                  ))}
+                  {items.map((c) => {
+                    const remplacant = dISO ? remplacantLe(c, dISO) : null
+                    return (
+                      <div
+                        key={c.id}
+                        className={`rounded-lg border p-3 ${
+                          remplacant ? 'border-teal-500/40 bg-teal-500/10' : 'border-orange-500/20 bg-orange-500/10'
+                        }`}
+                      >
+                        <p className="font-mono text-xs text-blue-600 dark:text-orange-400">
+                          {c.heureDebut} - {c.heureFin}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">{c.matiere}</p>
+                        {c.salle && <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{c.salle}</p>}
+                        {remplacant ? (
+                          <p className="mt-0.5 flex items-center gap-1 text-xs text-teal-700 dark:text-teal-300">
+                            <UserCog className="h-3 w-3 shrink-0" />
+                            {remplacant}
+                            <span className="text-[10px] uppercase tracking-wide opacity-70">· Remplacement</span>
+                          </p>
+                        ) : (
+                          c.enseignant && <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">{c.enseignant}</p>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

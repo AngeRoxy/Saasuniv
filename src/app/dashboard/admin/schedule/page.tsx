@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, X, Pencil, Trash2, Clock, MapPin, User, CalendarClock, AlertTriangle } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Clock, MapPin, User, UserCog, CalendarClock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
   getFilieres,
@@ -13,18 +13,28 @@ import {
   createCreneau,
   updateCreneau,
   deleteCreneau,
+  setRemplacement,
+  clearRemplacement,
 } from '@/lib/db'
 import type { Filiere, Matiere, Semestre } from '@/lib/db'
 import {
   JOURS,
   JOUR_LABEL,
   findConflits,
+  toDateISO,
   ConflitError,
   type Creneau,
   type CreneauFormData,
   type ConflitInfo,
   type JourSemaine,
 } from '@/types/emploi-du-temps'
+
+/** « YYYY-MM-DD » → « 14 juil. 2026 » (affichage court des dates ponctuelles). */
+function formatDateFr(iso: string): string {
+  const [y, m, j] = iso.split('-').map(Number)
+  if (!y || !m || !j) return iso
+  return new Date(y, m - 1, j).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
 const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
@@ -60,6 +70,12 @@ export default function SchedulePage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [conflits, setConflits] = useState<ConflitInfo[]>([])
   const [deleteTarget, setDeleteTarget] = useState<Creneau | null>(null)
+
+  // Modal remplacement ponctuel d'enseignant (une occurrence datée précise).
+  const [remplTarget, setRemplTarget] = useState<Creneau | null>(null)
+  const [remplForm, setRemplForm] = useState({ date: '', remplacant: '', motif: '' })
+  const [remplSaving, setRemplSaving] = useState(false)
+  const [remplError, setRemplError] = useState<string | null>(null)
 
   // Chargement initial
   useEffect(() => {
@@ -205,6 +221,61 @@ export default function SchedulePage() {
     setDeleteTarget(null)
   }
 
+  // ── Remplacement ponctuel d'enseignant ──────────────────────────────────────
+  function openRempl(c: Creneau) {
+    setRemplTarget(c)
+    setRemplForm({
+      // Pré-remplit avec le remplacement existant, sinon la date du jour.
+      date: c.remplacantActifDate ?? toDateISO(new Date()),
+      remplacant: c.remplacantNom ?? '',
+      motif: c.remplacantMotif ?? '',
+    })
+    setRemplError(null)
+  }
+
+  function closeRempl() {
+    setRemplTarget(null)
+    setRemplForm({ date: '', remplacant: '', motif: '' })
+    setRemplError(null)
+  }
+
+  async function handleSaveRempl() {
+    if (!universityId || !remplTarget) return
+    if (!remplForm.date) { setRemplError('Choisissez la date du remplacement.'); return }
+    if (!remplForm.remplacant) { setRemplError('Choisissez l’enseignant remplaçant.'); return }
+
+    setRemplSaving(true)
+    setRemplError(null)
+    try {
+      await setRemplacement(universityId, remplTarget.id, {
+        remplacantNom: remplForm.remplacant,
+        remplacantActifDate: remplForm.date,
+        remplacantMotif: remplForm.motif,
+      })
+      await refreshCreneaux()
+      closeRempl()
+    } catch {
+      setRemplError('Échec de l’enregistrement. Réessayez.')
+    } finally {
+      setRemplSaving(false)
+    }
+  }
+
+  async function handleClearRempl() {
+    if (!universityId || !remplTarget) return
+    setRemplSaving(true)
+    setRemplError(null)
+    try {
+      await clearRemplacement(universityId, remplTarget.id)
+      await refreshCreneaux()
+      closeRempl()
+    } catch {
+      setRemplError('Échec de la suppression. Réessayez.')
+    } finally {
+      setRemplSaving(false)
+    }
+  }
+
   // Garde d'accès
   if (profile && profile.role !== 'admin_universite' && profile.role !== 'super_admin_plateforme') {
     return (
@@ -307,6 +378,7 @@ export default function SchedulePage() {
                                 <Clock size={10} /> {c.heureDebut}–{c.heureFin}
                               </span>
                               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => openRempl(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-teal-500" title="Remplacer l’enseignant (ponctuel)"><UserCog size={11} /></button>
                                 <button onClick={() => openEdit(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-blue-800 dark:hover:text-orange-400" title="Modifier"><Pencil size={11} /></button>
                                 <button onClick={() => setDeleteTarget(c)} className="p-1 rounded text-zinc-600 dark:text-zinc-400 hover:text-red-400" title="Supprimer"><Trash2 size={11} /></button>
                               </div>
@@ -317,6 +389,13 @@ export default function SchedulePage() {
                               <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><User size={9} /> {c.enseignant}</p>
                             ) : (
                               <p className="text-[11px] text-zinc-600 italic flex items-center gap-1"><User size={9} /> Aucun enseignant assigné</p>
+                            )}
+                            {/* Remplacement ponctuel programmé : badge daté teal (distinct de l'accent bleu). */}
+                            {c.remplacantNom && c.remplacantActifDate && (
+                              <p className="mt-1 flex items-center gap-1 rounded-md bg-teal-500/10 border border-teal-500/25 px-1.5 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
+                                <UserCog size={9} className="shrink-0" />
+                                <span className="truncate">{c.remplacantNom} · {formatDateFr(c.remplacantActifDate)}</span>
+                              </p>
                             )}
                           </div>
                         ))
@@ -439,6 +518,92 @@ export default function SchedulePage() {
             <div className="flex gap-3 shrink-0">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors">Annuler</button>
               <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal remplacement ponctuel d'enseignant */}
+      {remplTarget && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-teal-500/30 rounded-2xl p-7 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-2 shrink-0">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <UserCog size={18} className="text-teal-500" /> Remplacer l’enseignant
+              </h2>
+              <button onClick={closeRempl} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"><X size={20} /></button>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-orange-200/50 mb-5 shrink-0">
+              {remplTarget.matiere} · {JOUR_LABEL[remplTarget.jour]} {remplTarget.heureDebut}–{remplTarget.heureFin}
+              {remplTarget.enseignant ? <> · titulaire : <span className="text-zinc-700 dark:text-zinc-300">{remplTarget.enseignant}</span></> : <> · aucun titulaire</>}
+            </p>
+
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+                <div className="rounded-lg bg-teal-500/5 border border-teal-500/20 px-3 py-2 text-[11px] text-teal-700 dark:text-teal-300/80 leading-relaxed">
+                  Le remplacement ne vaut que pour la <strong>date précise</strong> choisie (une seule occurrence).
+                  Le créneau récurrent et le titulaire habituel ne sont pas modifiés.
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Date concernée</label>
+                    <input
+                      type="date"
+                      value={remplForm.date}
+                      onChange={(e) => setRemplForm((f) => ({ ...f, date: e.target.value }))}
+                      className={`${inputCls} scheme-dark`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Enseignant remplaçant</label>
+                    <select
+                      value={remplForm.remplacant}
+                      onChange={(e) => setRemplForm((f) => ({ ...f, remplacant: e.target.value }))}
+                      className={selectCls}
+                    >
+                      <option value="">{teachers.length ? 'Choisir…' : 'Aucun enseignant'}</option>
+                      {teachers
+                        .filter((t) => t !== remplTarget.enseignant)
+                        .map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Motif (optionnel)</label>
+                  <input
+                    value={remplForm.motif}
+                    onChange={(e) => setRemplForm((f) => ({ ...f, motif: e.target.value }))}
+                    placeholder="Ex : maladie, formation…"
+                    className={inputCls}
+                  />
+                </div>
+
+                {remplError && (
+                  <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{remplError}</p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-6 shrink-0">
+                {/* Retirer le remplacement (visible seulement si un remplacement existe déjà). */}
+                {remplTarget.remplacantNom && (
+                  <button
+                    onClick={handleClearRempl}
+                    disabled={remplSaving}
+                    className="border border-red-500/25 text-red-500 rounded-xl px-4 py-2.5 text-sm hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  >
+                    Retirer
+                  </button>
+                )}
+                <button onClick={closeRempl} disabled={remplSaving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">
+                  Annuler
+                </button>
+                <button onClick={handleSaveRempl} disabled={remplSaving} className="flex-1 flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
+                  {remplSaving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
+                  Enregistrer
+                </button>
+              </div>
             </div>
           </div>
         </div>
