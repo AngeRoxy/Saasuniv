@@ -717,6 +717,7 @@ export function getDaysRemaining(trialEndsAt: number): number {
 import {
   ConflitError,
   findConflits,
+  verifierDateOccurrence,
   type ConflitInfo,
   type Creneau,
   type CreneauCandidat,
@@ -803,6 +804,16 @@ export async function setRemplacement(
   creneauId: string,
   data: { remplacantNom: string; remplacantActifDate: string; remplacantMotif?: string }
 ): Promise<void> {
+  // Garde autoritaire : la date DOIT tomber le jour de semaine du créneau, sinon
+  // l'état serait invisible partout sauf dans la liste admin (voir
+  // verifierDateOccurrence). On refuse plutôt que d'écrire un état mort.
+  const all = await getCreneaux(universityId)
+  const existing = all.find((c) => c.id === creneauId)
+  if (existing) {
+    const err = verifierDateOccurrence(existing.jour, data.remplacantActifDate)
+    if (err) throw new Error(err)
+  }
+
   const motif = data.remplacantMotif?.trim()
   await update(ref(db, `universities/${universityId}/emploi_du_temps/${creneauId}`), {
     remplacantNom: data.remplacantNom,
@@ -840,6 +851,12 @@ export async function annulerCreneauDate(
 ): Promise<void> {
   const all = await getCreneaux(universityId)
   const c = all.find((x) => x.id === creneauId)
+  // Garde autoritaire : même règle que le remplacement — une date qui ne tombe
+  // pas le jour du créneau produirait une annulation invisible côté étudiant.
+  if (c) {
+    const err = verifierDateOccurrence(c.jour, dateISO)
+    if (err) throw new Error(err)
+  }
   const dates = new Set(c?.datesAnnulees ?? [])
   dates.add(dateISO)
   const motifs: Record<string, string> = { ...(c?.motifsAnnulation ?? {}) }

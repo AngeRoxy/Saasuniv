@@ -23,7 +23,9 @@ import {
   JOURS,
   JOUR_LABEL,
   findConflits,
-  toDateISO,
+  jourDeDate,
+  prochaineOccurrence,
+  verifierDateOccurrence,
   ConflitError,
   type Creneau,
   type CreneauFormData,
@@ -36,6 +38,22 @@ function formatDateFr(iso: string): string {
   const [y, m, j] = iso.split('-').map(Number)
   if (!y || !m || !j) return iso
   return new Date(y, m - 1, j).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/**
+ * Une date ponctuelle enregistrée sur un autre jour que celui du créneau est
+ * INVISIBLE côté étudiant/parent/enseignant (voir verifierDateOccurrence). On la
+ * signale explicitement dans la liste admin, sinon l'admin croit le cours annulé
+ * alors qu'il ne l'est nulle part ailleurs.
+ */
+function dateIncoherente(c: Creneau, iso: string): boolean {
+  return jourDeDate(iso) !== c.jour
+}
+
+/** Libellé du jour de semaine d'une date « YYYY-MM-DD » (dimanche compris). */
+function labelJourDeDate(iso: string): string {
+  const j = jourDeDate(iso)
+  return j ? JOUR_LABEL[j].toLowerCase() : 'dimanche'
 }
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
@@ -233,8 +251,10 @@ export default function SchedulePage() {
   function openRempl(c: Creneau) {
     setRemplTarget(c)
     setRemplForm({
-      // Pré-remplit avec le remplacement existant, sinon la date du jour.
-      date: c.remplacantActifDate ?? toDateISO(new Date()),
+      // Pré-remplit avec le remplacement existant, sinon la PROCHAINE occurrence
+      // réelle du créneau — jamais « aujourd'hui », qui tombe presque toujours un
+      // autre jour de la semaine et produirait un état invisible côté étudiant.
+      date: c.remplacantActifDate ?? prochaineOccurrence(c.jour, new Date()),
       remplacant: c.remplacantNom ?? '',
       motif: c.remplacantMotif ?? '',
     })
@@ -251,6 +271,10 @@ export default function SchedulePage() {
     if (!universityId || !remplTarget) return
     if (!remplForm.date) { setRemplError('Choisissez la date du remplacement.'); return }
     if (!remplForm.remplacant) { setRemplError('Choisissez l’enseignant remplaçant.'); return }
+    // La date doit tomber le jour du créneau, sinon l'état serait invisible côté
+    // étudiant/parent/enseignant (garde également appliquée dans db.ts).
+    const dateErr = verifierDateOccurrence(remplTarget.jour, remplForm.date)
+    if (dateErr) { setRemplError(dateErr); return }
 
     setRemplSaving(true)
     setRemplError(null)
@@ -262,8 +286,9 @@ export default function SchedulePage() {
       })
       await refreshCreneaux()
       closeRempl()
-    } catch {
-      setRemplError('Échec de l’enregistrement. Réessayez.')
+    } catch (err) {
+      // Remonte le message de la garde autoritaire de db.ts s'il y en a un.
+      setRemplError(err instanceof Error ? err.message : 'Échec de l’enregistrement. Réessayez.')
     } finally {
       setRemplSaving(false)
     }
@@ -287,7 +312,8 @@ export default function SchedulePage() {
   // ── Annulation ponctuelle d'un créneau ──────────────────────────────────────
   function openAnnul(c: Creneau) {
     setAnnulTarget(c)
-    setAnnulForm({ date: toDateISO(new Date()), motif: '' })
+    // Prochaine occurrence réelle du créneau, pas « aujourd'hui » (cf. openRempl).
+    setAnnulForm({ date: prochaineOccurrence(c.jour, new Date()), motif: '' })
     setAnnulError(null)
   }
 
@@ -309,6 +335,10 @@ export default function SchedulePage() {
   async function handleAnnuler() {
     if (!universityId || !annulTarget) return
     if (!annulForm.date) { setAnnulError('Choisissez la date à annuler.'); return }
+    // Même garde que le remplacement : une date hors du jour du créneau créerait
+    // une annulation que personne ne verrait à part l'admin.
+    const dateErr = verifierDateOccurrence(annulTarget.jour, annulForm.date)
+    if (dateErr) { setAnnulError(dateErr); return }
 
     setAnnulSaving(true)
     setAnnulError(null)
@@ -316,8 +346,8 @@ export default function SchedulePage() {
       await annulerCreneauDate(universityId, annulTarget.id, annulForm.date, annulForm.motif)
       await reloadAndSyncAnnul(annulTarget.id)
       setAnnulForm((f) => ({ ...f, motif: '' })) // prêt pour une éventuelle 2e date
-    } catch {
-      setAnnulError('Échec de l’enregistrement. Réessayez.')
+    } catch (err) {
+      setAnnulError(err instanceof Error ? err.message : 'Échec de l’enregistrement. Réessayez.')
     } finally {
       setAnnulSaving(false)
     }
@@ -353,6 +383,11 @@ export default function SchedulePage() {
       </div>
     )
   }
+
+  // Cohérence de la date saisie dans chaque modale, évaluée en direct pour prévenir
+  // AVANT l'enregistrement (le blocage dur reste dans les handlers + db.ts).
+  const remplDateErr = remplTarget ? verifierDateOccurrence(remplTarget.jour, remplForm.date) : null
+  const annulDateErr = annulTarget ? verifierDateOccurrence(annulTarget.jour, annulForm.date) : null
 
   return (
     <div className="space-y-6">
@@ -452,21 +487,40 @@ export default function SchedulePage() {
                             ) : (
                               <p className="text-[11px] text-zinc-600 italic flex items-center gap-1"><User size={9} /> Aucun enseignant assigné</p>
                             )}
-                            {/* Remplacement ponctuel programmé : badge daté teal (distinct de l'accent bleu). */}
+                            {/* Remplacement ponctuel programmé : badge daté teal (distinct de l'accent bleu).
+                                Vire au rose si la date ne tombe pas le jour du créneau : l'état est alors
+                                invisible côté étudiant/parent, il faut le corriger. */}
                             {c.remplacantNom && c.remplacantActifDate && (
-                              <p className="mt-1 flex items-center gap-1 rounded-md bg-teal-500/10 border border-teal-500/25 px-1.5 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
-                                <UserCog size={9} className="shrink-0" />
+                              <button
+                                onClick={() => openRempl(c)}
+                                title={dateIncoherente(c, c.remplacantActifDate)
+                                  ? 'Date hors du jour du créneau : ce remplacement n’est visible par personne. Cliquez pour corriger.'
+                                  : 'Modifier le remplacement'}
+                                className={`mt-1 w-full flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] transition-colors ${
+                                  dateIncoherente(c, c.remplacantActifDate)
+                                    ? 'bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15'
+                                    : 'bg-teal-500/10 border-teal-500/25 text-teal-700 dark:text-teal-300 hover:bg-teal-500/15'
+                                }`}
+                              >
+                                {dateIncoherente(c, c.remplacantActifDate)
+                                  ? <AlertTriangle size={9} className="shrink-0" />
+                                  : <UserCog size={9} className="shrink-0" />}
                                 <span className="truncate">{c.remplacantNom} · {formatDateFr(c.remplacantActifDate)}</span>
-                              </p>
+                              </button>
                             )}
-                            {/* Annulations programmées : badge rose daté (clic = gérer via la modale). */}
+                            {/* Annulations programmées : badge rose daté (clic = gérer via la modale).
+                                Signale les dates incohérentes (invisibles côté étudiant). */}
                             {c.datesAnnulees && c.datesAnnulees.length > 0 && (
                               <button
                                 onClick={() => openAnnul(c)}
                                 className="mt-1 w-full flex items-center gap-1 rounded-md bg-rose-500/10 border border-rose-500/25 px-1.5 py-0.5 text-[10px] text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 transition-colors"
-                                title="Gérer les annulations"
+                                title={c.datesAnnulees.some((d) => dateIncoherente(c, d))
+                                  ? 'Une date ne tombe pas le jour du créneau : invisible côté étudiant. Cliquez pour corriger.'
+                                  : 'Gérer les annulations'}
                               >
-                                <CalendarX size={9} className="shrink-0" />
+                                {c.datesAnnulees.some((d) => dateIncoherente(c, d))
+                                  ? <AlertTriangle size={9} className="shrink-0" />
+                                  : <CalendarX size={9} className="shrink-0" />}
                                 <span className="truncate">
                                   {c.datesAnnulees.length === 1
                                     ? `Annulé le ${formatDateFr(c.datesAnnulees[0])}`
@@ -629,8 +683,15 @@ export default function SchedulePage() {
                       type="date"
                       value={remplForm.date}
                       onChange={(e) => setRemplForm((f) => ({ ...f, date: e.target.value }))}
-                      className={`${inputCls} scheme-dark`}
+                      className={`${inputCls} scheme-dark ${remplDateErr ? 'border-rose-500/60' : ''}`}
                     />
+                    {remplDateErr ? (
+                      <p className="mt-1 flex items-start gap-1 text-[11px] text-rose-500">
+                        <AlertTriangle size={11} className="mt-0.5 shrink-0" /> {remplDateErr}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-zinc-500">{JOUR_LABEL[remplTarget.jour]} {formatDateFr(remplForm.date)}</p>
+                    )}
                   </div>
                   <div>
                     <label className={labelCls}>Enseignant remplaçant</label>
@@ -714,8 +775,15 @@ export default function SchedulePage() {
                       type="date"
                       value={annulForm.date}
                       onChange={(e) => setAnnulForm((f) => ({ ...f, date: e.target.value }))}
-                      className={`${inputCls} scheme-dark`}
+                      className={`${inputCls} scheme-dark ${annulDateErr ? 'border-rose-500/60' : ''}`}
                     />
+                    {annulDateErr ? (
+                      <p className="mt-1 flex items-start gap-1 text-[11px] text-rose-500">
+                        <AlertTriangle size={11} className="mt-0.5 shrink-0" /> {annulDateErr}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-zinc-500">{JOUR_LABEL[annulTarget.jour]} {formatDateFr(annulForm.date)}</p>
+                    )}
                   </div>
                   <div>
                     <label className={labelCls}>Motif (optionnel)</label>
@@ -752,13 +820,24 @@ export default function SchedulePage() {
                     <p className={labelCls}>Dates annulées</p>
                     <ul className="space-y-1.5">
                       {annulTarget.datesAnnulees.map((d) => (
-                        <li key={d} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2">
+                        <li key={d} className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${
+                          dateIncoherente(annulTarget, d)
+                            ? 'bg-rose-500/5 border-rose-500/40'
+                            : 'bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10'
+                        }`}>
                           <span className="min-w-0 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                            <CalendarX size={13} className="text-rose-500 shrink-0" />
+                            {dateIncoherente(annulTarget, d)
+                              ? <AlertTriangle size={13} className="text-rose-500 shrink-0" />
+                              : <CalendarX size={13} className="text-rose-500 shrink-0" />}
                             <span className="truncate">
                               {formatDateFr(d)}
                               {annulTarget.motifsAnnulation?.[d] && (
                                 <span className="text-zinc-500"> · {annulTarget.motifsAnnulation[d]}</span>
+                              )}
+                              {dateIncoherente(annulTarget, d) && (
+                                <span className="block text-[11px] text-rose-500">
+                                  Tombe un {labelJourDeDate(d)}, pas un {JOUR_LABEL[annulTarget.jour].toLowerCase()} — invisible côté étudiant. Réactivez puis ré-annulez à la bonne date.
+                                </span>
                               )}
                             </span>
                           </span>

@@ -150,6 +150,35 @@ export function estDansSemaine(dateISO: string, lundi: Date): boolean {
   return dateISO >= toDateISO(lundi) && dateISO <= toDateISO(samedi)
 }
 
+/**
+ * Prochaine date (à partir de `from`, incluse) tombant le jour de semaine `jour`,
+ * au format « YYYY-MM-DD ». Valeur par défaut des actions datées : une annulation
+ * ou un remplacement n'a de sens que le jour où le créneau a effectivement lieu.
+ */
+export function prochaineOccurrence(jour: JourSemaine, from: Date): string {
+  const cible = JOURS.indexOf(jour)
+  const courant = (from.getDay() + 6) % 7 // 0 = lundi
+  const delta = (cible - courant + 7) % 7
+  return toDateISO(new Date(from.getFullYear(), from.getMonth(), from.getDate() + delta))
+}
+
+/**
+ * Vérifie qu'une date ponctuelle tombe bien le jour de semaine du créneau.
+ * Retourne un message d'erreur prêt à afficher, ou `null` si la date est valide.
+ *
+ * GARDE-FOU CRITIQUE : une date d'un autre jour produit un état INVISIBLE pour
+ * les étudiants, parents et enseignants — la colonne « mardi » d'une semaine ne
+ * vaudra jamais une date de mercredi, quelle que soit la semaine affichée. Un tel
+ * enregistrement ne s'afficherait QUE dans la liste (date-agnostique) de l'admin,
+ * donnant l'illusion d'un cours annulé/remplacé qui ne l'est nulle part ailleurs.
+ */
+export function verifierDateOccurrence(jour: JourSemaine, dateISO: string): string | null {
+  const j = jourDeDate(dateISO)
+  if (j === jour) return null
+  const recu = j ? `un ${JOUR_LABEL[j].toLowerCase()}` : 'un dimanche'
+  return `Ce créneau a lieu le ${JOUR_LABEL[jour].toLowerCase()} ; la date choisie est ${recu}. Choisissez une date qui tombe un ${JOUR_LABEL[jour].toLowerCase()}.`
+}
+
 /** Nom du remplaçant si un remplacement est actif à cette date précise, sinon `null`. */
 export function remplacantLe(c: Creneau, dateISO: string): string | null {
   return c.remplacantActifDate === dateISO && c.remplacantNom ? c.remplacantNom : null
