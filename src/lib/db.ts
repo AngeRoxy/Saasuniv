@@ -78,6 +78,10 @@ export interface UniversityMember {
   updatedAt?: number
   filiere?: string // étudiant : filière unique (nom)
   filiereIds?: string[] // enseignant : IDs des filières où il intervient
+  // Multi-campus : étudiant = UN SEUL campus ; enseignant = PLUSIEURS possibles.
+  // Optionnel pendant la migration progressive (voir migrerVersMultiCampus).
+  campusId?: string // étudiant
+  campusIds?: string[] // enseignant
   niveau?: string
   telephone?: string
   matricule?: string
@@ -138,7 +142,7 @@ export async function updateMemberProfile(
   // `filiere` (nom unique) reste utilisé par les étudiants ; `filiereIds`
   // (tableau d'IDs) est réservé aux enseignants — le tableau complet est
   // toujours réécrit en une fois (pas d'ajout/retrait partiel).
-  data: Partial<Pick<UniversityMember, 'filiere' | 'filiereIds' | 'niveau' | 'telephone' | 'matricule' | 'statut' | 'displayName' | 'chargeHoraire' | 'matieres' | 'photoUrl'>>
+  data: Partial<Pick<UniversityMember, 'filiere' | 'filiereIds' | 'campusId' | 'campusIds' | 'niveau' | 'telephone' | 'matricule' | 'statut' | 'displayName' | 'chargeHoraire' | 'matieres' | 'photoUrl'>>
 ): Promise<void> {
   await update(ref(db, `universities/${universityId}/members/${uid}`), data)
 }
@@ -387,6 +391,113 @@ export async function getManualStudents(universityId: string): Promise<(ManualSt
   return result
 }
 
+// ─── Campus ───────────────────────────────────────────────────────────────────
+
+import type { Campus, CampusFormData } from '@/types/campus'
+
+export type { Campus, CampusFormData }
+
+export async function createCampus(
+  universityId: string,
+  data: CampusFormData
+): Promise<string> {
+  const newRef = push(ref(db, `universities/${universityId}/campus`))
+  await set(newRef, stripUndefined({ ...data, universityId, createdAt: Date.now() }))
+  return newRef.key!
+}
+
+export async function getCampusList(universityId: string): Promise<Campus[]> {
+  const snapshot = await get(ref(db, `universities/${universityId}/campus`))
+  if (!snapshot.exists()) return []
+  const result: Campus[] = []
+  snapshot.forEach((child) => {
+    result.push({ id: child.key!, ...child.val() } as Campus)
+  })
+  return result
+}
+
+export async function updateCampus(
+  universityId: string,
+  campusId: string,
+  data: Partial<CampusFormData>
+): Promise<void> {
+  await update(ref(db, `universities/${universityId}/campus/${campusId}`), data)
+}
+
+/**
+ * Supprime un campus. BLOQUE si au moins une filière y est encore rattachée —
+ * supprimer un campus supprimerait sinon silencieusement le rattachement de
+ * ses filières (campusId orphelin), donc on refuse plutôt qu'accepter une
+ * suppression qui casse l'isolation des données par campus.
+ */
+export async function deleteCampus(
+  universityId: string,
+  campusId: string
+): Promise<void> {
+  const filieres = await getFilieres(universityId)
+  const rattachees = filieres.filter((f) => f.campusId === campusId).length
+  if (rattachees > 0) {
+    throw new Error(
+      `Impossible de supprimer ce campus : ${rattachees} filière(s) y sont encore rattachée(s). Déplacez ou supprimez-les d'abord.`
+    )
+  }
+  await remove(ref(db, `universities/${universityId}/campus/${campusId}`))
+}
+
+/**
+ * Migration multi-campus. Idempotente : si un campus « Campus principal »
+ * existe déjà, elle ne le recrée pas et ne touche qu'aux filières/membres
+ * ENCORE sans campus (aucune écrasement, aucune perte de donnée). À appeler
+ * avant toute création de filière tant qu'il n'existe pas de sélecteur de
+ * campus dans l'UI (voir src/app/dashboard/admin/filieres/page.tsx).
+ */
+export async function migrerVersMultiCampus(universityId: string): Promise<{
+  campusPrincipalId: string
+  filieresMigrees: number
+  etudiantsMigres: number
+  enseignantsMigres: number
+}> {
+  const campusExistants = await getCampusList(universityId)
+  let campusPrincipalId: string
+  if (campusExistants.length === 0) {
+    campusPrincipalId = await createCampus(universityId, { nom: 'Campus principal' })
+  } else {
+    const principal = campusExistants.find((c) => c.nom === 'Campus principal')
+    campusPrincipalId = (principal ?? campusExistants[0]).id
+  }
+
+  const filieres = await getFilieres(universityId)
+  let filieresMigrees = 0
+  for (const f of filieres) {
+    if (!f.campusId) {
+      await update(ref(db, `universities/${universityId}/filieres/${f.id}`), {
+        campusId: campusPrincipalId,
+        updatedAt: Date.now(),
+      })
+      filieresMigrees++
+    }
+  }
+
+  const membres = await getUniversityMembers(universityId)
+  let etudiantsMigres = 0
+  let enseignantsMigres = 0
+  for (const m of membres) {
+    if (m.role === 'student' && !m.campusId) {
+      await update(ref(db, `universities/${universityId}/members/${m.uid}`), {
+        campusId: campusPrincipalId,
+      })
+      etudiantsMigres++
+    } else if (m.role === 'teacher' && (!m.campusIds || m.campusIds.length === 0)) {
+      await update(ref(db, `universities/${universityId}/members/${m.uid}`), {
+        campusIds: [campusPrincipalId],
+      })
+      enseignantsMigres++
+    }
+  }
+
+  return { campusPrincipalId, filieresMigrees, etudiantsMigres, enseignantsMigres }
+}
+
 // ─── Filières ─────────────────────────────────────────────────────────────────
 
 import type { Filiere, FiliereFormData, Matiere, MatiereFormData } from '@/types/filiere'
@@ -395,11 +506,12 @@ export type { Filiere, FiliereFormData, Matiere, MatiereFormData }
 
 export async function createFiliere(
   universityId: string,
+  campusId: string,
   data: FiliereFormData
 ): Promise<string> {
   const newRef = push(ref(db, `universities/${universityId}/filieres`))
   const now = Date.now()
-  await set(newRef, { ...data, universityId, createdAt: now, updatedAt: now })
+  await set(newRef, { ...data, universityId, campusId, createdAt: now, updatedAt: now })
   return newRef.key!
 }
 

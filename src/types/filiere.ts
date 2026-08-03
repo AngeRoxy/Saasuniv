@@ -23,6 +23,7 @@ export type MatiereFormData = Omit<Matiere, 'id' | 'createdAt' | 'updatedAt'>
 export interface Filiere {
   id: string
   universityId: string
+  campusId: string
   nom: string
   code: string
   description: string
@@ -34,4 +35,8 @@ export interface Filiere {
   updatedAt: number
 }
 
-export type FiliereFormData = Omit<Filiere, 'id' | 'universityId' | 'createdAt' | 'updatedAt'>
+// `campusId` n'est PAS dans le formulaire : il est déterminé par l'appelant
+// (campus courant / campus principal) et passé en paramètre séparé à
+// `createFiliere`, pas saisi par l'utilisateur (pas encore de sélecteur de
+// campus dans l'UI).
+export type FiliereFormData = Omit<Filiere, 'id' | 'universityId' | 'campusId' | 'createdAt' | 'updatedAt'>

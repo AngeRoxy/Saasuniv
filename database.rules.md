@@ -43,8 +43,14 @@ est toujours exempté (accès plateforme).
 - `email` `.validate` : regex email. `role` `.validate` : enum stricte.
 
 ### Nœuds administrables (admin même université ou super admin)
-`manual_students`, `filieres`, `matieres`, `semestres`, `emploi_du_temps`,
+`manual_students`, `campus`, `filieres`, `matieres`, `semestres`, `emploi_du_temps`,
 `examens`, `paiements`, `config`, `annonces`, `deliberations`.
+
+- `campus` ← **nœud ajouté (multi-campus)** : mêmes lecture/écriture que les autres
+  nœuds administrables. La règle métier « un campus avec des filières
+  rattachées ne peut pas être supprimé » est appliquée **côté application**
+  (`deleteCampus` dans `src/lib/db.ts`), pas dans la règle RTDB — cohérent avec
+  le style déjà utilisé pour la justification des absences.
 
 - `examens` : **écriture strictement réservée à l'administration** (admin même université ou super admin) — même règle que `emploi_du_temps`. Contrairement aux absences, **aucune délégation à l'enseignant** : l'enseignant/surveillant ne fait que consulter. Lecture héritée du nœud université (intra-université). Épreuves datées, nœud totalement séparé de l'emploi du temps de cours.
 

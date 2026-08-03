@@ -141,6 +141,8 @@ export interface CreateMemberByAdminParams {
   role: CreatableRole
   filiere?: string // étudiant : filière unique (nom)
   filiereIds?: string[] // enseignant : IDs des filières où il intervient
+  campusId?: string // étudiant : campus unique
+  campusIds?: string[] // enseignant : campus où il intervient
   niveau?: string
   telephone?: string
   matricule?: string
@@ -202,6 +204,8 @@ export async function createMemberByAdmin(
     if (params.filiere) memberData.filiere = params.filiere
     // Enseignant : tableau complet d'IDs de filières (jamais un ajout partiel).
     if (params.filiereIds?.length) memberData.filiereIds = params.filiereIds
+    if (params.campusId) memberData.campusId = params.campusId
+    if (params.campusIds?.length) memberData.campusIds = params.campusIds
     if (params.niveau) memberData.niveau = params.niveau
     if (params.telephone) memberData.telephone = params.telephone
     if (params.matricule) memberData.matricule = params.matricule

@@ -46,6 +46,11 @@ export interface Member {
   telephone?: string
   filiere?: string // étudiant : filière unique (nom de la filière)
   filiereIds?: string[] // enseignant : IDs des filières où il intervient (plusieurs possibles)
+  // Multi-campus : étudiant = UN SEUL campus ; enseignant = PLUSIEURS possibles
+  // (cf. `filiereIds`). Optionnel pendant la migration progressive — absent =
+  // pas encore migré (voir `migrerVersMultiCampus` dans `src/lib/db.ts`).
+  campusId?: string // étudiant
+  campusIds?: string[] // enseignant
   niveau?: string
   matricule?: string
   chargeHoraire?: number // enseignant : charge horaire (h / semaine)
@@ -80,6 +85,8 @@ export interface AdminEditableMemberFields {
   telephone?: string
   filiere?: string // étudiant
   filiereIds?: string[] // enseignant : filières où il intervient
+  campusId?: string // étudiant : campus unique
+  campusIds?: string[] // enseignant : campus où il intervient
   niveau?: string
   matricule?: string
   chargeHoraire?: number
@@ -97,6 +104,8 @@ export interface CreateMemberRequest {
   role: CreatableRole
   filiere?: string // étudiant : filière unique (nom)
   filiereIds?: string[] // enseignant : IDs des filières où il intervient
+  campusId?: string // étudiant : campus unique
+  campusIds?: string[] // enseignant : campus où il intervient
   niveau?: string
   telephone?: string
   matricule?: string

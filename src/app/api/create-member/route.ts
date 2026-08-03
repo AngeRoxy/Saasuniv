@@ -67,6 +67,18 @@ export async function POST(request: Request): Promise<Response> {
     }
     filiereIds = [...new Set(body.filiereIds.map((f) => f.trim()).filter(Boolean))]
   }
+  // Campus de l'étudiant (unique) : chaîne non vide si fournie.
+  if (body.campusId !== undefined && typeof body.campusId !== 'string') {
+    return Response.json({ error: 'Campus invalide.' }, { status: 400 })
+  }
+  // Campus de l'enseignant (plusieurs possibles) : tableau d'IDs si fourni.
+  let campusIds: string[] | undefined
+  if (body.campusIds !== undefined) {
+    if (!Array.isArray(body.campusIds) || body.campusIds.some((c) => typeof c !== 'string')) {
+      return Response.json({ error: 'Liste de campus invalide.' }, { status: 400 })
+    }
+    campusIds = [...new Set(body.campusIds.map((c) => c.trim()).filter(Boolean))]
+  }
 
   // 3. Autorisation : l'appelant doit être admin de l'université ciblée.
   const caller = await assertAdminCaller(auth.uid, adminIdToken, body.universityId)
@@ -102,6 +114,30 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // 3-ter. Même vérification d'EXISTENCE pour le(s) campus fourni(s) (étudiant :
+  // campusId unique ; enseignant : campusIds).
+  const campusIdsToCheck = [...(campusIds ?? []), ...(body.campusId ? [body.campusId] : [])]
+  if (campusIdsToCheck.length > 0) {
+    let existingCampus: Record<string, unknown> | null
+    try {
+      const cRes = await fetch(
+        `${dbUrl}/universities/${body.universityId}/campus.json?shallow=true&auth=${adminIdToken}`
+      )
+      if (!cRes.ok) throw new Error('read failed')
+      existingCampus = (await cRes.json()) as Record<string, unknown> | null
+    } catch {
+      return Response.json({ error: 'Vérification des campus impossible.' }, { status: 502 })
+    }
+    const knownCampusIds = new Set(existingCampus ? Object.keys(existingCampus) : [])
+    const unknownCampus = campusIdsToCheck.filter((id) => !knownCampusIds.has(id))
+    if (unknownCampus.length > 0) {
+      return Response.json(
+        { error: `Campus inexistant(s) : ${unknownCampus.join(', ')}.` },
+        { status: 400 }
+      )
+    }
+  }
+
   // 4. Récupération du nom de l'université (pour l'email) + URL de connexion.
   let nomUniversite = body.universityId
   try {
@@ -126,6 +162,8 @@ export async function POST(request: Request): Promise<Response> {
       role: body.role,
       filiere: body.filiere,
       filiereIds,
+      campusId: body.campusId,
+      campusIds,
       niveau: body.niveau,
       telephone: body.telephone,
       matricule: body.matricule,

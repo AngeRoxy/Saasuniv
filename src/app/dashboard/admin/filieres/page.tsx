@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
 import {
-  getFilieres, createFiliere, updateFiliere, deleteFiliere,
+  getFilieres, createFiliere, updateFiliere, deleteFiliere, migrerVersMultiCampus,
 } from '@/lib/db'
 import type { Filiere, FiliereFormData } from '@/types/filiere'
 
@@ -60,6 +60,9 @@ export default function FilieresPage() {
   const { plan, isWithinLimit } = usePlan(profile?.universityId ?? '')
 
   const [filieres, setFilieres] = useState<Filiere[]>([])
+  // Pas encore de sélecteur de campus dans l'UI : toute nouvelle filière est
+  // rattachée au campus principal, déterminé/créé par la migration au chargement.
+  const [campusPrincipalId, setCampusPrincipalId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -81,6 +84,9 @@ export default function FilieresPage() {
   useEffect(() => {
     if (!uid) return
     let active = true
+    migrerVersMultiCampus(uid)
+      .then((result) => { if (active) setCampusPrincipalId(result.campusPrincipalId) })
+      .catch(() => { /* non bloquant : la création sera juste désactivée le temps d'un rechargement */ })
     getFilieres(uid)
       .then((data) => { if (active) setFilieres(data) })
       .catch(() => { if (active) setError('Impossible de charger les filières.') })
@@ -164,6 +170,10 @@ export default function FilieresPage() {
 
   async function handleSave() {
     if (!uid || !form.nom.trim() || !form.code.trim() || form.niveaux.length === 0) return
+    if (!editId && !campusPrincipalId) {
+      setToast('Initialisation du campus en cours, réessayez dans un instant')
+      return
+    }
     setSaving(true)
     try {
       if (editId) {
@@ -173,9 +183,9 @@ export default function FilieresPage() {
         ))
         setToast('Filière modifiée avec succès')
       } else {
-        const id = await createFiliere(uid, form)
+        const id = await createFiliere(uid, campusPrincipalId!, form)
         setFilieres(prev => [...prev, {
-          id, universityId: uid, ...form,
+          id, universityId: uid, campusId: campusPrincipalId!, ...form,
           createdAt: Date.now(), updatedAt: Date.now(),
         }])
         setToast('Filière créée avec succès')
