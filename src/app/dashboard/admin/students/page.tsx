@@ -18,7 +18,9 @@ import {
   getParcoursEtudiant,
   reorienterEtudiant,
   marquerAbandon,
+  annulerAbandon,
   type ParcoursAnnuel,
+  type HistoriqueStatutEntry,
 } from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
 import { STATUT_PARCOURS_LABELS, STATUT_PARCOURS_STYLES, redoublementBadgeLabel } from '@/types/parcours'
@@ -48,6 +50,7 @@ interface Student {
   statutScolarite?: 'actif' | 'abandonne' | 'diplome'
   dateChangementStatut?: number
   motifAbandon?: string
+  historiqueStatuts?: HistoriqueStatutEntry[]
 }
 
 interface ParentOption {
@@ -115,6 +118,48 @@ function findDuplicatePairs(students: Student[]): DuplicatePair[] {
     }
   }
   return pairs
+}
+
+/**
+ * Miroir client de `archiverStatutPrecedent` (db.ts) : archive le changement de
+ * statut ACTUEL du membre avant qu'il ne soit remplacé, pour que la mise à jour
+ * locale optimiste reste cohérente avec ce que Firebase vient d'enregistrer.
+ */
+function archiverStatutPrecedentLocal(student: Student): HistoriqueStatutEntry[] | undefined {
+  if (!student.dateChangementStatut) return student.historiqueStatuts
+  const entree: HistoriqueStatutEntry = {
+    statut: student.statutScolarite ?? 'actif',
+    date: student.dateChangementStatut,
+    ...(student.motifAbandon ? { motif: student.motifAbandon } : {}),
+  }
+  return [...(student.historiqueStatuts ?? []), entree]
+}
+
+function formatDateFr(ts: number): string {
+  return new Date(ts).toLocaleDateString('fr-FR')
+}
+
+/**
+ * Reconstitue la chronologie complète des changements de statut de scolarité
+ * (historique archivé + dernier changement en cours) et la met en phrases
+ * lisibles, en associant chaque abandon à sa reprise suivante si elle existe.
+ */
+function buildStatutTimeline(student: Student): string[] {
+  const events: HistoriqueStatutEntry[] = [
+    ...(student.historiqueStatuts ?? []),
+    ...(student.dateChangementStatut
+      ? [{ statut: student.statutScolarite ?? 'actif', date: student.dateChangementStatut, motif: student.motifAbandon }]
+      : []),
+  ].sort((a, b) => a.date - b.date)
+
+  const lines: string[] = []
+  events.forEach((e, i) => {
+    if (e.statut !== 'abandonne') return
+    const quitte = `A quitté l'établissement le ${formatDateFr(e.date)}${e.motif ? ` (${e.motif})` : ''}`
+    const reprise = events.slice(i + 1).find((ev) => ev.statut === 'actif')
+    lines.push(reprise ? `${quitte}, a repris ses études le ${formatDateFr(reprise.date)}.` : `${quitte}.`)
+  })
+  return lines
 }
 
 type FormData = Omit<Student, 'matricule' | 'statut' | 'uid' | 'fbKey'>
@@ -410,6 +455,7 @@ function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: St
 
 function ParcoursModal({ universityId, student, filieres, onClose }: { universityId: string; student: Student; filieres: Filiere[]; onClose: () => void }) {
   const [list, setList] = useState<ParcoursAnnuel[] | null>(null)
+  const statutTimeline = useMemo(() => buildStatutTimeline(student), [student])
 
   useEffect(() => {
     const uid = student.uid
@@ -440,6 +486,14 @@ function ParcoursModal({ universityId, student, filieres, onClose }: { universit
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
+        {statutTimeline.length > 0 && (
+          <div className="mb-4 space-y-1.5 rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-black/30 px-4 py-3">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Historique de statut</p>
+            {statutTimeline.map((line, i) => (
+              <p key={i} className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">{line}</p>
+            ))}
+          </div>
+        )}
         {list === null ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -708,6 +762,63 @@ function AbandonModal({
   )
 }
 
+// ─── Réactivation (annulation d'abandon) Modal ────────────────────────────────
+
+function ReactivateModal({
+  student,
+  submitting,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  student: Student
+  submitting: boolean
+  error: string | null
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-950 border border-emerald-500/20 rounded-2xl p-8 w-full max-w-sm shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-start gap-4 mb-6 flex-1 min-h-0 overflow-y-auto">
+          <div className="p-2 bg-emerald-500/10 rounded-xl shrink-0">
+            <RotateCcw size={20} className="text-emerald-500" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white mb-1">Réactiver le compte</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Réactiver le compte de{' '}
+              <span className="text-zinc-900 dark:text-white font-medium">{student.prenom} {student.nom}</span> ?
+              Il pourra à nouveau se connecter à la plateforme. L&apos;épisode d&apos;abandon reste conservé dans son
+              historique.
+            </p>
+            {error && (
+              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mt-3">{error}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-3 shrink-0">
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={submitting}
+            className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {submitting ? 'Réactivation…' : 'Réactiver'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Fusion de doublons Modal ─────────────────────────────────────────────────
 
 function MergeModal({
@@ -864,6 +975,11 @@ export default function StudentsPage() {
   const [markingAbandon, setMarkingAbandon] = useState(false)
   const [abandonError, setAbandonError] = useState<string | null>(null)
 
+  // Réactivation (annulation d'abandon)
+  const [reactivateTarget, setReactivateTarget] = useState<Student | null>(null)
+  const [reactivating, setReactivating] = useState(false)
+  const [reactivateError, setReactivateError] = useState<string | null>(null)
+
   // Doublons détectés (fusion = suppression du compte en trop)
   const [mergeTarget, setMergeTarget] = useState<DuplicatePair | null>(null)
   const [merging, setMerging] = useState(false)
@@ -907,6 +1023,7 @@ export default function StudentsPage() {
             statutScolarite: m.statutScolarite,
             dateChangementStatut: m.dateChangementStatut,
             motifAbandon: m.motifAbandon,
+            historiqueStatuts: m.historiqueStatuts,
           }
         })
         const fromManual: Student[] = manual.map((s) => {
@@ -1193,12 +1310,56 @@ export default function StudentsPage() {
     setStudents((prev) =>
       prev.map((s) =>
         s.uid === abandonTarget.uid
-          ? { ...s, statutScolarite: 'abandonne', dateChangementStatut: now, motifAbandon: motif || undefined }
+          ? {
+              ...s,
+              statutScolarite: 'abandonne',
+              dateChangementStatut: now,
+              motifAbandon: motif || undefined,
+              historiqueStatuts: archiverStatutPrecedentLocal(s),
+            }
           : s
       )
     )
     setMarkingAbandon(false)
     setAbandonTarget(null)
+  }
+
+  async function handleReactivateConfirm() {
+    if (!reactivateTarget?.uid) return
+    const universityId = profile?.universityId
+    if (!universityId) {
+      setReactivateError("Aucune université active. Réactivation non enregistrée.")
+      return
+    }
+    setReactivating(true)
+    setReactivateError(null)
+    try {
+      await annulerAbandon(universityId, reactivateTarget.uid)
+    } catch (err) {
+      // Écriture Firebase échouée : erreur claire, aucune modification locale.
+      setReactivateError(err instanceof Error ? err.message : 'La réactivation a échoué.')
+      setReactivating(false)
+      return
+    }
+    // Succès confirmé uniquement.
+    const now = Date.now()
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.uid === reactivateTarget.uid
+          ? {
+              ...s,
+              statutScolarite: 'actif',
+              dateChangementStatut: now,
+              motifAbandon: undefined,
+              historiqueStatuts: archiverStatutPrecedentLocal(s),
+            }
+          : s
+      )
+    )
+    setReactivating(false)
+    setReactivateTarget(null)
+    setToast(`${reactivateTarget.prenom} ${reactivateTarget.nom} a été réactivé(e).`)
+    setTimeout(() => setToast(null), 5000)
   }
 
   async function handleMergeConfirm(keep: Student, remove: Student) {
@@ -1487,6 +1648,15 @@ export default function StudentsPage() {
                           <UserX size={14} />
                         </button>
                       )}
+                      {student.uid && enAbandon && (
+                        <button
+                          onClick={() => setReactivateTarget(student)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                          title="Annuler l'abandon"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setDeleteTarget(student)}
                         className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -1617,6 +1787,17 @@ export default function StudentsPage() {
           error={abandonError}
           onSubmit={handleAbandonSubmit}
           onClose={() => { setAbandonTarget(null); setAbandonError(null) }}
+        />
+      )}
+
+      {/* Réactivation (annulation d'abandon) */}
+      {reactivateTarget && (
+        <ReactivateModal
+          student={reactivateTarget}
+          submitting={reactivating}
+          error={reactivateError}
+          onConfirm={handleReactivateConfirm}
+          onClose={() => { setReactivateTarget(null); setReactivateError(null) }}
         />
       )}
 

@@ -92,9 +92,19 @@ export interface UniversityMember {
   /** URL Storage de la photo de profil (voir uploadAvatar). */
   photoUrl?: string
   // Scolarité (étudiant) : absent = 'actif'. Distinct de `statut` (compte Auth).
+  // `dateChangementStatut`/`motifAbandon` décrivent le DERNIER changement ;
+  // `historiqueStatuts` conserve les changements précédents (ex: un abandon
+  // suivi d'une réactivation) pour ne jamais perdre la trace d'un épisode passé.
   statutScolarite?: 'actif' | 'abandonne' | 'diplome'
   dateChangementStatut?: number
   motifAbandon?: string
+  historiqueStatuts?: HistoriqueStatutEntry[]
+}
+
+export interface HistoriqueStatutEntry {
+  statut: 'actif' | 'abandonne' | 'diplome'
+  date: number
+  motif?: string
 }
 
 export async function getUniversityMembers(
@@ -205,6 +215,23 @@ export async function removeMember(
 }
 
 /**
+ * Reporte le changement de statut ACTUEL du membre (dateChangementStatut /
+ * motifAbandon) dans `historiqueStatuts` avant qu'il ne soit remplacé, pour ne
+ * jamais perdre la trace d'un épisode passé (ex: un abandon avant réactivation).
+ * Sans changement antérieur enregistré (premier changement de statut), il n'y a
+ * rien à archiver.
+ */
+function archiverStatutPrecedent(member: UniversityMember | null): HistoriqueStatutEntry[] | undefined {
+  if (!member?.dateChangementStatut) return member?.historiqueStatuts
+  const entree = stripUndefined({
+    statut: member.statutScolarite ?? 'actif',
+    date: member.dateChangementStatut,
+    motif: member.motifAbandon,
+  }) as HistoriqueStatutEntry
+  return [...(member.historiqueStatuts ?? []), entree]
+}
+
+/**
  * Marque un étudiant en abandon de scolarité. NE SUPPRIME RIEN : c'est un simple
  * changement de statut, daté et motivé, jamais une désactivation silencieuse.
  * Le compte reste dans `members` avec tout son historique (notes, absences…).
@@ -214,12 +241,39 @@ export async function marquerAbandon(
   studentUid: string,
   motif?: string
 ): Promise<void> {
+  const member = await getUniversityMember(universityId, studentUid)
+  const historiqueStatuts = archiverStatutPrecedent(member)
   await update(
     ref(db, `universities/${universityId}/members/${studentUid}`),
     stripUndefined({
       statutScolarite: 'abandonne' as const,
       dateChangementStatut: Date.now(),
       motifAbandon: motif ?? undefined,
+      historiqueStatuts,
+      updatedAt: Date.now(),
+    })
+  )
+}
+
+/**
+ * Annule un abandon : l'étudiant reprend ses études. Remet `statutScolarite`
+ * à "actif" (ce qui lève le blocage de connexion) sans jamais toucher aux
+ * notes/absences/parcours — l'épisode d'abandon est archivé dans
+ * `historiqueStatuts` plutôt que perdu.
+ */
+export async function annulerAbandon(
+  universityId: string,
+  studentUid: string
+): Promise<void> {
+  const member = await getUniversityMember(universityId, studentUid)
+  const historiqueStatuts = archiverStatutPrecedent(member)
+  await update(
+    ref(db, `universities/${universityId}/members/${studentUid}`),
+    stripUndefined({
+      statutScolarite: 'actif' as const,
+      dateChangementStatut: Date.now(),
+      motifAbandon: null,
+      historiqueStatuts,
       updatedAt: Date.now(),
     })
   )

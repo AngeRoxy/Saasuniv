@@ -22,6 +22,13 @@ export type MemberStatus = 'actif' | 'inactif' | 'premiere_connexion'
 /** Statut de scolarité d'un étudiant — distinct de `MemberStatus` (compte actif/inactif). */
 export type StatutScolarite = 'actif' | 'abandonne' | 'diplome'
 
+/** Un changement de statut de scolarité archivé (voir `Member.historiqueStatuts`). */
+export interface HistoriqueStatutEntry {
+  statut: StatutScolarite
+  date: number
+  motif?: string
+}
+
 export const ROLE_LABELS_FR: Record<MemberRole, string> = {
   admin_universite: 'Administrateur',
   teacher: 'Enseignant',
@@ -53,6 +60,7 @@ export interface Member {
   statutScolarite?: StatutScolarite
   dateChangementStatut?: number
   motifAbandon?: string
+  historiqueStatuts?: HistoriqueStatutEntry[]
   createdAt: number
   updatedAt: number
 }
