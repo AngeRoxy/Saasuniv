@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw, ArrowRightLeft, UserX } from 'lucide-react'
+import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw, ArrowRightLeft, UserX, Users, GitMerge } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
@@ -75,6 +75,46 @@ function generateMatricule(existing: Student[]): string {
     .filter(Number.isFinite)
   const next = (nums.length > 0 ? Math.max(...nums) : 0) + 1
   return `STU-${year}-${String(next).padStart(4, '0')}`
+}
+
+/** Nom/prénom insensibles à la casse et aux accents, pour comparer des doublons. */
+function normalizeForCompare(s: string): string {
+  return s
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim()
+}
+
+interface DuplicatePair {
+  a: Student
+  b: Student
+  reason: 'nom' | 'telephone'
+}
+
+/**
+ * Détection best-effort de comptes en doublon : même nom+prénom (accents/casse
+ * ignorés) OU même numéro de téléphone. Comparaison en O(n²), volontairement
+ * simple — le volume d'étudiants d'une université reste dans un ordre de
+ * grandeur où ça ne pose aucun problème de performance.
+ */
+function findDuplicatePairs(students: Student[]): DuplicatePair[] {
+  const pairs: DuplicatePair[] = []
+  for (let i = 0; i < students.length; i++) {
+    for (let j = i + 1; j < students.length; j++) {
+      const a = students[i]
+      const b = students[j]
+      const nomA = normalizeForCompare(`${a.prenom} ${a.nom}`)
+      const nomB = normalizeForCompare(`${b.prenom} ${b.nom}`)
+      const sameName = nomA !== '' && nomA === nomB
+      const telA = a.telephone.trim()
+      const telB = b.telephone.trim()
+      const samePhone = telA !== '' && telA === telB
+      if (sameName || samePhone) {
+        pairs.push({ a, b, reason: sameName ? 'nom' : 'telephone' })
+      }
+    }
+  }
+  return pairs
 }
 
 type FormData = Omit<Student, 'matricule' | 'statut' | 'uid' | 'fbKey'>
@@ -668,6 +708,110 @@ function AbandonModal({
   )
 }
 
+// ─── Fusion de doublons Modal ─────────────────────────────────────────────────
+
+function MergeModal({
+  pair,
+  submitting,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  pair: DuplicatePair
+  submitting: boolean
+  error: string | null
+  onConfirm: (keep: Student, remove: Student) => void
+  onClose: () => void
+}) {
+  const [keep, setKeep] = useState<'a' | 'b'>('a')
+  const candidates: Array<{ key: 'a' | 'b'; student: Student }> = [
+    { key: 'a', student: pair.a },
+    { key: 'b', student: pair.b },
+  ]
+
+  function handleConfirm() {
+    const kept = keep === 'a' ? pair.a : pair.b
+    const removed = keep === 'a' ? pair.b : pair.a
+    onConfirm(kept, removed)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-950 border border-red-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-6 shrink-0">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Fusionner les comptes en doublon</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Choisissez le compte à <span className="text-zinc-900 dark:text-white font-medium">garder</span> comme compte principal.
+            L&apos;autre sera <span className="text-red-500 font-medium">supprimé définitivement</span> (avec le nettoyage en cascade habituel).
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {candidates.map(({ key, student }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setKeep(key)}
+                className={`text-left rounded-xl border p-3 text-xs transition-colors ${
+                  keep === key
+                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                }`}
+              >
+                <p className="font-medium text-zinc-900 dark:text-white">{student.prenom} {student.nom}</p>
+                <p className="text-zinc-500 mt-1 truncate">{student.email}</p>
+                <p className="text-zinc-500">{student.telephone || '—'}</p>
+                <p className="text-zinc-500">{student.filiere} · {student.niveau}</p>
+                <p className="text-zinc-500 font-mono mt-1">{student.matricule}</p>
+                <p className={`text-[11px] font-medium mt-2 ${keep === key ? 'text-emerald-500' : 'text-transparent'}`}>
+                  ✓ Compte gardé
+                </p>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-start gap-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-3">
+            <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-zinc-600 dark:text-amber-200/70 leading-relaxed">
+              Les notes et absences des deux comptes ne sont <span className="font-medium">pas fusionnées automatiquement</span> —
+              vérifiez-les manuellement avant de confirmer. Le compte supprimé perd définitivement son historique.
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-6 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={submitting}
+            className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {submitting ? 'Suppression…' : 'Confirmer la fusion'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
@@ -719,6 +863,11 @@ export default function StudentsPage() {
   const [abandonTarget, setAbandonTarget] = useState<Student | null>(null)
   const [markingAbandon, setMarkingAbandon] = useState(false)
   const [abandonError, setAbandonError] = useState<string | null>(null)
+
+  // Doublons détectés (fusion = suppression du compte en trop)
+  const [mergeTarget, setMergeTarget] = useState<DuplicatePair | null>(null)
+  const [merging, setMerging] = useState(false)
+  const [mergeError, setMergeError] = useState<string | null>(null)
 
   // ── Firebase load ─────────────────────────────────────────────────────────────
 
@@ -801,6 +950,8 @@ export default function StudentsPage() {
       return matchSearch && matchFiliere && matchScolarite
     })
   }, [students, search, filiereFilter, scolariteFilter])
+
+  const duplicatePairs = useMemo(() => findDuplicatePairs(students), [students])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -1050,6 +1201,37 @@ export default function StudentsPage() {
     setAbandonTarget(null)
   }
 
+  async function handleMergeConfirm(keep: Student, remove: Student) {
+    const universityId = profile?.universityId
+    if (!universityId) {
+      setMergeError("Aucune université active. Fusion non enregistrée.")
+      return
+    }
+    setMerging(true)
+    setMergeError(null)
+    try {
+      if (remove.uid) {
+        await removeMember(universityId, remove.uid)
+      } else if (remove.fbKey) {
+        await removeManualStudent(universityId, remove.fbKey)
+      }
+    } catch (err) {
+      // Écriture Firebase échouée : erreur claire, aucune modification locale.
+      setMergeError(err instanceof Error ? err.message : 'La fusion a échoué.')
+      setMerging(false)
+      return
+    }
+    // Succès confirmé uniquement : seul le doublon en trop est retiré, AUCUNE
+    // fusion automatique de notes/absences — à vérifier manuellement par l'admin.
+    setStudents((prev) => prev.filter((s) => s.matricule !== remove.matricule))
+    setMerging(false)
+    setMergeTarget(null)
+    setToast(
+      `Doublon supprimé. ${keep.prenom} ${keep.nom} reste le compte principal — vérifiez manuellement ses notes et absences par rapport à celles du compte supprimé.`
+    )
+    setTimeout(() => setToast(null), 10000)
+  }
+
   // ── Derived for modal ─────────────────────────────────────────────────────────
 
   const modalInitial: FormData = editTarget
@@ -1123,6 +1305,51 @@ export default function StudentsPage() {
         {filtered.length} étudiant{filtered.length !== 1 ? 's' : ''} trouvé{filtered.length !== 1 ? 's' : ''}
         {filiereFilter && <span> · filière <span className="text-blue-600 dark:text-orange-400">{filiereFilter}</span></span>}
       </p>
+
+      {/* Doublons potentiels détectés */}
+      {duplicatePairs.length > 0 && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Users size={15} className="text-amber-600 dark:text-amber-400" />
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+              {duplicatePairs.length} doublon{duplicatePairs.length > 1 ? 's' : ''} potentiel{duplicatePairs.length > 1 ? 's' : ''} détecté{duplicatePairs.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="space-y-2">
+            {duplicatePairs.map((pair) => (
+              <div
+                key={`${pair.a.uid ?? pair.a.fbKey}-${pair.b.uid ?? pair.b.fbKey}`}
+                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
+                  <div className="text-xs">
+                    <p className="text-zinc-900 dark:text-white font-medium">{pair.a.prenom} {pair.a.nom}</p>
+                    <p className="text-zinc-500">{pair.a.email}</p>
+                    <p className="text-zinc-500">{pair.a.telephone || '—'}</p>
+                    <p className="text-zinc-500">{pair.a.filiere} · {pair.a.niveau}</p>
+                  </div>
+                  <button
+                    onClick={() => setMergeTarget(pair)}
+                    className="flex items-center gap-1.5 justify-self-center bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 border border-zinc-300 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
+                  >
+                    <GitMerge size={12} />
+                    Fusionner
+                  </button>
+                  <div className="text-xs">
+                    <p className="text-zinc-900 dark:text-white font-medium">{pair.b.prenom} {pair.b.nom}</p>
+                    <p className="text-zinc-500">{pair.b.email}</p>
+                    <p className="text-zinc-500">{pair.b.telephone || '—'}</p>
+                    <p className="text-zinc-500">{pair.b.filiere} · {pair.b.niveau}</p>
+                  </div>
+                </div>
+                <p className="text-zinc-500 text-[11px] mt-2">
+                  {pair.reason === 'nom' ? 'Nom et prénom identiques' : 'Même numéro de téléphone'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl overflow-hidden">
@@ -1390,6 +1617,17 @@ export default function StudentsPage() {
           error={abandonError}
           onSubmit={handleAbandonSubmit}
           onClose={() => { setAbandonTarget(null); setAbandonError(null) }}
+        />
+      )}
+
+      {/* Fusion de doublons */}
+      {mergeTarget && (
+        <MergeModal
+          pair={mergeTarget}
+          submitting={merging}
+          error={mergeError}
+          onConfirm={handleMergeConfirm}
+          onClose={() => { setMergeTarget(null); setMergeError(null) }}
         />
       )}
 
