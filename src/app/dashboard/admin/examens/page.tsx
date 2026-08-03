@@ -27,11 +27,14 @@ import {
   createExamen,
   updateExamen,
   deleteExamen,
+  getCampusList,
+  migrerVersMultiCampus,
   type Filiere,
   type Matiere,
   type Semestre,
   type UniversityMember,
 } from '@/lib/db'
+import type { Campus } from '@/types/campus'
 import {
   findConflitsExamen,
   ConflitExamenError,
@@ -55,6 +58,7 @@ const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 
 const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
 
 interface FormState {
+  campusId: string
   filiereId: string
   niveau: string
   matiereId: string
@@ -71,6 +75,7 @@ interface FormState {
 
 function emptyForm(): FormState {
   return {
+    campusId: '',
     filiereId: '',
     niveau: '',
     matiereId: '',
@@ -115,9 +120,12 @@ export default function ExamensAdminPage() {
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [teachers, setTeachers] = useState<UniversityMember[]>([])
   const [examens, setExamens] = useState<Examen[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
   const [loading, setLoading] = useState(true)
 
   // Filtres du haut (filtrent la liste affichée uniquement)
+  const [fCampusId, setFCampusId] = useState('')
   const [fFiliereId, setFFiliereId] = useState('')
   const [fNiveau, setFNiveau] = useState('')
   const [fSemestreId, setFSemestreId] = useState('')
@@ -139,24 +147,31 @@ export default function ExamensAdminPage() {
 
   const loadAll = useCallback(async () => {
     if (!universityId) return
-    const [fil, sem, prof, exa] = await Promise.all([
+    const [fil, sem, prof, exa, campus] = await Promise.all([
       getFilieres(universityId),
       getSemestres(universityId),
       getUniversityMembers(universityId, 'teacher'),
       getExamens(universityId),
+      getCampusList(universityId),
     ])
     setFilieres(fil)
     setSemestres(sem)
     setTeachers(prof)
     setExamens(exa)
+    setCampusList(campus)
+    // Un seul campus : assigné automatiquement, aucun choix à faire.
+    if (campus.length === 1) setFCampusId(campus[0].id)
   }, [universityId])
 
+  // Migration douce garantit qu'au moins le campus principal existe (idempotente,
+  // cf. src/lib/db.ts) avant toute lecture.
   useEffect(() => {
     if (!universityId) return
     let active = true
     ;(async () => {
       setLoading(true)
       try {
+        await migrerVersMultiCampus(universityId)
         await loadAll()
       } finally {
         if (active) setLoading(false)
@@ -193,6 +208,7 @@ export default function ExamensAdminPage() {
   const groupes = useMemo(() => {
     const filtered = examens.filter(
       (e) =>
+        (!fCampusId || e.campusId === fCampusId) &&
         (!fFiliereId || e.filiereId === fFiliereId) &&
         (!fNiveau || e.niveau === fNiveau) &&
         (!fSemestreId || e.semestreId === fSemestreId) &&
@@ -205,15 +221,41 @@ export default function ExamensAdminPage() {
       map.set(e.date, list)
     }
     return [...map.entries()]
-  }, [examens, fFiliereId, fNiveau, fSemestreId, fTypeSession])
+  }, [examens, fCampusId, fFiliereId, fNiveau, fSemestreId, fTypeSession])
+
+  // Filières du campus sélectionné pour le filtre du haut (cohérent avec la
+  // Phase 2). Simple affinage, pas un préalable bloquant : sans campus choisi
+  // (« Tous »), toutes les filières restent proposées.
+  const filieresFiltreDuCampus = hasMultipleCampus && fCampusId
+    ? filieres.filter((f) => f.campusId === fCampusId)
+    : filieres
 
   const filterFiliere = filieres.find((f) => f.id === fFiliereId)
   const filterNiveaux = filterFiliere?.niveaux ?? []
+
+  // Filières du campus sélectionné DANS LE FORMULAIRE (indépendant des filtres du haut).
+  const filieresFormDuCampus = hasMultipleCampus
+    ? filieres.filter((f) => f.campusId === form.campusId)
+    : filieres
 
   const formFiliere = filieres.find((f) => f.id === form.filiereId)
   const formNiveaux = formFiliere?.niveaux ?? []
 
   const totalFiltres = groupes.reduce((n, [, items]) => n + items.length, 0)
+
+  // Campus effectif de l'examen en cours de saisie : le choix du formulaire si
+  // plusieurs campus existent, sinon le campus unique de l'université.
+  const effectiveCampusId = hasMultipleCampus ? form.campusId : (campusList[0]?.id ?? '')
+
+  function handleFilterCampus(id: string) {
+    setFCampusId(id)
+    if (!id) return // « Tous » : la filière déjà choisie reste valide, rien à réinitialiser.
+    const f = filieres.find((x) => x.id === fFiliereId)
+    if (f && f.campusId !== id) {
+      setFFiliereId('')
+      setFNiveau('')
+    }
+  }
 
   function handleFilterFiliere(id: string) {
     setFFiliereId(id)
@@ -225,11 +267,22 @@ export default function ExamensAdminPage() {
     setForm((f) => ({ ...f, filiereId: id, niveau: '', matiereId: '' }))
   }
 
+  // Changement de campus dans le formulaire : la filière choisie n'a de sens que
+  // si elle appartient au nouveau campus, sinon on la réinitialise (avec niveau/matière).
+  function handleFormCampusChange(id: string) {
+    setForm((f) => {
+      const filiere = filieres.find((x) => x.id === f.filiereId)
+      const reset = Boolean(id) && filiere && filiere.campusId !== id
+      return { ...f, campusId: id, ...(reset ? { filiereId: '', niveau: '', matiereId: '' } : {}) }
+    })
+  }
+
   function openAdd() {
     setEditId(null)
     // Pré-remplit avec les filtres courants pour aller plus vite.
     setForm({
       ...emptyForm(),
+      campusId: fCampusId,
       filiereId: fFiliereId,
       niveau: fNiveau,
       semestreId: fSemestreId,
@@ -242,6 +295,7 @@ export default function ExamensAdminPage() {
   function openEdit(e: Examen) {
     setEditId(e.id)
     setForm({
+      campusId: e.campusId,
       filiereId: e.filiereId,
       niveau: e.niveau,
       matiereId: e.matiereId,
@@ -270,6 +324,10 @@ export default function ExamensAdminPage() {
 
   async function handleSave() {
     if (!universityId) return
+    if (hasMultipleCampus && !form.campusId) {
+      setFormError('Choisissez un campus.')
+      return
+    }
     if (!form.filiereId || !form.niveau || !form.semestreId) {
       setFormError('Filière, niveau et semestre sont obligatoires.')
       return
@@ -282,7 +340,8 @@ export default function ExamensAdminPage() {
       return
     }
 
-    // Détection de conflit instantanée sur les examens déjà chargés.
+    // Détection de conflit instantanée sur les examens déjà chargés, SUR LE MÊME
+    // CAMPUS (cf. types/examen.ts).
     const candidat: ExamenCandidat = {
       date: form.date,
       heureDebut: form.heureDebut,
@@ -292,6 +351,7 @@ export default function ExamensAdminPage() {
       surveillantUid: form.surveillantUid || undefined,
       enseignantNom: form.enseignantUid ? teacherName(form.enseignantUid) : undefined,
       surveillantNom: form.surveillantUid ? teacherName(form.surveillantUid) : undefined,
+      campusId: effectiveCampusId,
     }
     const found = findConflitsExamen(examens, candidat, editId ?? undefined)
     if (found.length > 0) {
@@ -305,6 +365,7 @@ export default function ExamensAdminPage() {
     setConflits([])
     try {
       const base = {
+        campusId: effectiveCampusId,
         filiereId: form.filiereId,
         niveau: form.niveau,
         matiereId: form.matiereId,
@@ -427,13 +488,23 @@ export default function ExamensAdminPage() {
         </div>
       ) : (
         <>
-          {/* Filtres */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4">
+          {/* Filtres — le campus n'apparaît que si l'université en compte plusieurs
+              (sinon assigné automatiquement, sans choix, comme les autres modules). */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${hasMultipleCampus ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4`}>
+            {hasMultipleCampus && (
+              <div>
+                <label className={labelCls}>Campus</label>
+                <select value={fCampusId} onChange={(e) => handleFilterCampus(e.target.value)} className={selectCls}>
+                  <option value="">Tous</option>
+                  {campusList.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label className={labelCls}>Filière</label>
               <select value={fFiliereId} onChange={(e) => handleFilterFiliere(e.target.value)} className={selectCls}>
                 <option value="">Toutes</option>
-                {filieres.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
+                {filieresFiltreDuCampus.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
               </select>
             </div>
             <div>
@@ -553,12 +624,29 @@ export default function ExamensAdminPage() {
 
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+              {/* Campus — uniquement si l'université en compte plusieurs (sinon
+                  assigné automatiquement, sans choix, comme les autres modules). */}
+              {hasMultipleCampus && (
+                <div>
+                  <label className={labelCls}>Campus *</label>
+                  <select value={form.campusId} onChange={(e) => handleFormCampusChange(e.target.value)} className={selectCls}>
+                    <option value="">Choisir…</option>
+                    {campusList.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                  </select>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Filière</label>
-                  <select value={form.filiereId} onChange={(e) => setFormFiliere(e.target.value)} className={selectCls}>
-                    <option value="">Choisir…</option>
-                    {filieres.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
+                  <select
+                    value={form.filiereId}
+                    onChange={(e) => setFormFiliere(e.target.value)}
+                    disabled={hasMultipleCampus && !form.campusId}
+                    className={`${selectCls} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <option value="">{hasMultipleCampus && !form.campusId ? 'Choisir un campus d’abord' : 'Choisir…'}</option>
+                    {filieresFormDuCampus.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
                   </select>
                 </div>
                 <div>
