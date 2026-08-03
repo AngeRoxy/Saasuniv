@@ -10,9 +10,10 @@ import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
 import {
-  getFilieres, createFiliere, updateFiliere, deleteFiliere, migrerVersMultiCampus,
+  getFilieres, createFiliere, updateFiliere, deleteFiliere, migrerVersMultiCampus, getCampusList,
 } from '@/lib/db'
 import type { Filiere, FiliereFormData } from '@/types/filiere'
+import type { Campus } from '@/types/campus'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -60,9 +61,10 @@ export default function FilieresPage() {
   const { plan, isWithinLimit } = usePlan(profile?.universityId ?? '')
 
   const [filieres, setFilieres] = useState<Filiere[]>([])
-  // Pas encore de sélecteur de campus dans l'UI : toute nouvelle filière est
-  // rattachée au campus principal, déterminé/créé par la migration au chargement.
-  const [campusPrincipalId, setCampusPrincipalId] = useState<string | null>(null)
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  // Filtre d'affichage (haut de page) — n'a de sens que si l'université a
+  // plusieurs campus, cf. contrainte "pas de complexité visuelle inutile".
+  const [campusFilter, setCampusFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -72,6 +74,9 @@ export default function FilieresPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<FiliereFormData>(emptyForm())
+  // Campus choisi pour la NOUVELLE filière — visible uniquement si plusieurs
+  // campus existent ; sinon assigné automatiquement au campus unique.
+  const [modalCampusId, setModalCampusId] = useState('')
   const [niveauInput, setNiveauInput] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -80,17 +85,25 @@ export default function FilieresPage() {
   const [deleting, setDeleting] = useState(false)
 
   const uid = profile?.universityId
+  const hasMultipleCampus = campusList.length > 1
 
   useEffect(() => {
     if (!uid) return
     let active = true
-    migrerVersMultiCampus(uid)
-      .then((result) => { if (active) setCampusPrincipalId(result.campusPrincipalId) })
-      .catch(() => { /* non bloquant : la création sera juste désactivée le temps d'un rechargement */ })
-    getFilieres(uid)
-      .then((data) => { if (active) setFilieres(data) })
-      .catch(() => { if (active) setError('Impossible de charger les filières.') })
-      .finally(() => { if (active) setLoading(false) })
+    ;(async () => {
+      try {
+        // Garantit qu'au moins le campus principal existe (migration idempotente).
+        await migrerVersMultiCampus(uid)
+        const [campus, fils] = await Promise.all([getCampusList(uid), getFilieres(uid)])
+        if (!active) return
+        setCampusList(campus)
+        setFilieres(fils)
+      } catch {
+        if (active) setError('Impossible de charger les filières.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
     return () => { active = false }
   }, [uid])
 
@@ -103,13 +116,19 @@ export default function FilieresPage() {
     )
   }
 
-  const filtered = filieres.filter(f =>
+  // Le filtre campus (s'il y a plusieurs campus) borne l'ensemble affiché ;
+  // la recherche s'applique ensuite par-dessus.
+  const filieresDuCampus = hasMultipleCampus && campusFilter
+    ? filieres.filter(f => f.campusId === campusFilter)
+    : filieres
+
+  const filtered = filieresDuCampus.filter(f =>
     f.nom.toLowerCase().includes(search.toLowerCase()) ||
     f.code.toLowerCase().includes(search.toLowerCase())
   )
 
-  const totalActives = filieres.filter(f => f.actif).length
-  const totalInactives = filieres.length - totalActives
+  const totalActives = filieresDuCampus.filter(f => f.actif).length
+  const totalInactives = filieresDuCampus.length - totalActives
 
   // ─── Modal helpers ──────────────────────────────────────────────────────────
 
@@ -122,6 +141,8 @@ export default function FilieresPage() {
     setForm(emptyForm())
     setNiveauInput('')
     setEditId(null)
+    // Un seul campus : assigné automatiquement, aucun choix à faire.
+    setModalCampusId(campusList.length === 1 ? campusList[0].id : '')
     setModalOpen(true)
   }
 
@@ -144,6 +165,7 @@ export default function FilieresPage() {
     setModalOpen(false)
     setEditId(null)
     setForm(emptyForm())
+    setModalCampusId('')
     setNiveauInput('')
   }
 
@@ -170,8 +192,11 @@ export default function FilieresPage() {
 
   async function handleSave() {
     if (!uid || !form.nom.trim() || !form.code.trim() || form.niveaux.length === 0) return
-    if (!editId && !campusPrincipalId) {
-      setToast('Initialisation du campus en cours, réessayez dans un instant')
+    // Campus effectif : le choix du modal s'il y en a plusieurs, sinon le
+    // campus unique de l'université (aucune saisie requise dans ce cas).
+    const campusIdToUse = campusList.length === 1 ? campusList[0].id : modalCampusId
+    if (!editId && !campusIdToUse) {
+      setToast('Veuillez choisir un campus')
       return
     }
     setSaving(true)
@@ -183,9 +208,9 @@ export default function FilieresPage() {
         ))
         setToast('Filière modifiée avec succès')
       } else {
-        const id = await createFiliere(uid, campusPrincipalId!, form)
+        const id = await createFiliere(uid, campusIdToUse, form)
         setFilieres(prev => [...prev, {
-          id, universityId: uid, campusId: campusPrincipalId!, ...form,
+          id, universityId: uid, campusId: campusIdToUse, ...form,
           createdAt: Date.now(), updatedAt: Date.now(),
         }])
         setToast('Filière créée avec succès')
@@ -258,15 +283,29 @@ export default function FilieresPage() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-orange-400/50" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher par nom ou code…"
-          className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl pl-9 pr-4 py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 w-full max-w-sm text-sm"
-        />
+      {/* Search + filtre campus (le filtre n'apparaît que si plusieurs campus existent) */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-orange-400/50" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher par nom ou code…"
+            className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl pl-9 pr-4 py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-orange-200/30 focus:outline-none focus:border-orange-400/60 w-full text-sm"
+          />
+        </div>
+        {hasMultipleCampus && (
+          <select
+            value={campusFilter}
+            onChange={e => setCampusFilter(e.target.value)}
+            className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 appearance-none min-w-50"
+          >
+            <option value="">Tous les campus</option>
+            {campusList.map(c => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Error */}
@@ -319,6 +358,14 @@ export default function FilieresPage() {
                   <span className="text-xs text-zinc-500 dark:text-orange-200/40">{f.dureeAns} an{f.dureeAns > 1 ? 's' : ''}</span>
                   <span className="text-zinc-500 dark:text-orange-200/20 text-xs">·</span>
                   <span className="text-xs text-zinc-500 dark:text-orange-200/40">{f.totalCreditsRequis} crédits requis</span>
+                  {hasMultipleCampus && (
+                    <>
+                      <span className="text-zinc-500 dark:text-orange-200/20 text-xs">·</span>
+                      <span className="text-xs text-blue-600 dark:text-orange-400">
+                        {campusList.find(c => c.id === f.campusId)?.nom ?? '—'}
+                      </span>
+                    </>
+                  )}
                   {(f.niveaux ?? []).map(n => (
                     <span key={n} className="text-xs bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 rounded-full px-2 py-0.5">
                       {n}
@@ -387,6 +434,24 @@ export default function FilieresPage() {
 
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+              {/* Campus — uniquement à la création, et uniquement si l'université
+                  a plusieurs campus (sinon assigné automatiquement, sans choix). */}
+              {!editId && hasMultipleCampus && (
+                <div>
+                  <label className={labelCls}>Campus *</label>
+                  <select
+                    value={modalCampusId}
+                    onChange={e => setModalCampusId(e.target.value)}
+                    className={`${inputCls} appearance-none`}
+                  >
+                    <option value="" disabled>Choisir un campus…</option>
+                    {campusList.map(c => (
+                      <option key={c.id} value={c.id}>{c.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Nom + Code */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -519,7 +584,10 @@ export default function FilieresPage() {
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saving || !form.nom.trim() || !form.code.trim() || form.niveaux.length === 0}
+                  disabled={
+                    saving || !form.nom.trim() || !form.code.trim() || form.niveaux.length === 0 ||
+                    (!editId && hasMultipleCampus && !modalCampusId)
+                  }
                   className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
                 >
                   {saving ? 'Enregistrement…' : editId ? 'Modifier' : 'Créer la filière'}
