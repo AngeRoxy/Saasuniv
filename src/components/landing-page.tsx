@@ -44,7 +44,7 @@ const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean; soon?
   { label: 'Suggestions automatiques (intelligence artificielle)', key: 'recommandationsIA', ia: true },
   { label: 'Journal des activités', key: 'auditLogs' },
   { label: 'Support prioritaire', key: 'supportPrioritaire' },
-  { label: 'Gestion de plusieurs campus/sites', key: 'multiCampus', soon: true },
+  { label: 'Gestion de plusieurs campus/sites', key: 'multiCampus' },
   { label: 'Connexion avec vos autres logiciels', key: 'apiAccess', soon: true },
   { label: 'Adresse web à votre nom', key: 'sousDomainePerso', soon: true },
 ]
