@@ -15,6 +15,7 @@ export default function StudentExamensPage() {
   const [metaLoading, setMetaLoading] = useState(true)
   const [filiereId, setFiliereId] = useState<string | undefined>()
   const [niveau, setNiveau] = useState<string | undefined>()
+  const [campusId, setCampusId] = useState<string | undefined>()
   const [filiereNom, setFiliereNom] = useState('')
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [semestreId, setSemestreId] = useState<string | undefined>()
@@ -35,6 +36,7 @@ export default function StudentExamensPage() {
         setFiliereId(filiere?.id)
         setFiliereNom(member?.filiere ?? '')
         setNiveau(member?.niveau ?? undefined)
+        setCampusId(member?.campusId ?? undefined)
         setSemestres(sems)
         const enCours = sems.find((s) => s.statut === 'en_cours')
         setSemestreId(enCours?.id ?? sems[0]?.id)
@@ -52,7 +54,7 @@ export default function StudentExamensPage() {
   // l'université avant de connaître le groupe de l'étudiant.
   const { examensAVenir, loading: examLoading } = useExamens(
     ready ? (universityId ?? '') : '',
-    { filiereId, niveau, semestreId }
+    { campusId, filiereId, niveau, semestreId }
   )
 
   if (metaLoading) {

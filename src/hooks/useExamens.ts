@@ -5,6 +5,7 @@ import { getExamens, type Examen } from '@/lib/db'
 import { compareExamens, todayISO } from '@/types/examen'
 
 interface UseExamensFilters {
+  campusId?: string
   filiereId?: string
   niveau?: string
   semestreId?: string
@@ -29,14 +30,14 @@ export function useExamens(
   universityId: string,
   filters?: UseExamensFilters
 ): UseExamensResult {
-  const { filiereId, niveau, semestreId } = filters ?? {}
+  const { campusId, filiereId, niveau, semestreId } = filters ?? {}
 
   const [examens, setExamens] = useState<Examen[]>([])
   const [loading, setLoading] = useState(Boolean(universityId))
 
   // Réinitialisation au changement de cible (pattern « information from previous
   // renders » — évite un setState en effet, qui casse `next build`).
-  const key = `${universityId}|${filiereId ?? ''}|${niveau ?? ''}|${semestreId ?? ''}`
+  const key = `${universityId}|${campusId ?? ''}|${filiereId ?? ''}|${niveau ?? ''}|${semestreId ?? ''}`
   const [prevKey, setPrevKey] = useState(key)
   if (key !== prevKey) {
     setPrevKey(key)
@@ -45,9 +46,9 @@ export function useExamens(
 
   const fetchAll = useCallback(async (): Promise<Examen[]> => {
     if (!universityId) return []
-    const list = await getExamens(universityId, { filiereId, niveau, semestreId })
+    const list = await getExamens(universityId, { campusId, filiereId, niveau, semestreId })
     return [...list].sort(compareExamens)
-  }, [universityId, filiereId, niveau, semestreId])
+  }, [universityId, campusId, filiereId, niveau, semestreId])
 
   useEffect(() => {
     let active = true

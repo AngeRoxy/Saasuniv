@@ -2063,6 +2063,7 @@ export { ConflitExamenError }
 export type { Examen, ExamenFormData, ConflitExamenInfo }
 
 export interface ExamenFilters {
+  campusId?: string
   filiereId?: string
   niveau?: string
   semestreId?: string
@@ -2117,6 +2118,7 @@ export async function getExamens(
   if (!filters) return result
   return result.filter(
     (e) =>
+      (!filters.campusId || e.campusId === filters.campusId) &&
       (!filters.filiereId || e.filiereId === filters.filiereId) &&
       (!filters.niveau || e.niveau === filters.niveau) &&
       (!filters.semestreId || e.semestreId === filters.semestreId) &&
