@@ -18,6 +18,8 @@ export const JOUR_LABEL: Record<JourSemaine, string> = {
 
 export interface Creneau {
   id: string
+  /** Campus physique où se tient ce cours (obligatoire — cf. RÈGLE 3 : borne la détection de conflits). */
+  campusId: string
   filiereId: string
   niveau: string
   semestreId: string
@@ -196,10 +198,16 @@ export function motifAnnulationLe(c: Creneau, dateISO: string): string | null {
 
 // ─── Détection de conflits (RÈGLE 3) ────────────────────────────────────────────
 // Deux créneaux entrent en conflit lorsqu'ils se chevauchent le même jour DANS LE
-// MÊME SEMESTRE et partagent : la même salle, le même enseignant, ou le même
-// groupe (filière + niveau). Le semestre borne la comparaison car deux semestres
-// couvrent des périodes distinctes de l'année — une salle réutilisée en S1 et S2
-// au même horaire n'est donc pas un vrai conflit.
+// MÊME SEMESTRE ET SUR LE MÊME CAMPUS et partagent : la même salle, le même
+// enseignant, ou le même groupe (filière + niveau). Le semestre borne la
+// comparaison car deux semestres couvrent des périodes distinctes de l'année —
+// une salle réutilisée en S1 et S2 au même horaire n'est donc pas un vrai conflit.
+// Le campus borne la comparaison pour la même raison : une salle « Amphi A » sur
+// deux campus différents est une salle physiquement différente qui porte
+// simplement le même nom (pas un vrai conflit). Effet de bord assumé : un
+// enseignant multi-campus (cf. Member.campusIds) affecté à la même heure sur deux
+// campus différents n'est PAS signalé — c'est un choix délibéré de ce modèle
+// multi-campus en silos, laissé au jugement de l'administration.
 
 export type ConflitType = 'salle' | 'enseignant' | 'groupe'
 
@@ -212,7 +220,7 @@ export interface ConflitInfo {
 /** Champs strictement nécessaires pour tester un créneau candidat. */
 export type CreneauCandidat = Pick<
   Creneau,
-  'jour' | 'heureDebut' | 'heureFin' | 'salle' | 'enseignant' | 'filiereId' | 'niveau' | 'semestreId'
+  'jour' | 'heureDebut' | 'heureFin' | 'salle' | 'enseignant' | 'filiereId' | 'niveau' | 'semestreId' | 'campusId'
 >
 
 /**
@@ -241,6 +249,7 @@ export function findConflits(
     if (c.id === excludeId) continue
     if (c.jour !== candidat.jour) continue
     if (c.semestreId !== candidat.semestreId) continue
+    if (c.campusId !== candidat.campusId) continue
     if (!seChevauchent(candidat.heureDebut, candidat.heureFin, c.heureDebut, c.heureFin)) continue
 
     const plage = `${JOUR_LABEL[c.jour]} ${c.heureDebut}–${c.heureFin}`

@@ -14,6 +14,8 @@ export type StatutExamen = 'planifie' | 'en_cours' | 'termine' | 'annule'
 export interface Examen {
   id: string
   universityId: string
+  /** Campus physique où se tient l'épreuve (obligatoire — cf. détection de conflits ci-dessous). */
+  campusId: string
   filiereId: string
   niveau: string
   matiereId: string
@@ -140,9 +142,13 @@ export function compareExamens(a: Examen, b: Examen): number {
 // ─── Détection de conflits ───────────────────────────────────────────────────────
 // Adaptée de la RÈGLE 3 de l'emploi du temps (emploi-du-temps.ts), mais bornée à
 // une DATE précise plutôt qu'à un jour de semaine récurrent. Deux examens sont en
-// conflit quand ils se chevauchent LE MÊME JOUR et partagent : la même salle, ou
-// une même personne (l'enseignant OU le surveillant du candidat déjà mobilisé sur
-// l'autre épreuve, quel que soit son rôle). Un examen annulé ne bloque jamais.
+// conflit quand ils se chevauchent LE MÊME JOUR, SUR LE MÊME CAMPUS et partagent :
+// la même salle, ou une même personne (l'enseignant OU le surveillant du candidat
+// déjà mobilisé sur l'autre épreuve, quel que soit son rôle). Le campus borne la
+// comparaison pour la même raison que l'emploi du temps : une salle « Amphi A » sur
+// deux campus différents est une salle physiquement différente (même choix
+// délibéré pour l'enseignant/surveillant multi-campus, cf. emploi-du-temps.ts).
+// Un examen annulé ne bloque jamais.
 
 export type ConflitExamenType = 'salle' | 'enseignant' | 'surveillant'
 
@@ -155,7 +161,7 @@ export interface ConflitExamenInfo {
 /** Champs strictement nécessaires pour tester un examen candidat. */
 export type ExamenCandidat = Pick<
   Examen,
-  'date' | 'heureDebut' | 'heureFin' | 'salle' | 'enseignantUid' | 'surveillantUid' | 'enseignantNom' | 'surveillantNom'
+  'date' | 'heureDebut' | 'heureFin' | 'salle' | 'enseignantUid' | 'surveillantUid' | 'enseignantNom' | 'surveillantNom' | 'campusId'
 >
 
 /** Deux plages « HH:mm » se chevauchent si l'une commence avant que l'autre finisse. */
@@ -180,6 +186,7 @@ export function findConflitsExamen(
     if (e.id === excludeId) continue
     if (e.statut === 'annule') continue // une épreuve annulée libère salle & personnes
     if (e.date !== candidat.date) continue
+    if (e.campusId !== candidat.campusId) continue
     if (!seChevauchent(candidat.heureDebut, candidat.heureFin, e.heureDebut, e.heureFin)) continue
 
     const plage = `le ${e.date} de ${e.heureDebut} à ${e.heureFin}`

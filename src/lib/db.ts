@@ -456,6 +456,8 @@ export async function migrerVersMultiCampus(universityId: string): Promise<{
   filieresMigrees: number
   etudiantsMigres: number
   enseignantsMigres: number
+  creneauxMigres: number
+  examensMigres: number
 }> {
   const campusExistants = await getCampusList(universityId)
   let campusPrincipalId: string
@@ -466,6 +468,9 @@ export async function migrerVersMultiCampus(universityId: string): Promise<{
     campusPrincipalId = (principal ?? campusExistants[0]).id
   }
 
+  // Mutée en mémoire en même temps que Firebase : les boucles PHASE 3 ci-dessous
+  // (créneaux, examens) résolvent le campus d'une filière via CE tableau, qui doit
+  // donc refléter les campusId qu'on vient d'assigner, pas seulement la BDD.
   const filieres = await getFilieres(universityId)
   let filieresMigrees = 0
   for (const f of filieres) {
@@ -474,6 +479,7 @@ export async function migrerVersMultiCampus(universityId: string): Promise<{
         campusId: campusPrincipalId,
         updatedAt: Date.now(),
       })
+      f.campusId = campusPrincipalId
       filieresMigrees++
     }
   }
@@ -495,7 +501,45 @@ export async function migrerVersMultiCampus(universityId: string): Promise<{
     }
   }
 
-  return { campusPrincipalId, filieresMigrees, etudiantsMigres, enseignantsMigres }
+  // PHASE 3 : les créneaux/examens créés avant l'introduction de `campusId` n'en
+  // portent aucun — on le résout via le campus de leur filière (déjà migrée
+  // ci-dessus), avec repli sur le campus principal si la filière est introuvable
+  // (référence orpheline).
+  const filiereCampusId = (filiereId: string): string =>
+    filieres.find((f) => f.id === filiereId)?.campusId ?? campusPrincipalId
+
+  const creneaux = await getCreneaux(universityId)
+  let creneauxMigres = 0
+  for (const c of creneaux) {
+    if (!c.campusId) {
+      await update(ref(db, `universities/${universityId}/emploi_du_temps/${c.id}`), {
+        campusId: filiereCampusId(c.filiereId),
+        updatedAt: Date.now(),
+      })
+      creneauxMigres++
+    }
+  }
+
+  const examens = await getExamens(universityId)
+  let examensMigres = 0
+  for (const e of examens) {
+    if (!e.campusId) {
+      await update(ref(db, `universities/${universityId}/examens/${e.id}`), {
+        campusId: filiereCampusId(e.filiereId),
+        updatedAt: Date.now(),
+      })
+      examensMigres++
+    }
+  }
+
+  return {
+    campusPrincipalId,
+    filieresMigrees,
+    etudiantsMigres,
+    enseignantsMigres,
+    creneauxMigres,
+    examensMigres,
+  }
 }
 
 // ─── Filières ─────────────────────────────────────────────────────────────────
