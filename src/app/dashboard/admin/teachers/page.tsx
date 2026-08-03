@@ -6,8 +6,9 @@ import { UserPlus, X, Pencil, Trash2, Clock, Wifi, AlertTriangle, Mail, CheckCir
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
-import { getUniversityMembers, updateMemberProfile, getFilieres, getMatieres, removeMember } from '@/lib/db'
+import { getUniversityMembers, updateMemberProfile, getFilieres, getMatieres, removeMember, getCampusList, migrerVersMultiCampus } from '@/lib/db'
 import type { Filiere, Matiere } from '@/types/filiere'
+import type { Campus } from '@/types/campus'
 import { createMemberViaApi } from '@/lib/members-client'
 import { EmailEditModal } from '@/components/admin/email-edit-modal'
 import { MemberAvatar } from '@/components/ui/member-avatar'
@@ -20,6 +21,7 @@ interface Teacher {
   email: string
   telephone?: string
   filiereIds: string[]   // un enseignant peut intervenir dans PLUSIEURS filières
+  campusIds: string[]    // un enseignant peut intervenir sur PLUSIEURS campus
   matieres: string[]
   chargeHoraire: number
   photoUrl?: string
@@ -31,12 +33,13 @@ type FormState = {
   email: string
   telephone: string
   filiereIds: string[]   // filières sélectionnées (drive la cascade matières)
+  campusIds: string[]    // campus où l'enseignant intervient
   matieres: string[]     // matières enseignées (saisies ou choisies)
   chargeHoraire: string
 }
 const emptyForm: FormState = {
   nom: '', prenom: '', email: '', telephone: '',
-  filiereIds: [], matieres: [], chargeHoraire: '0',
+  filiereIds: [], campusIds: [], matieres: [], chargeHoraire: '0',
 }
 
 export default function TeachersPage() {
@@ -45,6 +48,9 @@ export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [filieres, setFilieres] = useState<Filiere[]>([])
   const [matieres, setMatieres] = useState<Matiere[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
+  const [campusFilter, setCampusFilter] = useState('')
   const [fbLoading, setFbLoading] = useState(true)
   const [limitError, setLimitError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -65,12 +71,16 @@ export default function TeachersPage() {
       try {
         // Les filières sont nécessaires AVANT les enseignants pour la migration
         // douce (retrouver l'ID d'une ancienne filière stockée sous forme de nom).
-        const [fils, members] = await Promise.all([
+        // Garantit qu'au moins le campus principal existe (migration idempotente).
+        await migrerVersMultiCampus(universityId)
+        const [fils, members, campus] = await Promise.all([
           getFilieres(universityId),
           getUniversityMembers(universityId, 'teacher'),
+          getCampusList(universityId),
         ])
         if (!active) return
         setFilieres(fils)
+        setCampusList(campus)
         const idByNom = new Map(fils.map((f) => [f.nom, f.id]))
         const fbTeachers: Teacher[] = members.map((m, i) => {
           const parts = m.displayName.split(' ')
@@ -86,6 +96,7 @@ export default function TeachersPage() {
             email: m.email,
             telephone: m.telephone ?? '',
             filiereIds,
+            campusIds: m.campusIds ?? [],
             matieres: m.matieres ?? [],
             chargeHoraire: m.chargeHoraire ?? 0,
             photoUrl: m.photoUrl,
@@ -93,7 +104,7 @@ export default function TeachersPage() {
         })
         setTeachers(fbTeachers)
       } catch {
-        if (active) { setFilieres([]); setTeachers([]) }
+        if (active) { setFilieres([]); setTeachers([]); setCampusList([]) }
       } finally {
         if (active) setFbLoading(false)
       }
@@ -137,6 +148,19 @@ export default function TeachersPage() {
     return (id: string) => map.get(id) ?? id
   }, [filieres])
 
+  // id campus → nom (pour l'affichage des pills et du filtre).
+  const campusNom = useMemo(() => {
+    const map = new Map(campusList.map((c) => [c.id, c.nom]))
+    return (id: string) => map.get(id) ?? id
+  }, [campusList])
+
+  const filteredTeachers = useMemo(
+    () => (hasMultipleCampus && campusFilter
+      ? teachers.filter((t) => t.campusIds.includes(campusFilter))
+      : teachers),
+    [teachers, hasMultipleCampus, campusFilter]
+  )
+
   // Options de matières proposées : union chargée + celles déjà sélectionnées
   // (pour ne jamais masquer une matière retenue si sa filière est décochée).
   const matiereOptions = useMemo(
@@ -151,6 +175,8 @@ export default function TeachersPage() {
       return
     }
     setEditingId(null)
+    // Un seul campus : assigné automatiquement (voir handleSubmit), aucun choix
+    // à faire ici — le sélecteur ne s'affiche que si plusieurs campus existent.
     setForm(emptyForm)
     setShowModal(true)
   }
@@ -163,6 +189,7 @@ export default function TeachersPage() {
       email: teacher.email,
       telephone: teacher.telephone ?? '',
       filiereIds: teacher.filiereIds,
+      campusIds: teacher.campusIds,
       matieres: teacher.matieres,
       chargeHoraire: String(teacher.chargeHoraire),
     })
@@ -180,6 +207,17 @@ export default function TeachersPage() {
     }))
   }
 
+  // Coche / décoche un campus (multi-sélection) : un enseignant peut intervenir
+  // sur plusieurs campus.
+  function toggleCampus(id: string) {
+    setForm((prev) => ({
+      ...prev,
+      campusIds: prev.campusIds.includes(id)
+        ? prev.campusIds.filter((x) => x !== id)
+        : [...prev.campusIds, id],
+    }))
+  }
+
   function toggleMatiere(nom: string) {
     setForm((prev) => ({
       ...prev,
@@ -193,6 +231,11 @@ export default function TeachersPage() {
     e.preventDefault()
     const matieres = form.matieres.map((m) => m.trim()).filter(Boolean)
     const chargeHoraire = Number(form.chargeHoraire) || 0
+    // Un seul campus : assigné automatiquement (aucun sélecteur affiché) ;
+    // plusieurs campus : le choix coché dans le formulaire.
+    const campusIds = hasMultipleCampus
+      ? form.campusIds
+      : campusList.length === 1 ? [campusList[0].id] : []
 
     if (editingId) {
       const teacher = teachers.find((t) => t.id === editingId)
@@ -208,6 +251,7 @@ export default function TeachersPage() {
         await updateMemberProfile(profile.universityId, teacher.uid, {
           // Tableau complet réécrit à chaque fois (pas d'ajout/retrait partiel).
           filiereIds: form.filiereIds,
+          campusIds,
           telephone: form.telephone,
           chargeHoraire,
           matieres,
@@ -221,7 +265,7 @@ export default function TeachersPage() {
       setTeachers((prev) =>
         prev.map((t) =>
           t.id === editingId
-            ? { ...t, nom: form.nom, prenom: form.prenom, email: form.email, telephone: form.telephone, filiereIds: form.filiereIds, matieres, chargeHoraire }
+            ? { ...t, nom: form.nom, prenom: form.prenom, email: form.email, telephone: form.telephone, filiereIds: form.filiereIds, campusIds, matieres, chargeHoraire }
             : t
         )
       )
@@ -249,6 +293,7 @@ export default function TeachersPage() {
         displayName,
         role: 'teacher',
         filiereIds: form.filiereIds,
+        campusIds,
         telephone: form.telephone,
         chargeHoraire,
         matieres,
@@ -261,6 +306,7 @@ export default function TeachersPage() {
         email: form.email,
         telephone: form.telephone,
         filiereIds: form.filiereIds,
+        campusIds,
         matieres,
         chargeHoraire,
       }
@@ -325,7 +371,20 @@ export default function TeachersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {/* Filtre campus — n'apparaît que si plusieurs campus existent */}
+        {hasMultipleCampus && (
+          <select
+            value={campusFilter}
+            onChange={(e) => setCampusFilter(e.target.value)}
+            className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 appearance-none min-w-40"
+          >
+            <option value="">Tous les campus</option>
+            {campusList.map((c) => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </select>
+        )}
         <button
           onClick={openAdd}
           className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors"
@@ -336,7 +395,7 @@ export default function TeachersPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {teachers.map((teacher) => (
+        {filteredTeachers.map((teacher) => (
           <div key={teacher.id} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6 space-y-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-3 min-w-0">
@@ -399,6 +458,26 @@ export default function TeachersPage() {
               )}
             </div>
 
+            {hasMultipleCampus && (
+              <div>
+                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Campus</p>
+                {teacher.campusIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {teacher.campusIds.map((cid) => (
+                      <span
+                        key={cid}
+                        className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-medium"
+                      >
+                        {campusNom(cid)}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-600">Aucun campus assigné</span>
+                )}
+              </div>
+            )}
+
             <div>
               <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Cours assignés</p>
               <div className="flex flex-wrap gap-1.5">
@@ -421,7 +500,7 @@ export default function TeachersPage() {
         ))}
       </div>
 
-      {teachers.length === 0 && (
+      {filteredTeachers.length === 0 && (
         <div className="text-center py-16 text-zinc-500">
           <p>Aucun enseignant enregistré.</p>
         </div>
@@ -527,6 +606,37 @@ export default function TeachersPage() {
                   </p>
                 )}
               </div>
+
+              {/* Campus — multi-sélection : un enseignant peut intervenir sur
+                  plusieurs campus. N'apparaît que si plusieurs campus existent
+                  (sinon assigné automatiquement, sans choix). */}
+              {hasMultipleCampus && (
+                <div>
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Campus</label>
+                  <div className="flex flex-wrap gap-2">
+                    {campusList.map((c) => {
+                      const selected = form.campusIds.includes(c.id)
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => toggleCampus(c.id)}
+                          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                            selected
+                              ? 'bg-orange-500/20 border-orange-500/40 text-blue-700 dark:text-orange-300'
+                              : 'bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-white/20'
+                          }`}
+                        >
+                          {c.nom}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
+                    Cochez tous les campus où intervient cet enseignant.
+                  </p>
+                </div>
+              )}
 
               {/* Matières enseignées — union des matières des filières sélectionnées */}
               <div>
