@@ -237,6 +237,13 @@ export default function TeachersPage() {
       ? form.campusIds
       : campusList.length === 1 ? [campusList[0].id] : []
 
+    // Contrairement aux filières (qui peuvent rester vides), un enseignant sans
+    // AUCUN campus n'a nulle part où donner cours — on bloque avant tout appel réseau.
+    if (campusIds.length === 0) {
+      setCreateError('Sélectionnez au moins un campus où cet enseignant peut intervenir.')
+      return
+    }
+
     if (editingId) {
       const teacher = teachers.find((t) => t.id === editingId)
       // Sans compte synchronisé, aucune persistance possible : on le signale
@@ -612,7 +619,7 @@ export default function TeachersPage() {
                   (sinon assigné automatiquement, sans choix). */}
               {hasMultipleCampus && (
                 <div>
-                  <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Campus</label>
+                  <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Campus *</label>
                   <div className="flex flex-wrap gap-2">
                     {campusList.map((c) => {
                       const selected = form.campusIds.includes(c.id)
@@ -633,7 +640,7 @@ export default function TeachersPage() {
                     })}
                   </div>
                   <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
-                    Cochez tous les campus où intervient cet enseignant.
+                    Cochez tous les campus où intervient cet enseignant (au moins un requis).
                   </p>
                 </div>
               )}
@@ -722,7 +729,7 @@ export default function TeachersPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || (hasMultipleCampus && form.campusIds.length === 0)}
                   className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
