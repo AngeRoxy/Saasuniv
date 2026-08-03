@@ -2274,7 +2274,10 @@ export async function getParcoursAnnee(
   const all = await getAllParcours(universityId)
   const map: Record<string, ParcoursAnnuel> = {}
   for (const p of all) {
-    if (p.anneeAcademique === anneeAcademique) map[p.studentUid] = p
+    // Une réorientation n'est pas une décision de clôture : l'ignorer ici évite
+    // qu'elle masque à tort le bouton « Confirmer la clôture » pour un étudiant
+    // réorienté dont l'année n'a pas encore été clôturée.
+    if (p.anneeAcademique === anneeAcademique && p.statut !== 'reoriente') map[p.studentUid] = p
   }
   return map
 }
