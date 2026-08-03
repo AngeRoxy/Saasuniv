@@ -22,6 +22,7 @@ export default function StudentSchedulePage() {
   const [loading, setLoading] = useState(true)
   const [filiereId, setFiliereId] = useState<string | null>(null)
   const [niveau, setNiveau] = useState<string | null>(null)
+  const [campusId, setCampusId] = useState<string | null>(null)
   const [filiereNom, setFiliereNom] = useState<string>('')
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [semestreId, setSemestreId] = useState('')
@@ -48,6 +49,7 @@ export default function StudentSchedulePage() {
         setFiliereId(filiere?.id ?? null)
         setFiliereNom(member?.filiere ?? '')
         setNiveau(member?.niveau ?? null)
+        setCampusId(member?.campusId ?? null)
         setSemestres(sems)
         setCreneaux(cre)
 
@@ -61,21 +63,29 @@ export default function StudentSchedulePage() {
     return () => { active = false }
   }, [universityId, user?.uid])
 
+  // `campusId` filtre transparent : un étudiant appartient à un seul campus (pas
+  // de sélecteur nécessaire côté étudiant). Repli sans filtre si absent (donnée
+  // pas encore migrée) — jamais d'écran vide pour une raison invisible.
   const creneauxFiltres = useMemo(
     () =>
       creneaux.filter(
-        (c) => c.filiereId === filiereId && c.niveau === niveau && (!semestreId || c.semestreId === semestreId)
+        (c) =>
+          c.filiereId === filiereId &&
+          c.niveau === niveau &&
+          (!semestreId || c.semestreId === semestreId) &&
+          (!campusId || c.campusId === campusId)
       ),
-    [creneaux, filiereId, niveau, semestreId]
+    [creneaux, filiereId, niveau, semestreId, campusId]
   )
 
-  // Bornes de la grille : tous les créneaux de l'université pour le semestre actif
-  // (sans filtre filière/niveau), pour que la journée-type reflète les horaires
-  // réels de tout l'établissement, pas seulement ceux de l'étudiant.
-  const creneauxBornes = useMemo(
-    () => (semestreId ? creneaux.filter((c) => c.semestreId === semestreId) : creneaux),
-    [creneaux, semestreId]
-  )
+  // Bornes de la grille : tous les créneaux du CAMPUS de l'étudiant pour le
+  // semestre actif (sans filtre filière/niveau), pour que la journée-type reflète
+  // les horaires réels de son établissement — pas ceux d'un autre campus dont les
+  // horaires n'ont aucun rapport avec les siens.
+  const creneauxBornes = useMemo(() => {
+    const duCampus = campusId ? creneaux.filter((c) => c.campusId === campusId) : creneaux
+    return semestreId ? duCampus.filter((c) => c.semestreId === semestreId) : duCampus
+  }, [creneaux, semestreId, campusId])
 
   if (loading) {
     return (
