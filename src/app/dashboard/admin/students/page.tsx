@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw, ArrowRightLeft } from 'lucide-react'
+import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw, ArrowRightLeft, UserX } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
@@ -17,6 +17,7 @@ import {
   getEtudiantsRedoublants,
   getParcoursEtudiant,
   reorienterEtudiant,
+  marquerAbandon,
   type ParcoursAnnuel,
 } from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
@@ -43,6 +44,10 @@ interface Student {
   parentUid?: string
   /** Photo de profil (membres Firebase Auth uniquement — voir AvatarUpload). */
   photoUrl?: string
+  /** Statut de scolarité — distinct de `statut` (compte Auth). Absent = actif. */
+  statutScolarite?: 'actif' | 'abandonne' | 'diplome'
+  dateChangementStatut?: number
+  motifAbandon?: string
 }
 
 interface ParentOption {
@@ -583,6 +588,86 @@ function ReorientModal({
   )
 }
 
+// ─── Abandon Modal ────────────────────────────────────────────────────────────
+
+function AbandonModal({
+  student,
+  submitting,
+  error,
+  onSubmit,
+  onClose,
+}: {
+  student: Student
+  submitting: boolean
+  error: string | null
+  onSubmit: (motif: string) => void
+  onClose: () => void
+}) {
+  const [motif, setMotif] = useState('')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    onSubmit(motif.trim())
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-2xl p-8 w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-6 shrink-0">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Marquer comme abandon</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-zinc-900 dark:text-white font-medium">{student.prenom} {student.nom}</span>{' '}
+              sera marqué(e) en abandon de scolarité, daté d&apos;aujourd&apos;hui. Son compte et son historique
+              (notes, absences…) restent intacts et consultables — rien n&apos;est supprimé.
+            </p>
+
+            <div>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Motif (optionnel)</label>
+              <textarea
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                rows={2}
+                placeholder="Ex : abandon pour raisons personnelles"
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors resize-none"
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-6 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+              {submitting ? 'Enregistrement…' : 'Confirmer l’abandon'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
@@ -594,6 +679,9 @@ export default function StudentsPage() {
   const [limitError, setLimitError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filiereFilter, setFiliereFilter] = useState('')
+  // Statut de scolarité : masque les abandons seulement si l'admin le demande
+  // explicitement — ils restent visibles par défaut ('tous').
+  const [scolariteFilter, setScolariteFilter] = useState<'tous' | 'actifs' | 'abandonnes'>('tous')
   const [page, setPage] = useState(1)
 
   // Modal state
@@ -626,6 +714,11 @@ export default function StudentsPage() {
   const [reorientTarget, setReorientTarget] = useState<Student | null>(null)
   const [reorienting, setReorienting] = useState(false)
   const [reorientError, setReorientError] = useState<string | null>(null)
+
+  // Abandon de scolarité
+  const [abandonTarget, setAbandonTarget] = useState<Student | null>(null)
+  const [markingAbandon, setMarkingAbandon] = useState(false)
+  const [abandonError, setAbandonError] = useState<string | null>(null)
 
   // ── Firebase load ─────────────────────────────────────────────────────────────
 
@@ -662,6 +755,9 @@ export default function StudentsPage() {
             statut: normalizeStatut(m.statut),
             parentUid: m.parentUid,
             photoUrl: m.photoUrl,
+            statutScolarite: m.statutScolarite,
+            dateChangementStatut: m.dateChangementStatut,
+            motifAbandon: m.motifAbandon,
           }
         })
         const fromManual: Student[] = manual.map((s) => {
@@ -697,9 +793,14 @@ export default function StudentsPage() {
         s.filiere.toLowerCase().includes(q) ||
         s.matricule.toLowerCase().includes(q)
       const matchFiliere = !filiereFilter || s.filiere === filiereFilter
-      return matchSearch && matchFiliere
+      const estAbandonne = s.statutScolarite === 'abandonne'
+      const matchScolarite =
+        scolariteFilter === 'tous' ||
+        (scolariteFilter === 'abandonnes' && estAbandonne) ||
+        (scolariteFilter === 'actifs' && !estAbandonne)
+      return matchSearch && matchFiliere && matchScolarite
     })
-  }, [students, search, filiereFilter])
+  }, [students, search, filiereFilter, scolariteFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -716,6 +817,11 @@ export default function StudentsPage() {
 
   function handleFiliereChange(v: string) {
     setFiliereFilter(v)
+    setPage(1)
+  }
+
+  function handleScolariteFilterChange(v: 'tous' | 'actifs' | 'abandonnes') {
+    setScolariteFilter(v)
     setPage(1)
   }
 
@@ -914,6 +1020,36 @@ export default function StudentsPage() {
     setReorientTarget(null)
   }
 
+  async function handleAbandonSubmit(motif: string) {
+    if (!abandonTarget?.uid) return
+    const universityId = profile?.universityId
+    if (!universityId) {
+      setAbandonError("Aucune université active. Changement de statut non enregistré.")
+      return
+    }
+    setMarkingAbandon(true)
+    setAbandonError(null)
+    const now = Date.now()
+    try {
+      await marquerAbandon(universityId, abandonTarget.uid, motif || undefined)
+    } catch (err) {
+      // Écriture Firebase échouée : erreur claire, aucune modification locale.
+      setAbandonError(err instanceof Error ? err.message : 'Le changement de statut a échoué.')
+      setMarkingAbandon(false)
+      return
+    }
+    // Succès confirmé uniquement.
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.uid === abandonTarget.uid
+          ? { ...s, statutScolarite: 'abandonne', dateChangementStatut: now, motifAbandon: motif || undefined }
+          : s
+      )
+    )
+    setMarkingAbandon(false)
+    setAbandonTarget(null)
+  }
+
   // ── Derived for modal ─────────────────────────────────────────────────────────
 
   const modalInitial: FormData = editTarget
@@ -961,6 +1097,17 @@ export default function StudentsPage() {
           ))}
         </select>
 
+        {/* Statut de scolarité filter */}
+        <select
+          value={scolariteFilter}
+          onChange={(e) => handleScolariteFilterChange(e.target.value as 'tous' | 'actifs' | 'abandonnes')}
+          className="bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/50 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none min-w-40"
+        >
+          <option value="tous" className="bg-white dark:bg-zinc-900">Tous les statuts</option>
+          <option value="actifs" className="bg-white dark:bg-zinc-900">Masquer les abandons</option>
+          <option value="abandonnes" className="bg-white dark:bg-zinc-900">Abandons seulement</option>
+        </select>
+
         {/* Add button */}
         <button
           onClick={openAdd}
@@ -999,8 +1146,13 @@ export default function StudentsPage() {
                   </td>
                 </tr>
               )}
-              {paginated.map((student) => (
-                <tr key={student.uid ?? student.fbKey ?? student.matricule} className="hover:bg-white/2 transition-colors">
+              {paginated.map((student) => {
+                const enAbandon = student.statutScolarite === 'abandonne'
+                return (
+                <tr
+                  key={student.uid ?? student.fbKey ?? student.matricule}
+                  className={`hover:bg-white/2 transition-colors ${enAbandon ? 'opacity-60' : ''}`}
+                >
                   {/* Matricule */}
                   <td className="px-5 py-4 text-blue-600 dark:text-orange-400 text-xs font-mono whitespace-nowrap">{student.matricule}</td>
 
@@ -1022,6 +1174,15 @@ export default function StudentsPage() {
                         >
                           <RotateCcw size={9} />
                           {redoublementBadgeLabel(student.niveau, redoublants[student.uid])}
+                        </span>
+                      )}
+                      {enAbandon && (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-[10px] font-medium"
+                          title={student.motifAbandon}
+                        >
+                          <UserX size={9} />
+                          Abandon{student.dateChangementStatut ? ` · ${new Date(student.dateChangementStatut).toLocaleDateString('fr-FR')}` : ''}
                         </span>
                       )}
                     </div>
@@ -1090,6 +1251,15 @@ export default function StudentsPage() {
                       >
                         <Pencil size={14} />
                       </button>
+                      {student.uid && !enAbandon && (
+                        <button
+                          onClick={() => setAbandonTarget(student)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-500/10 transition-colors"
+                          title="Marquer comme abandon"
+                        >
+                          <UserX size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setDeleteTarget(student)}
                         className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -1100,7 +1270,7 @@ export default function StudentsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -1209,6 +1379,17 @@ export default function StudentsPage() {
           error={reorientError}
           onSubmit={handleReorientSubmit}
           onClose={() => { setReorientTarget(null); setReorientError(null) }}
+        />
+      )}
+
+      {/* Abandon de scolarité */}
+      {abandonTarget && (
+        <AbandonModal
+          student={abandonTarget}
+          submitting={markingAbandon}
+          error={abandonError}
+          onSubmit={handleAbandonSubmit}
+          onClose={() => { setAbandonTarget(null); setAbandonError(null) }}
         />
       )}
 

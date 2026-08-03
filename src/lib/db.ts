@@ -91,6 +91,10 @@ export interface UniversityMember {
   enfantUids?: string[] // parent → uids des étudiants liés
   /** URL Storage de la photo de profil (voir uploadAvatar). */
   photoUrl?: string
+  // Scolarité (étudiant) : absent = 'actif'. Distinct de `statut` (compte Auth).
+  statutScolarite?: 'actif' | 'abandonne' | 'diplome'
+  dateChangementStatut?: number
+  motifAbandon?: string
 }
 
 export async function getUniversityMembers(
@@ -198,6 +202,27 @@ export async function removeMember(
 
   // Suppression du membre lui-même (comportement existant).
   await remove(ref(db, `universities/${universityId}/members/${uid}`))
+}
+
+/**
+ * Marque un étudiant en abandon de scolarité. NE SUPPRIME RIEN : c'est un simple
+ * changement de statut, daté et motivé, jamais une désactivation silencieuse.
+ * Le compte reste dans `members` avec tout son historique (notes, absences…).
+ */
+export async function marquerAbandon(
+  universityId: string,
+  studentUid: string,
+  motif?: string
+): Promise<void> {
+  await update(
+    ref(db, `universities/${universityId}/members/${studentUid}`),
+    stripUndefined({
+      statutScolarite: 'abandonne' as const,
+      dateChangementStatut: Date.now(),
+      motifAbandon: motif ?? undefined,
+      updatedAt: Date.now(),
+    })
+  )
 }
 
 // ─── Liens parent ↔ enfants ─────────────────────────────────────────────────

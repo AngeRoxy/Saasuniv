@@ -19,6 +19,9 @@ export type SelfRegisterRole = 'super_admin_plateforme'
 
 export type MemberStatus = 'actif' | 'inactif' | 'premiere_connexion'
 
+/** Statut de scolarité d'un étudiant — distinct de `MemberStatus` (compte actif/inactif). */
+export type StatutScolarite = 'actif' | 'abandonne' | 'diplome'
+
 export const ROLE_LABELS_FR: Record<MemberRole, string> = {
   admin_universite: 'Administrateur',
   teacher: 'Enseignant',
@@ -44,6 +47,12 @@ export interface Member {
   enfantUids?: string[] // pour un parent : uids des étudiants liés
   statut: MemberStatus
   premiereConnexion: boolean
+  // Scolarité (étudiant) : absent = 'actif'. Ne remplace pas `statut` (compte
+  // Auth actif/inactif) — un étudiant en abandon garde un compte fonctionnel,
+  // seule sa situation académique change.
+  statutScolarite?: StatutScolarite
+  dateChangementStatut?: number
+  motifAbandon?: string
   createdAt: number
   updatedAt: number
 }

@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
-import { loginWithEmail } from '@/lib/auth'
+import { loginWithEmail, logout } from '@/lib/auth'
 import {
   getUserProfile,
+  getUniversityMember,
   checkLoginLocked,
   recordFailedLoginAttempt,
   resetLoginAttempts,
@@ -36,15 +37,36 @@ function getErrorMessage(code: string): string {
   }
 }
 
-async function resolveAndRedirect(uid: string, router: ReturnType<typeof useRouter>) {
+async function resolveAndRedirect(
+  uid: string,
+  router: ReturnType<typeof useRouter>,
+  onBlocked: (message: string) => void
+) {
   let role: Role = 'student'
+  let universityId: string | null = null
   try {
     const profile = await Promise.race([
       getUserProfile(uid),
       new Promise<null>(r => setTimeout(() => r(null), 4000)),
     ])
     if (profile?.role) role = profile.role as Role
+    if (profile?.universityId) universityId = profile.universityId
   } catch { /* default */ }
+
+  // Un étudiant en abandon de scolarité garde un compte Auth valide (pas de
+  // firebase-admin côté serveur pour le désactiver) : on bloque donc l'accès
+  // ICI, juste après l'authentification réussie, avant toute redirection.
+  if (role === 'student' && universityId) {
+    try {
+      const member = await getUniversityMember(universityId, uid)
+      if (member?.statutScolarite === 'abandonne') {
+        await logout()
+        onBlocked("Ce compte est marqué comme abandon de scolarité. Contactez l'administration de votre établissement.")
+        return
+      }
+    } catch { /* vérification best-effort : ne bloque pas un étudiant actif */ }
+  }
+
   // Pose le cookie de session AVANT la navigation pour que le proxy voie la
   // session dès le premier chargement de /dashboard (évite un rebond login).
   await syncSessionCookie()
@@ -90,7 +112,10 @@ export default function LoginPage() {
       // Succès → on nettoie le compteur d'échecs (best-effort).
       resetLoginAttempts(email).catch(() => {})
       setFailedCount(0)
-      await resolveAndRedirect(credential.user.uid, router)
+      await resolveAndRedirect(credential.user.uid, router, (message) => {
+        setError(message)
+        setLoading(false)
+      })
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ''
       // 3. Échec → on enregistre la tentative (anti brute-force).
