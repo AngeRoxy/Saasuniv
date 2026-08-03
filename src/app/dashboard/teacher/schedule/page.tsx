@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { CalendarClock, CalendarX, Clock, MapPin, Layers, UserCog } from 'lucide-react'
+import { CalendarClock, CalendarX, Clock, MapPin, Layers, UserCog, Building2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { getFilieres, getSemestres, getCreneaux } from '@/lib/db'
+import { getFilieres, getSemestres, getCreneaux, getCampusList } from '@/lib/db'
 import type { Filiere, Semestre } from '@/lib/db'
+import type { Campus } from '@/types/campus'
 import {
   JOURS,
   JOUR_LABEL,
@@ -43,6 +44,8 @@ export default function TeacherSchedulePage() {
   const [semestres, setSemestres] = useState<Semestre[]>([])
   const [semestreId, setSemestreId] = useState('')
   const [creneaux, setCreneaux] = useState<Creneau[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
   // Semaine calendaire affichée : ancre les états datés (remplacements ponctuels).
   const [lundiSemaine, setLundiSemaine] = useState(() => lundiDeLaSemaine(new Date()))
 
@@ -52,15 +55,17 @@ export default function TeacherSchedulePage() {
     ;(async () => {
       setLoading(true)
       try {
-        const [fil, sem, cre] = await Promise.all([
+        const [fil, sem, cre, campus] = await Promise.all([
           getFilieres(universityId),
           getSemestres(universityId),
           getCreneaux(universityId),
+          getCampusList(universityId),
         ])
         if (!active) return
         setFilieres(fil)
         setSemestres(sem)
         setCreneaux(cre)
+        setCampusList(campus)
         const enCours = sem.find((s) => s.statut === 'en_cours')
         setSemestreId(enCours?.id ?? sem[0]?.id ?? '')
       } finally {
@@ -74,6 +79,14 @@ export default function TeacherSchedulePage() {
     const map = new Map(filieres.map((f) => [f.id, f.nom]))
     return (id: string) => map.get(id) ?? '—'
   }, [filieres])
+
+  // Nom du campus d'un créneau : utile UNIQUEMENT si l'enseignant intervient sur
+  // plusieurs campus, sinon aucun intérêt (cf. contrainte "0 changement visuel"
+  // en mono-campus).
+  const campusNom = useMemo(() => {
+    const map = new Map(campusList.map((c) => [c.id, c.nom]))
+    return (id: string) => map.get(id) ?? '—'
+  }, [campusList])
 
   const byDay = useMemo(() => {
     const parJour = new Map<JourSemaine, TeacherItem[]>()
@@ -200,6 +213,14 @@ export default function TeacherSchedulePage() {
                           <Layers size={9} /> {filiereNom(c.filiereId)} · {c.niveau}
                         </p>
                         {c.salle && <p className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1"><MapPin size={9} /> {c.salle}</p>}
+                        {/* Badge campus : visible seulement si l'enseignant intervient sur
+                            plusieurs campus — repère utile quand deux créneaux le même jour
+                            appartiennent à des campus différents. */}
+                        {hasMultipleCampus && (
+                          <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-1.5 py-0.5 text-[9px] font-medium text-zinc-700 dark:text-zinc-300">
+                            <Building2 size={9} className="shrink-0" /> {campusNom(c.campusId)}
+                          </span>
+                        )}
                         {/* Priorité d'affichage : annulé > remplacement > couvert par un tiers. */}
                         {annule ? (
                           motifAnnul && <p className="text-[11px] text-zinc-500 mt-0.5">{motifAnnul}</p>
