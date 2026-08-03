@@ -10,6 +10,8 @@ import {
   getUniversityMembers,
   getManualStudents,
   getFilieres,
+  getCampusList,
+  migrerVersMultiCampus,
   updateManualStudent,
   updateMemberProfile,
   removeManualStudent,
@@ -23,6 +25,7 @@ import {
   type HistoriqueStatutEntry,
 } from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
+import type { Campus } from '@/types/campus'
 import { STATUT_PARCOURS_LABELS, STATUT_PARCOURS_STYLES, redoublementBadgeLabel } from '@/types/parcours'
 import { createMemberViaApi } from '@/lib/members-client'
 import { EmailEditModal } from '@/components/admin/email-edit-modal'
@@ -42,6 +45,8 @@ interface Student {
   telephone: string
   filiere: string
   niveau: string
+  // Multi-campus : absent pour les étudiants manuels (legacy) ou pas encore migrés.
+  campusId?: string
   statut: StudentStatus
   parentUid?: string
   /** Photo de profil (membres Firebase Auth uniquement — voir AvatarUpload). */
@@ -171,6 +176,7 @@ const EMPTY_FORM: FormData = {
   telephone: '',
   filiere: '',
   niveau: '',
+  campusId: '',
   parentUid: '',
 }
 
@@ -250,23 +256,34 @@ interface ModalProps {
   matriculePreview: string
   parents: ParentOption[]
   filieres: Filiere[]
+  campusList: Campus[]
   submitting: boolean
   onSubmit: (data: FormData) => void
   onClose: () => void
 }
 
-function StudentModal({ mode, initial, matriculePreview, parents, filieres, submitting, onSubmit, onClose }: ModalProps) {
+function StudentModal({ mode, initial, matriculePreview, parents, filieres, campusList, submitting, onSubmit, onClose }: ModalProps) {
   const [form, setForm] = useState<FormData>(initial)
+  const hasMultipleCampus = campusList.length > 1
 
   function set(key: keyof FormData) {
     return (v: string) => setForm((prev) => ({ ...prev, [key]: v }))
   }
 
+  // Cohérence : une filière appartient à un seul campus — tant que plusieurs
+  // campus existent et qu'aucun n'est choisi, aucune filière n'est proposée.
+  const filiereOptions = filieres.filter((f) => !hasMultipleCampus || f.campusId === form.campusId)
+
   // Cascade filière → niveau : les niveaux proposés sont ceux de la filière
   // choisie (saisis librement par l'université). Changer de filière réinitialise
   // le niveau pour éviter une combinaison incohérente.
-  const selectedFiliere = filieres.find((f) => f.nom === form.filiere)
+  const selectedFiliere = filiereOptions.find((f) => f.nom === form.filiere)
   const niveauOptions = selectedFiliere?.niveaux ?? []
+
+  function handleCampusChange(v: string) {
+    // Changer de campus invalide le choix de filière/niveau précédent.
+    setForm((prev) => ({ ...prev, campusId: v, filiere: '', niveau: '' }))
+  }
 
   function handleFiliereChange(v: string) {
     setForm((prev) => ({ ...prev, filiere: v, niveau: '' }))
@@ -307,8 +324,34 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
           {/* Téléphone */}
           <FieldInput label="Téléphone" type="tel" value={form.telephone} onChange={set('telephone')} placeholder="+225 07 00 00 00" required />
 
-          {/* Filière / Niveau — chargés dynamiquement depuis Firebase */}
-          {filieres.length === 0 ? (
+          {/* Campus — uniquement à la création, et uniquement si l'université a
+              plusieurs campus (sinon assigné automatiquement, sans choix).
+              Select brut (pas FieldSelect) car la valeur est un ID, pas le
+              libellé affiché — comme le sélecteur de parent plus bas. */}
+          {mode === 'add' && hasMultipleCampus && (
+            <div>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Campus</label>
+              <select
+                required
+                value={form.campusId ?? ''}
+                onChange={(e) => handleCampusChange(e.target.value)}
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none"
+              >
+                <option value="" disabled className="bg-white dark:bg-zinc-900">Choisir un campus…</option>
+                {campusList.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-white dark:bg-zinc-900">{c.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Filière / Niveau — chargés dynamiquement depuis Firebase, scopés au
+              campus choisi (une filière appartient à un seul campus). */}
+          {hasMultipleCampus && mode === 'add' && !form.campusId ? (
+            <p className="text-zinc-500 dark:text-orange-200/40 text-xs">
+              Choisissez un campus pour voir ses filières.
+            </p>
+          ) : filiereOptions.length === 0 ? (
             <div className="flex items-start gap-2.5 rounded-xl bg-orange-500/5 border border-orange-500/20 px-4 py-3">
               <AlertTriangle size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
               <p className="text-xs text-zinc-600 dark:text-orange-200/70 leading-relaxed">
@@ -322,7 +365,7 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, subm
           ) : (
             <>
               <div className="grid grid-cols-2 gap-4">
-                <FieldSelect label="Filière" value={form.filiere} onChange={handleFiliereChange} options={filieres.map((f) => f.nom)} required />
+                <FieldSelect label="Filière" value={form.filiere} onChange={handleFiliereChange} options={filiereOptions.map((f) => f.nom)} required />
                 <FieldSelect
                   label="Niveau"
                   value={form.niveau}
@@ -930,10 +973,13 @@ export default function StudentsPage() {
   const { plan, isWithinLimit } = usePlan(profile?.universityId ?? '')
   const [students, setStudents] = useState<Student[]>([])
   const [filieres, setFilieres] = useState<Filiere[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
   const [fbLoading, setFbLoading] = useState(true)
   const [limitError, setLimitError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filiereFilter, setFiliereFilter] = useState('')
+  const [campusFilter, setCampusFilter] = useState('')
   // Statut de scolarité : masque les abandons seulement si l'admin le demande
   // explicitement — ils restent visibles par défaut ('tous').
   const [scolariteFilter, setScolariteFilter] = useState<'tous' | 'actifs' | 'abandonnes'>('tous')
@@ -998,6 +1044,12 @@ export default function StudentsPage() {
     getFilieres(universityId)
       .then(setFilieres)
       .catch(() => setFilieres([]))
+    // Garantit qu'au moins le campus principal existe (migration idempotente),
+    // au cas où l'admin n'est jamais passé par Campus ou Filières avant cette page.
+    migrerVersMultiCampus(universityId)
+      .then(() => getCampusList(universityId))
+      .then(setCampusList)
+      .catch(() => setCampusList([]))
     getEtudiantsRedoublants(universityId)
       .then((list) => setRedoublants(Object.fromEntries(list.map((r) => [r.studentUid, r.nombreRedoublements]))))
       .catch(() => setRedoublants({}))
@@ -1017,6 +1069,7 @@ export default function StudentsPage() {
             telephone: m.telephone ?? '',
             filiere: m.filiere ?? '',
             niveau: m.niveau ?? '',
+            campusId: m.campusId,
             statut: normalizeStatut(m.statut),
             parentUid: m.parentUid,
             photoUrl: m.photoUrl,
@@ -1059,14 +1112,15 @@ export default function StudentsPage() {
         s.filiere.toLowerCase().includes(q) ||
         s.matricule.toLowerCase().includes(q)
       const matchFiliere = !filiereFilter || s.filiere === filiereFilter
+      const matchCampus = !hasMultipleCampus || !campusFilter || s.campusId === campusFilter
       const estAbandonne = s.statutScolarite === 'abandonne'
       const matchScolarite =
         scolariteFilter === 'tous' ||
         (scolariteFilter === 'abandonnes' && estAbandonne) ||
         (scolariteFilter === 'actifs' && !estAbandonne)
-      return matchSearch && matchFiliere && matchScolarite
+      return matchSearch && matchFiliere && matchCampus && matchScolarite
     })
-  }, [students, search, filiereFilter, scolariteFilter])
+  }, [students, search, filiereFilter, campusFilter, hasMultipleCampus, scolariteFilter])
 
   const duplicatePairs = useMemo(() => findDuplicatePairs(students), [students])
 
@@ -1085,6 +1139,11 @@ export default function StudentsPage() {
 
   function handleFiliereChange(v: string) {
     setFiliereFilter(v)
+    setPage(1)
+  }
+
+  function handleCampusFilterChange(v: string) {
+    setCampusFilter(v)
     setPage(1)
   }
 
@@ -1133,6 +1192,7 @@ export default function StudentsPage() {
           role: 'student',
           filiere: data.filiere,
           niveau: data.niveau,
+          campusId: data.campusId || undefined,
           telephone: data.telephone,
           matricule: mat,
           parentUid: data.parentUid || undefined,
@@ -1146,6 +1206,7 @@ export default function StudentsPage() {
           telephone: data.telephone,
           filiere: data.filiere,
           niveau: data.niveau,
+          campusId: data.campusId || undefined,
           statut: 'Actif',
           parentUid: data.parentUid || undefined,
         }
@@ -1395,9 +1456,13 @@ export default function StudentsPage() {
 
   // ── Derived for modal ─────────────────────────────────────────────────────────
 
+  // Un seul campus : assigné automatiquement, aucun choix à faire (cf. contrainte
+  // de simplicité — le sélecteur ne s'affiche que si plusieurs campus existent).
+  const defaultCampusId = campusList.length === 1 ? campusList[0].id : ''
+
   const modalInitial: FormData = editTarget
-    ? { prenom: editTarget.prenom, nom: editTarget.nom, email: editTarget.email, telephone: editTarget.telephone, filiere: editTarget.filiere, niveau: editTarget.niveau }
-    : EMPTY_FORM
+    ? { prenom: editTarget.prenom, nom: editTarget.nom, email: editTarget.email, telephone: editTarget.telephone, filiere: editTarget.filiere, niveau: editTarget.niveau, campusId: editTarget.campusId ?? defaultCampusId }
+    : { ...EMPTY_FORM, campusId: defaultCampusId }
 
   const matriculePreview = editTarget ? editTarget.matricule : generateMatricule(students)
 
@@ -1439,6 +1504,20 @@ export default function StudentsPage() {
             <option key={f.id} value={f.nom} className="bg-white dark:bg-zinc-900">{f.nom}</option>
           ))}
         </select>
+
+        {/* Campus filter — n'apparaît que si plusieurs campus existent */}
+        {hasMultipleCampus && (
+          <select
+            value={campusFilter}
+            onChange={(e) => handleCampusFilterChange(e.target.value)}
+            className="bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-orange-500/50 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none min-w-40"
+          >
+            <option value="" className="bg-white dark:bg-zinc-900">Tous les campus</option>
+            {campusList.map((c) => (
+              <option key={c.id} value={c.id} className="bg-white dark:bg-zinc-900">{c.nom}</option>
+            ))}
+          </select>
+        )}
 
         {/* Statut de scolarité filter */}
         <select
@@ -1720,6 +1799,7 @@ export default function StudentsPage() {
             matriculePreview={matriculePreview}
             parents={parents}
             filieres={filieres}
+            campusList={campusList}
             submitting={submitting}
             onSubmit={handleModalSubmit}
             onClose={closeModal}
