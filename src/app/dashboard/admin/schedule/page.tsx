@@ -17,8 +17,11 @@ import {
   clearRemplacement,
   annulerCreneauDate,
   reactiverCreneauDate,
+  getCampusList,
+  migrerVersMultiCampus,
 } from '@/lib/db'
 import type { Filiere, Matiere, Semestre } from '@/lib/db'
+import type { Campus } from '@/types/campus'
 import {
   JOURS,
   JOUR_LABEL,
@@ -75,9 +78,12 @@ export default function SchedulePage() {
   const [teachers, setTeachers] = useState<string[]>([])
   const [creneaux, setCreneaux] = useState<Creneau[]>([])
   const [matieres, setMatieres] = useState<Matiere[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
   const [loading, setLoading] = useState(true)
 
   // Sélection courante
+  const [campusId, setCampusId] = useState('')
   const [filiereId, setFiliereId] = useState('')
   const [niveau, setNiveau] = useState('')
   const [semestreId, setSemestreId] = useState('')
@@ -103,24 +109,30 @@ export default function SchedulePage() {
   const [annulSaving, setAnnulSaving] = useState(false)
   const [annulError, setAnnulError] = useState<string | null>(null)
 
-  // Chargement initial
+  // Chargement initial. La migration douce garantit qu'au moins le campus
+  // principal existe (idempotente, cf. src/lib/db.ts) avant toute lecture.
   useEffect(() => {
     if (!universityId) return
     let active = true
     ;(async () => {
       setLoading(true)
       try {
-        const [fil, sem, prof, cre] = await Promise.all([
+        await migrerVersMultiCampus(universityId)
+        const [fil, sem, prof, cre, campus] = await Promise.all([
           getFilieres(universityId),
           getSemestres(universityId),
           getUniversityMembers(universityId, 'teacher'),
           getCreneaux(universityId),
+          getCampusList(universityId),
         ])
         if (!active) return
         setFilieres(fil)
         setSemestres(sem)
         setTeachers(prof.map((p) => p.displayName))
         setCreneaux(cre)
+        setCampusList(campus)
+        // Un seul campus : assigné automatiquement, aucun choix à faire.
+        if (campus.length === 1) setCampusId(campus[0].id)
       } finally {
         if (active) setLoading(false)
       }
@@ -142,15 +154,35 @@ export default function SchedulePage() {
     return () => { active = false }
   }, [universityId, filiereId])
 
+  // Filières du campus sélectionné (cohérent avec la Phase 2 : filieres/page.tsx).
+  // Si un seul campus existe, aucun filtre n'est nécessaire (toutes en font partie).
+  const filieresDuCampus = hasMultipleCampus
+    ? filieres.filter((f) => f.campusId === campusId)
+    : filieres
+
   const selectedFiliere = filieres.find((f) => f.id === filiereId)
   const niveauxOptions = selectedFiliere?.niveaux ?? []
-  const ready = Boolean(filiereId && niveau && semestreId)
+  const ready = Boolean((!hasMultipleCampus || campusId) && filiereId && niveau && semestreId)
+  // Campus effectif du créneau en cours de saisie : le choix du sélecteur si
+  // plusieurs campus existent, sinon le campus unique de l'université.
+  const effectiveCampusId = hasMultipleCampus ? campusId : (campusList[0]?.id ?? '')
 
   // Réinitialise le niveau si on change de filière et qu'il n'existe plus.
   function handleFiliereChange(id: string) {
     setFiliereId(id)
     const f = filieres.find((x) => x.id === id)
     if (!f?.niveaux?.includes(niveau)) setNiveau('')
+  }
+
+  // Changement de campus : la filière sélectionnée n'a de sens que si elle
+  // appartient au nouveau campus, sinon on la réinitialise (comme le niveau).
+  function handleCampusChange(id: string) {
+    setCampusId(id)
+    const f = filieres.find((x) => x.id === filiereId)
+    if (f && f.campusId !== id) {
+      setFiliereId('')
+      setNiveau('')
+    }
   }
 
   const filtered = useMemo(
@@ -204,8 +236,9 @@ export default function SchedulePage() {
     if (form.heureFin <= form.heureDebut) { setFormError('L’heure de fin doit être après l’heure de début.'); return }
 
     // RÈGLE 3 — détection de conflit instantanée sur les créneaux déjà chargés :
-    // salle, enseignant ou groupe (filière + niveau) qui se chevauchent.
-    const candidat = { filiereId, niveau, semestreId, ...form }
+    // salle, enseignant ou groupe (filière + niveau) qui se chevauchent, SUR LE
+    // MÊME CAMPUS (cf. types/emploi-du-temps.ts).
+    const candidat = { filiereId, niveau, semestreId, campusId: effectiveCampusId, ...form }
     const found = findConflits(creneaux, candidat, editId ?? undefined)
     if (found.length > 0) {
       setConflits(found)
@@ -220,7 +253,7 @@ export default function SchedulePage() {
       if (editId) {
         await updateCreneau(universityId, editId, { ...form })
       } else {
-        const data: CreneauFormData = { filiereId, niveau, semestreId, ...form }
+        const data: CreneauFormData = { filiereId, niveau, semestreId, campusId: effectiveCampusId, ...form }
         await createCreneau(universityId, data)
       }
       await refreshCreneaux()
@@ -415,13 +448,28 @@ export default function SchedulePage() {
         </div>
       ) : (
         <>
-          {/* Sélecteurs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4">
+          {/* Sélecteurs — le campus n'apparaît que si l'université en compte plusieurs
+              (sinon assigné automatiquement, sans choix, comme les autres modules). */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${hasMultipleCampus ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-4`}>
+            {hasMultipleCampus && (
+              <div>
+                <label className={labelCls}>Campus</label>
+                <select value={campusId} onChange={(e) => handleCampusChange(e.target.value)} className={selectCls}>
+                  <option value="">Choisir…</option>
+                  {campusList.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label className={labelCls}>Filière</label>
-              <select value={filiereId} onChange={(e) => handleFiliereChange(e.target.value)} className={selectCls}>
-                <option value="">Choisir…</option>
-                {filieres.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
+              <select
+                value={filiereId}
+                onChange={(e) => handleFiliereChange(e.target.value)}
+                disabled={hasMultipleCampus && !campusId}
+                className={`${selectCls} disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <option value="">{hasMultipleCampus && !campusId ? 'Choisir un campus d’abord' : 'Choisir…'}</option>
+                {filieresDuCampus.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
               </select>
             </div>
             <div>
@@ -442,7 +490,9 @@ export default function SchedulePage() {
 
           {!ready ? (
             <div className="text-center py-16 text-zinc-500 dark:text-orange-200/30 text-sm">
-              Sélectionnez une filière, un niveau et un semestre pour afficher la grille.
+              {hasMultipleCampus
+                ? 'Sélectionnez un campus, une filière, un niveau et un semestre pour afficher la grille.'
+                : 'Sélectionnez une filière, un niveau et un semestre pour afficher la grille.'}
             </div>
           ) : (
             <>
