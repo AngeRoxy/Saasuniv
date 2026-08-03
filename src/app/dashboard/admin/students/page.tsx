@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw } from 'lucide-react'
+import { Search, UserPlus, X, Pencil, Trash2, ChevronLeft, ChevronRight, AlertTriangle, Wifi, Mail, CheckCircle2, History, RotateCcw, ArrowRightLeft } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/hooks/usePlan'
 import { getPlanConfig } from '@/lib/plans'
@@ -16,6 +16,7 @@ import {
   removeMember,
   getEtudiantsRedoublants,
   getParcoursEtudiant,
+  reorienterEtudiant,
   type ParcoursAnnuel,
 } from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
@@ -362,7 +363,7 @@ function ConfirmDelete({ student, deleting, onConfirm, onCancel }: { student: St
 
 // ─── Parcours Modal (chronologie des années clôturées) ────────────────────────
 
-function ParcoursModal({ universityId, student, onClose }: { universityId: string; student: Student; onClose: () => void }) {
+function ParcoursModal({ universityId, student, filieres, onClose }: { universityId: string; student: Student; filieres: Filiere[]; onClose: () => void }) {
   const [list, setList] = useState<ParcoursAnnuel[] | null>(null)
 
   useEffect(() => {
@@ -421,6 +422,17 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
                       <> · Moyenne <span className="text-zinc-800 dark:text-zinc-200">{p.moyenneGenerale.toFixed(2)}/20</span></>
                     )}
                   </p>
+                  {p.statut === 'reoriente' && p.nouvelleFiliereId && (
+                    <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1">
+                      Vers <span className="text-zinc-800 dark:text-zinc-200">
+                        {filieres.find((f) => f.id === p.nouvelleFiliereId)?.nom ?? '—'}
+                      </span>
+                      {p.nouveauNiveau && <> · <span className="text-zinc-800 dark:text-zinc-200">{p.nouveauNiveau}</span></>}
+                    </p>
+                  )}
+                  {p.motif && (
+                    <p className="text-zinc-500 text-[11px] mt-0.5 italic">Motif : {p.motif}</p>
+                  )}
                   {p.clotureParNom && (
                     <p className="text-zinc-600 text-[11px] mt-0.5">Clôturé par {p.clotureParNom}</p>
                   )}
@@ -435,10 +447,146 @@ function ParcoursModal({ universityId, student, onClose }: { universityId: strin
   )
 }
 
+// ─── Réorientation Modal ──────────────────────────────────────────────────────
+
+function ReorientModal({
+  student,
+  filieres,
+  submitting,
+  error,
+  onSubmit,
+  onClose,
+}: {
+  student: Student
+  filieres: Filiere[]
+  submitting: boolean
+  error: string | null
+  onSubmit: (nouvelleFiliereId: string, nouveauNiveau: string, motif: string) => void
+  onClose: () => void
+}) {
+  const [filiereId, setFiliereId] = useState('')
+  const [niveau, setNiveau] = useState('')
+  const [motif, setMotif] = useState('')
+
+  const selectedFiliere = filieres.find((f) => f.id === filiereId)
+  const niveauOptions = selectedFiliere?.niveaux ?? []
+
+  function handleFiliereChange(v: string) {
+    setFiliereId(v)
+    setNiveau('')
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    onSubmit(filiereId, niveau, motif.trim())
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-950 border border-sky-500/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-6 shrink-0">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Réorienter l&apos;étudiant</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-zinc-900 dark:text-white font-medium">{student.prenom} {student.nom}</span>{' '}
+              est actuellement en <span className="text-zinc-800 dark:text-zinc-200">{student.filiere}</span>
+              {student.niveau && <> ({student.niveau})</>}.
+            </p>
+
+            <div>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nouvelle filière</label>
+              <select
+                required
+                value={filiereId}
+                onChange={(e) => handleFiliereChange(e.target.value)}
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-sky-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none"
+              >
+                <option value="" disabled className="bg-white dark:bg-zinc-900">Choisir une filière…</option>
+                {filieres.map((f) => (
+                  <option key={f.id} value={f.id} className="bg-white dark:bg-zinc-900">{f.nom}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Nouveau niveau</label>
+              <select
+                required
+                disabled={!filiereId || niveauOptions.length === 0}
+                value={niveau}
+                onChange={(e) => setNiveau(e.target.value)}
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-sky-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="" disabled className="bg-white dark:bg-zinc-900">
+                  {filiereId ? 'Choisir…' : 'Choisir une filière d’abord'}
+                </option>
+                {niveauOptions.map((n) => (
+                  <option key={n} value={n} className="bg-white dark:bg-zinc-900">{n}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Motif (optionnel)</label>
+              <textarea
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                rows={2}
+                placeholder="Ex : changement d'orientation professionnelle"
+                className="w-full bg-[#fafafa] dark:bg-black border border-zinc-200 dark:border-zinc-800 focus:border-sky-500/60 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors resize-none"
+              />
+            </div>
+
+            {selectedFiliere && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-sky-500/5 border border-sky-500/20 px-4 py-3">
+                <AlertTriangle size={15} className="text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-zinc-600 dark:text-sky-200/70 leading-relaxed">
+                  Les notes actuelles de {student.prenom} resteront visibles dans son historique sous{' '}
+                  <span className="font-medium">{student.filiere}</span>. Elles ne seront ni déplacées ni mélangées
+                  avec ses futures notes en <span className="font-medium">{selectedFiliere.nom}</span>.
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-6 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="flex-1 bg-white dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !filiereId || !niveau}
+              className="flex-1 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
+              {submitting ? 'Réorientation…' : 'Confirmer la réorientation'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const { plan, isWithinLimit } = usePlan(profile?.universityId ?? '')
   const [students, setStudents] = useState<Student[]>([])
   const [filieres, setFilieres] = useState<Filiere[]>([])
@@ -473,6 +621,11 @@ export default function StudentsPage() {
   const [redoublants, setRedoublants] = useState<Record<string, number>>({})
   // Parcours académique (modal chronologie)
   const [parcoursTarget, setParcoursTarget] = useState<Student | null>(null)
+
+  // Réorientation
+  const [reorientTarget, setReorientTarget] = useState<Student | null>(null)
+  const [reorienting, setReorienting] = useState(false)
+  const [reorientError, setReorientError] = useState<string | null>(null)
 
   // ── Firebase load ─────────────────────────────────────────────────────────────
 
@@ -722,6 +875,45 @@ export default function StudentsPage() {
     setDeleteTarget(null)
   }
 
+  async function handleReorientSubmit(nouvelleFiliereId: string, nouveauNiveau: string, motif: string) {
+    if (!reorientTarget?.uid) return
+    const universityId = profile?.universityId
+    if (!universityId) {
+      setReorientError("Aucune université active. Réorientation non enregistrée.")
+      return
+    }
+    const nouvelleFiliere = filieres.find((f) => f.id === nouvelleFiliereId)
+    if (!nouvelleFiliere) {
+      setReorientError('Filière sélectionnée invalide.')
+      return
+    }
+    setReorienting(true)
+    setReorientError(null)
+    try {
+      await reorienterEtudiant(
+        universityId,
+        reorientTarget.uid,
+        nouvelleFiliereId,
+        nouveauNiveau,
+        { uid: user?.uid ?? '', nom: profile?.displayName ?? 'Administrateur' },
+        motif || undefined
+      )
+    } catch (err) {
+      // Écriture Firebase échouée : erreur claire, aucune modification locale.
+      setReorientError(err instanceof Error ? err.message : 'La réorientation a échoué.')
+      setReorienting(false)
+      return
+    }
+    // Succès confirmé uniquement.
+    setStudents((prev) =>
+      prev.map((s) => (s.uid === reorientTarget.uid ? { ...s, filiere: nouvelleFiliere.nom, niveau: nouveauNiveau } : s))
+    )
+    setReorienting(false)
+    setToast(`${reorientTarget.prenom} ${reorientTarget.nom} a été réorienté(e) vers ${nouvelleFiliere.nom}.`)
+    setTimeout(() => setToast(null), 6000)
+    setReorientTarget(null)
+  }
+
   // ── Derived for modal ─────────────────────────────────────────────────────────
 
   const modalInitial: FormData = editTarget
@@ -875,6 +1067,15 @@ export default function StudentsPage() {
                       )}
                       {student.uid && (
                         <button
+                          onClick={() => setReorientTarget(student)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-500/10 transition-colors"
+                          title="Réorienter"
+                        >
+                          <ArrowRightLeft size={14} />
+                        </button>
+                      )}
+                      {student.uid && (
+                        <button
                           onClick={() => setEmailTarget(student)}
                           className="p-1.5 rounded-lg text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                           title="Corriger l'email"
@@ -994,7 +1195,20 @@ export default function StudentsPage() {
         <ParcoursModal
           universityId={profile.universityId}
           student={parcoursTarget}
+          filieres={filieres}
           onClose={() => setParcoursTarget(null)}
+        />
+      )}
+
+      {/* Réorientation */}
+      {reorientTarget && (
+        <ReorientModal
+          student={reorientTarget}
+          filieres={filieres}
+          submitting={reorienting}
+          error={reorientError}
+          onSubmit={handleReorientSubmit}
+          onClose={() => { setReorientTarget(null); setReorientError(null) }}
         />
       )}
 

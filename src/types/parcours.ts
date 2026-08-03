@@ -8,7 +8,7 @@
 /** Année académique, format libre saisi par l'école (ex: "2025/2026", "2025-2026"). */
 export type AnneeAcademique = string
 
-export type StatutParcours = 'en_cours' | 'valide' | 'redouble' | 'abandonne'
+export type StatutParcours = 'en_cours' | 'valide' | 'redouble' | 'abandonne' | 'reoriente'
 
 export interface ParcoursAnnuel {
   /** Clé Firebase déterministe : `${studentUid}__${anneeAcademique}`. */
@@ -25,6 +25,11 @@ export interface ParcoursAnnuel {
   dateCloture?: number
   clotureParUid?: string
   clotureParNom?: string
+  /** Motif libre (ex: réorientation) — optionnel, saisi par l'admin. */
+  motif?: string
+  /** Pour statut 'reoriente' : filière/niveau vers lesquels l'étudiant a été réorienté. */
+  nouvelleFiliereId?: string
+  nouveauNiveau?: string
   createdAt: number
   updatedAt: number
 }
@@ -56,6 +61,17 @@ function safeKeySegment(segment: string): string {
 /** Clé déterministe d'un parcours annuel (upsert idempotent par année). */
 export function parcoursId(studentUid: string, anneeAcademique: AnneeAcademique): string {
   return `${studentUid}__${safeKeySegment(anneeAcademique)}`
+}
+
+/**
+ * Clé distincte de `parcoursId` pour un événement de réorientation en cours
+ * d'année. Une réorientation et une clôture de fin d'année peuvent survenir la
+ * même année académique ; utiliser la même clé écraserait silencieusement la
+ * trace de réorientation lors de la clôture (`cloturerAnneeEtudiant` fait un
+ * upsert par `${studentUid}__${anneeAcademique}`).
+ */
+export function reorientationId(studentUid: string, anneeAcademique: AnneeAcademique): string {
+  return `${studentUid}__${safeKeySegment(anneeAcademique)}__reorientation`
 }
 
 /**
@@ -104,13 +120,16 @@ export const STATUT_PARCOURS_LABELS: Record<StatutParcours, string> = {
   valide: 'Validé',
   redouble: 'Niveau repris',
   abandonne: 'Abandon',
+  reoriente: 'Réorienté',
 }
 
 // Palette volontairement sobre : le redoublement reste neutre (ambre/zinc), jamais
 // rouge alarmant. Le vert « validé » reste discret pour ne pas écraser le reste.
+// La réorientation utilise un bleu ciel neutre, distinct de l'ambre du redoublement.
 export const STATUT_PARCOURS_STYLES: Record<StatutParcours, string> = {
   en_cours: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25',
   valide: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
   redouble: 'bg-amber-500/10 text-blue-700 dark:text-amber-300 border-amber-500/25',
   abandonne: 'bg-zinc-700/30 text-zinc-600 dark:text-zinc-400 border-white/10',
+  reoriente: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/25',
 }

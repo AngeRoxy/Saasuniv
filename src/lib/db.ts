@@ -2012,6 +2012,7 @@ async function clearEnseignantOnExamens(
 
 import {
   parcoursId,
+  reorientationId,
   type AnneeAcademique,
   type InfosRedoublement,
   type ParcoursAnnuel,
@@ -2076,6 +2077,65 @@ export async function cloturerAnneeEtudiant(
       updatedAt: now,
     })
   }
+}
+
+/**
+ * Réoriente un étudiant vers une autre filière en cours d'année. Trace
+ * l'ancienne filière/niveau dans le parcours annuel (statut `reoriente`) AVANT
+ * de faire progresser le membre : les notes déjà saisies restent liées à leur
+ * ancienne filiere/niveau/semestre, consultables comme historique, jamais
+ * déplacées ni effacées.
+ */
+export async function reorienterEtudiant(
+  universityId: string,
+  studentUid: string,
+  nouvelleFiliereId: string,
+  nouveauNiveau: string,
+  admin: { uid: string; nom: string },
+  motif?: string
+): Promise<void> {
+  const [member, filieres, semestreEnCours] = await Promise.all([
+    getUniversityMember(universityId, studentUid),
+    getFilieres(universityId),
+    getSemestreEnCours(universityId),
+  ])
+  if (!member) throw new Error("Étudiant introuvable.")
+  const nouvelleFiliere = filieres.find((f) => f.id === nouvelleFiliereId)
+  if (!nouvelleFiliere) throw new Error("Filière de destination introuvable.")
+  const anneeAcademique = semestreEnCours?.anneeAcademique
+  if (!anneeAcademique) {
+    throw new Error("Aucun semestre en cours défini — impossible de dater la réorientation dans le parcours académique.")
+  }
+
+  const ancienneFiliereNom = member.filiere ?? ''
+  const ancienneFiliere = filieres.find((f) => f.nom === ancienneFiliereNom)
+  const ancienNiveau = member.niveau ?? ''
+
+  const id = reorientationId(studentUid, anneeAcademique)
+  const pRef = ref(db, `universities/${universityId}/parcours/${id}`)
+  const now = Date.now()
+  const record = stripUndefined({
+    studentUid,
+    filiereId: ancienneFiliere?.id ?? '',
+    niveau: ancienNiveau,
+    anneeAcademique,
+    statut: 'reoriente' as StatutParcours,
+    nouvelleFiliereId,
+    nouveauNiveau,
+    motif: motif ?? undefined,
+    dateCloture: now,
+    clotureParUid: admin.uid,
+    clotureParNom: admin.nom,
+    createdAt: now,
+    updatedAt: now,
+  })
+  await set(pRef, record)
+
+  await update(ref(db, `universities/${universityId}/members/${studentUid}`), {
+    filiere: nouvelleFiliere.nom,
+    niveau: nouveauNiveau,
+    updatedAt: now,
+  })
 }
 
 /** Tous les parcours annuels de l'université (filtrage en mémoire). */
