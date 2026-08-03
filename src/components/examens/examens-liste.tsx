@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Clock, MapPin, Info, CalendarCheck } from 'lucide-react'
+import { Clock, MapPin, Info, CalendarCheck, Building2 } from 'lucide-react'
 import {
   type Examen,
   TYPE_SESSION_LABELS,
@@ -21,6 +21,12 @@ interface ExamensListeProps {
    * côté enseignant). Retourne null pour ne rien afficher.
    */
   roleFor?: (examen: Examen) => string | null
+  /**
+   * Nom du campus de l'examen, affiché en badge. À fournir UNIQUEMENT quand ça a
+   * du sens (ex : enseignant intervenant sur plusieurs campus) — retourne null
+   * pour ne rien afficher (comportement historique inchangé en mono-campus).
+   */
+  campusLabel?: (examen: Examen) => string | null
   emptyMessage?: string
 }
 
@@ -41,7 +47,7 @@ function urgenceLabel(dateStr: string): string {
  * les vues étudiant / parent / enseignant. Met en avant les examens imminents
  * (≤ 7 jours) et affiche les examens annulés barrés plutôt que de les masquer.
  */
-export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListeProps) {
+export function ExamensListe({ examens, roleFor, campusLabel, emptyMessage }: ExamensListeProps) {
   const groupes = useMemo(() => {
     const map = new Map<string, Examen[]>()
     for (const e of [...examens].sort(compareExamens)) {
@@ -113,6 +119,11 @@ export function ExamensListe({ examens, roleFor, emptyMessage }: ExamensListePro
                       {roleFor?.(e) && (
                         <span className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/15 bg-white dark:bg-white/5 text-zinc-700 dark:text-zinc-300">
                           {roleFor(e)}
+                        </span>
+                      )}
+                      {campusLabel?.(e) && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/15 bg-white dark:bg-white/5 text-zinc-700 dark:text-zinc-300">
+                          <Building2 size={11} className="shrink-0" /> {campusLabel(e)}
                         </span>
                       )}
                     </div>

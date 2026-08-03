@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ClipboardList } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useExamens } from '@/hooks/useExamens'
+import { getCampusList } from '@/lib/db'
 import { ExamensListe } from '@/components/examens/examens-liste'
 import type { Examen } from '@/types/examen'
+import type { Campus } from '@/types/campus'
 
 export default function TeacherExamensPage() {
   const { user, profile } = useAuth()
@@ -14,6 +16,23 @@ export default function TeacherExamensPage() {
   // Aucun filtre filière/niveau : on charge tous les examens de l'université puis
   // on retient ceux où l'enseignant connecté intervient (responsable ou surveillant).
   const { examensAVenir, loading } = useExamens(universityId ?? '')
+
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
+
+  useEffect(() => {
+    if (!universityId) return
+    let active = true
+    getCampusList(universityId).then((list) => { if (active) setCampusList(list) })
+    return () => { active = false }
+  }, [universityId])
+
+  // Badge campus : visible seulement si l'enseignant intervient (potentiellement)
+  // sur plusieurs campus — repère utile pour distinguer deux épreuves le même jour.
+  const campusNom = useMemo(() => {
+    const map = new Map(campusList.map((c) => [c.id, c.nom]))
+    return (id: string) => map.get(id) ?? '—'
+  }, [campusList])
 
   const mesExamens = useMemo(
     () =>
@@ -55,6 +74,7 @@ export default function TeacherExamensPage() {
       <ExamensListe
         examens={mesExamens}
         roleFor={roleFor}
+        campusLabel={hasMultipleCampus ? (e) => campusNom(e.campusId) : undefined}
         emptyMessage="Aucun examen à venir ne vous est assigné."
       />
     </div>
