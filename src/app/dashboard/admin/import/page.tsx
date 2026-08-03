@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Upload, Download, FileSpreadsheet, CheckCircle, AlertTriangle, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { getUniversityMembers, getFilieres } from '@/lib/db'
+import { getUniversityMembers, getFilieres, getCampusList, migrerVersMultiCampus } from '@/lib/db'
 import type { Filiere } from '@/types/filiere'
+import type { Campus } from '@/types/campus'
 import { createMemberViaApi } from '@/lib/members-client'
 import { PlanGate } from '@/components/ui/plan-gate'
 
@@ -135,17 +136,24 @@ export default function ImportPage() {
   const [results, setResults] = useState<ImportResult[] | null>(null)
   const [matriculeBase, setMatriculeBase] = useState(0)
   const [filieres, setFilieres] = useState<Filiere[]>([])
+  const [campusList, setCampusList] = useState<Campus[]>([])
+  const hasMultipleCampus = campusList.length > 1
+  const [campusId, setCampusId] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Numérotation matricule + filières réelles (pour résoudre la colonne
-  // `filieres` des enseignants en IDs).
+  // `filieres` des enseignants en IDs) + campus (tout le lot importé est
+  // rattaché à UN SEUL campus, cohérent avec la Phase 2/3). Migration douce
+  // garantit qu'au moins le campus principal existe.
   useEffect(() => {
     if (!universityId) return
     let active = true
     ;(async () => {
-      const [studs, fils] = await Promise.all([
+      await migrerVersMultiCampus(universityId)
+      const [studs, fils, campus] = await Promise.all([
         getUniversityMembers(universityId, 'student'),
         getFilieres(universityId),
+        getCampusList(universityId),
       ])
       if (!active) return
       const nums = studs
@@ -153,6 +161,9 @@ export default function ImportPage() {
         .filter(Number.isFinite)
       setMatriculeBase(nums.length ? Math.max(...nums) : 0)
       setFilieres(fils)
+      setCampusList(campus)
+      // Un seul campus : assigné automatiquement, aucun choix à faire.
+      if (campus.length === 1) setCampusId(campus[0].id)
     })()
     return () => { active = false }
   }, [universityId])
@@ -176,6 +187,7 @@ export default function ImportPage() {
 
   async function handleImport() {
     if (!universityId || validRows.length === 0) return
+    if (hasMultipleCampus && !campusId) return
     setImporting(true)
     setResults(null)
     const out: ImportResult[] = []
@@ -192,6 +204,7 @@ export default function ImportPage() {
             universityId, email: r.email, displayName, role: 'student',
             filiere: r.filiere, niveau: r.niveau,
             matricule: `STU-${year}-${String(next).padStart(4, '0')}`,
+            campusId,
           })
         } else {
           await createMemberViaApi({
@@ -201,6 +214,7 @@ export default function ImportPage() {
             role: 'teacher',
             // Multi-filières : IDs déjà résolus et validés au parsing.
             ...(r.filiereIds.length > 0 && { filiereIds: r.filiereIds }),
+            campusIds: [campusId],
           })
         }
         out.push({ email: r.email, ok: true, message: 'Compte créé' })
@@ -250,6 +264,25 @@ export default function ImportPage() {
         ))}
       </div>
 
+      {/* Campus — uniquement si l'université en compte plusieurs (sinon assigné
+          automatiquement, sans choix). Tout le lot importé rejoint UN SEUL campus. */}
+      {hasMultipleCampus && (
+        <div className="max-w-xs">
+          <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-1.5">Campus de destination *</label>
+          <select
+            value={campusId}
+            onChange={(e) => setCampusId(e.target.value)}
+            className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60"
+          >
+            <option value="">Choisir…</option>
+            {campusList.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+          </select>
+          <p className="text-[11px] text-zinc-500 dark:text-orange-200/40 mt-1.5">
+            Tous les comptes de ce fichier seront rattachés à ce campus.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <button onClick={() => inputRef.current?.click()}
           className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors">
@@ -295,7 +328,7 @@ export default function ImportPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{validRows.length} ligne{validRows.length !== 1 ? 's' : ''} valide{validRows.length !== 1 ? 's' : ''} sur {rows.length}</p>
-            <button onClick={handleImport} disabled={importing || validRows.length === 0}
+            <button onClick={handleImport} disabled={importing || validRows.length === 0 || (hasMultipleCampus && !campusId)}
               className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors">
               {importing && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
               Lancer l’import ({validRows.length})
