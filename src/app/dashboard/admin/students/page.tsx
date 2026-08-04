@@ -56,6 +56,8 @@ interface Student {
   dateChangementStatut?: number
   motifAbandon?: string
   historiqueStatuts?: HistoriqueStatutEntry[]
+  /** Sa filière (référencée par nom) a été supprimée — cf. deleteFiliere. */
+  filiereObsolete?: boolean
 }
 
 interface ParentOption {
@@ -1077,6 +1079,7 @@ export default function StudentsPage() {
             dateChangementStatut: m.dateChangementStatut,
             motifAbandon: m.motifAbandon,
             historiqueStatuts: m.historiqueStatuts,
+            filiereObsolete: m.filiereObsolete,
           }
         })
         const fromManual: Student[] = manual.map((s) => {
@@ -1091,6 +1094,7 @@ export default function StudentsPage() {
             filiere: s.filiere ?? '',
             niveau: s.niveau ?? '',
             statut: normalizeStatut(s.statut),
+            filiereObsolete: s.filiereObsolete,
           }
         })
         setStudents([...fromAuth, ...fromManual])
@@ -1250,9 +1254,17 @@ export default function StudentsPage() {
         setSubmitting(false)
         return
       }
-      // Succès confirmé uniquement.
+      // Succès confirmé uniquement. `filiereObsolete` ne se lève localement que
+      // si la filière a RÉELLEMENT changé (miroir de la garde côté db.ts) —
+      // resoumettre le formulaire sans toucher au sélecteur (ex : juste le
+      // téléphone) renvoie la même filière obsolète et ne doit pas faire
+      // disparaître le badge à tort.
       setStudents((prev) =>
-        prev.map((s) => s.matricule === editTarget.matricule ? { ...s, ...data } : s)
+        prev.map((s) =>
+          s.matricule === editTarget.matricule
+            ? { ...s, ...data, filiereObsolete: data.filiere !== editTarget.filiere ? false : s.filiereObsolete }
+            : s
+        )
       )
       setSubmitting(false)
     }
@@ -1339,9 +1351,14 @@ export default function StudentsPage() {
       setReorienting(false)
       return
     }
-    // Succès confirmé uniquement.
+    // Succès confirmé uniquement. `nouvelleFiliere` est garantie réelle (vérifiée
+    // plus haut) : la réorientation lève donc toujours le badge d'obsolescence.
     setStudents((prev) =>
-      prev.map((s) => (s.uid === reorientTarget.uid ? { ...s, filiere: nouvelleFiliere.nom, niveau: nouveauNiveau } : s))
+      prev.map((s) =>
+        s.uid === reorientTarget.uid
+          ? { ...s, filiere: nouvelleFiliere.nom, niveau: nouveauNiveau, filiereObsolete: false }
+          : s
+      )
     )
     setReorienting(false)
     setToast(`${reorientTarget.prenom} ${reorientTarget.nom} a été réorienté(e) vers ${nouvelleFiliere.nom}.`)
@@ -1657,7 +1674,18 @@ export default function StudentsPage() {
                   </td>
 
                   {/* Filière */}
-                  <td className="px-5 py-4 text-zinc-700 dark:text-zinc-300 text-sm whitespace-nowrap">{student.filiere}</td>
+                  <td className="px-5 py-4 text-zinc-700 dark:text-zinc-300 text-sm whitespace-nowrap">
+                    {student.filiere || '—'}
+                    {student.filiereObsolete && (
+                      <span
+                        className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-500/10 border border-red-500/25 text-red-500 dark:text-red-400 text-[10px] font-medium align-middle"
+                        title={`Cette filière a été supprimée (ancienne filière : ${student.filiere || '—'}). Réassignez cet étudiant à une filière valide.`}
+                      >
+                        <AlertTriangle size={9} />
+                        Filière supprimée
+                      </span>
+                    )}
+                  </td>
 
                   {/* Niveau */}
                   <td className="px-5 py-4">

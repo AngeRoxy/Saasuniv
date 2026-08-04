@@ -103,6 +103,13 @@ export interface UniversityMember {
   dateChangementStatut?: number
   motifAbandon?: string
   historiqueStatuts?: HistoriqueStatutEntry[]
+  // Étudiant : la filière qui vient d'être supprimée référençait cet étudiant
+  // PAR NOM (`filiere` reste une chaîne, pas un id — cf. deleteFiliere). Le nom
+  // texte est conservé tel quel comme trace historique ; ce booléen signale
+  // seulement qu'il ne correspond plus à AUCUNE filière réelle. Levé
+  // automatiquement dès qu'une vraie réassignation a lieu (updateMemberProfile /
+  // reorienterEtudiant).
+  filiereObsolete?: boolean
 }
 
 export interface HistoriqueStatutEntry {
@@ -144,7 +151,19 @@ export async function updateMemberProfile(
   // toujours réécrit en une fois (pas d'ajout/retrait partiel).
   data: Partial<Pick<UniversityMember, 'filiere' | 'filiereIds' | 'campusId' | 'campusIds' | 'niveau' | 'telephone' | 'matricule' | 'statut' | 'displayName' | 'chargeHoraire' | 'matieres' | 'photoUrl'>>
 ): Promise<void> {
-  await update(ref(db, `universities/${universityId}/members/${uid}`), data)
+  const patch: Record<string, unknown> = { ...data }
+  // Lève le signalement `filiereObsolete` (posé par deleteFiliere) UNIQUEMENT
+  // si la filière change RÉELLEMENT (comparée à la valeur déjà enregistrée) —
+  // pas à la simple présence du champ dans le patch : le formulaire d'édition
+  // renvoie TOUJOURS `filiere`, même non modifié, et une filière obsolète
+  // resoumise telle quelle ne doit surtout pas être considérée comme corrigée.
+  if (data.filiere !== undefined) {
+    const existing = await getUniversityMember(universityId, uid)
+    if (existing?.filiere !== data.filiere) {
+      patch.filiereObsolete = null
+    }
+  }
+  await update(ref(db, `universities/${universityId}/members/${uid}`), patch)
 }
 
 /**
@@ -371,7 +390,17 @@ export async function updateManualStudent(
   key: string,
   data: Partial<Omit<ManualStudent, 'key'>>
 ): Promise<void> {
-  await update(ref(db, `universities/${universityId}/manual_students/${key}`), data)
+  const patch: Record<string, unknown> = { ...data }
+  // Même garde que updateMemberProfile : ne lève `filiereObsolete` que si la
+  // filière change réellement, pas sur la simple présence du champ.
+  if (data.filiere !== undefined) {
+    const snapshot = await get(ref(db, `universities/${universityId}/manual_students/${key}/filiere`))
+    const existingFiliere = snapshot.exists() ? (snapshot.val() as string) : undefined
+    if (existingFiliere !== data.filiere) {
+      patch.filiereObsolete = null
+    }
+  }
+  await update(ref(db, `universities/${universityId}/manual_students/${key}`), patch)
 }
 
 export async function removeManualStudent(
@@ -602,6 +631,11 @@ export async function deleteFiliere(
   universityId: string,
   filiereId: string
 ): Promise<void> {
+  // Nom de la filière AVANT suppression : les étudiants la référencent par NOM
+  // (member.filiere est un texte, pas un id — cf. diagnostic import CSV), donc
+  // introuvable une fois le nœud supprimé.
+  const filiereSupprimee = await getFiliere(universityId, filiereId)
+
   // Comportement existant : suppression de la filière et de ses matières.
   await Promise.all([
     remove(ref(db, `universities/${universityId}/filieres/${filiereId}`)),
@@ -622,6 +656,36 @@ export async function deleteFiliere(
   for (const e of examens) {
     if (e.filiereId === filiereId) {
       await deleteExamen(universityId, e.id)
+    }
+  }
+
+  // Cascade ÉTUDIANTS : référencés par NOM, donc jamais touchés par les
+  // suppressions par ID ci-dessus. On ne supprime JAMAIS l'étudiant (trop
+  // destructeur) — on signale seulement que sa filière n'existe plus, en
+  // conservant le nom texte comme trace historique (`filiere` inchangé).
+  // Couvre les deux collections affichées par admin/students : les membres
+  // Auth ET les fiches manuelles (sans compte).
+  if (filiereSupprimee?.nom) {
+    const nomSupprime = filiereSupprimee.nom
+    const [membres, manuels] = await Promise.all([
+      getUniversityMembers(universityId, 'student'),
+      getManualStudents(universityId),
+    ])
+    const now = Date.now()
+    for (const m of membres) {
+      if (m.filiere === nomSupprime) {
+        await update(ref(db, `universities/${universityId}/members/${m.uid}`), {
+          filiereObsolete: true,
+          updatedAt: now,
+        })
+      }
+    }
+    for (const s of manuels) {
+      if (s.key && s.filiere === nomSupprime) {
+        await update(ref(db, `universities/${universityId}/manual_students/${s.key}`), {
+          filiereObsolete: true,
+        })
+      }
     }
   }
 }
@@ -2389,6 +2453,10 @@ export async function reorienterEtudiant(
   await update(ref(db, `universities/${universityId}/members/${studentUid}`), {
     filiere: nouvelleFiliere.nom,
     niveau: nouveauNiveau,
+    // `nouvelleFiliere` est garantie réelle (vérifiée plus haut) : toute
+    // réorientation lève donc systématiquement un éventuel signalement
+    // d'obsolescence posé par deleteFiliere.
+    filiereObsolete: null,
     updatedAt: now,
   })
 }

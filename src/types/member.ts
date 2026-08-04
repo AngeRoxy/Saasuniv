@@ -66,6 +66,11 @@ export interface Member {
   dateChangementStatut?: number
   motifAbandon?: string
   historiqueStatuts?: HistoriqueStatutEntry[]
+  // Étudiant : sa filière (référencée par NOM, cf. `filiere`) vient d'être
+  // supprimée — signalement posé par `deleteFiliere`, levé automatiquement dès
+  // qu'une vraie réassignation a lieu. Voir db.ts (UniversityMember) pour le
+  // détail.
+  filiereObsolete?: boolean
   createdAt: number
   updatedAt: number
 }
