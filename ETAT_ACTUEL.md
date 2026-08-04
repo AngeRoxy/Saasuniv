@@ -31,8 +31,12 @@ terminé et de nombreux modules ont été ajoutés depuis.
   examens). Sélecteur de campus dans l'UI admin (filières, étudiants,
   enseignants, emploi du temps, examens, import CSV) uniquement si
   l'université en compte plusieurs — transparent et sans changement visuel
-  sinon. Détection de conflits d'emploi du temps/examens désormais bornée
-  PAR CAMPUS (une salle homonyme sur 2 campus n'est plus un faux conflit).
+  sinon. Détection de conflits d'emploi du temps/examens : la SALLE (et le
+  groupe filière/niveau) reste bornée PAR CAMPUS (une salle homonyme sur 2
+  campus n'est plus un faux conflit), mais l'ENSEIGNANT/SURVEILLANT est
+  vérifié sur TOUS les campus — une personne physique ne peut pas être à
+  deux endroits en même temps (bug corrigé après test : l'ancienne version
+  bornait aussi ce cas par campus, à tort).
   Règle RTDB `filieres/$filiereId/campusId` valide que le campus référencé
   existe réellement ; `/api/create-member` fait de même pour les membres.
   Non gouverné par le plan tarifaire : le flag `multiCampus` de
