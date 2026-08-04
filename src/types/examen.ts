@@ -142,13 +142,16 @@ export function compareExamens(a: Examen, b: Examen): number {
 // ─── Détection de conflits ───────────────────────────────────────────────────────
 // Adaptée de la RÈGLE 3 de l'emploi du temps (emploi-du-temps.ts), mais bornée à
 // une DATE précise plutôt qu'à un jour de semaine récurrent. Deux examens sont en
-// conflit quand ils se chevauchent LE MÊME JOUR, SUR LE MÊME CAMPUS et partagent :
-// la même salle, ou une même personne (l'enseignant OU le surveillant du candidat
-// déjà mobilisé sur l'autre épreuve, quel que soit son rôle). Le campus borne la
-// comparaison pour la même raison que l'emploi du temps : une salle « Amphi A » sur
-// deux campus différents est une salle physiquement différente (même choix
-// délibéré pour l'enseignant/surveillant multi-campus, cf. emploi-du-temps.ts).
-// Un examen annulé ne bloque jamais.
+// conflit quand ils se chevauchent LE MÊME JOUR et partagent : la même salle, ou
+// une même personne (l'enseignant OU le surveillant du candidat déjà mobilisé sur
+// l'autre épreuve, quel que soit son rôle). Un examen annulé ne bloque jamais.
+//
+// Le campus ne borne la comparaison QUE pour la salle (même raison que l'emploi
+// du temps : une salle « Amphi A » sur deux campus différents est une salle
+// physiquement différente). PAS pour l'enseignant/le surveillant : ce sont des
+// personnes physiques uniques, elles ne peuvent pas être mobilisées sur deux
+// campus en même temps — corrigé après un bug métier confirmé par test (cf.
+// emploi-du-temps.ts pour le même correctif côté créneaux).
 
 export type ConflitExamenType = 'salle' | 'enseignant' | 'surveillant'
 
@@ -173,11 +176,17 @@ function seChevauchent(aDebut: string, aFin: string, bDebut: string, bFin: strin
  * Détection pure (sans I/O) : compare un examen candidat à une liste déjà chargée.
  * Réutilisable côté UI (feedback instantané) et côté db.ts (garde autoritaire
  * avant écriture). `excludeId` ignore l'examen en cours d'édition.
+ *
+ * `campusNom` résout le nom d'affichage d'un campus à partir de son id — utilisé
+ * UNIQUEMENT pour préciser le message d'un conflit enseignant/surveillant
+ * inter-campus. Fonction toujours PURE : lookup fourni par l'appelant, jamais
+ * d'accès Firebase ici. Repli sur « un autre campus » si omis.
  */
 export function findConflitsExamen(
   examens: Examen[],
   candidat: ExamenCandidat,
-  excludeId?: string
+  excludeId?: string,
+  campusNom?: (campusId: string) => string
 ): ConflitExamenInfo[] {
   const conflits: ConflitExamenInfo[] = []
   const salle = candidat.salle.trim().toLowerCase()
@@ -186,31 +195,34 @@ export function findConflitsExamen(
     if (e.id === excludeId) continue
     if (e.statut === 'annule') continue // une épreuve annulée libère salle & personnes
     if (e.date !== candidat.date) continue
-    if (e.campusId !== candidat.campusId) continue
     if (!seChevauchent(candidat.heureDebut, candidat.heureFin, e.heureDebut, e.heureFin)) continue
 
+    const memeCampus = e.campusId === candidat.campusId
     const plage = `le ${e.date} de ${e.heureDebut} à ${e.heureFin}`
+    const ailleurs = memeCampus ? '' : ` sur ${campusNom ? campusNom(e.campusId) : 'un autre campus'}`
     const personnesExistant = [e.enseignantUid, e.surveillantUid].filter(Boolean) as string[]
 
-    if (salle && e.salle.trim().toLowerCase() === salle) {
+    if (memeCampus && salle && e.salle.trim().toLowerCase() === salle) {
       conflits.push({
         type: 'salle',
         examenExistant: e,
         message: `Salle « ${e.salle} » déjà réservée pour l'examen de « ${e.matiereNom} » ${plage}.`,
       })
     }
+    // Conflit enseignant/surveillant : JAMAIS borné par campus — une personne
+    // physique ne peut pas être mobilisée à deux endroits en même temps.
     if (candidat.enseignantUid && personnesExistant.includes(candidat.enseignantUid)) {
       conflits.push({
         type: 'enseignant',
         examenExistant: e,
-        message: `${candidat.enseignantNom ?? "L'enseignant responsable"} est déjà mobilisé sur l'examen de « ${e.matiereNom} » ${plage}.`,
+        message: `${candidat.enseignantNom ?? "L'enseignant responsable"} est déjà mobilisé${ailleurs} sur l'examen de « ${e.matiereNom} » ${plage}.`,
       })
     }
     if (candidat.surveillantUid && personnesExistant.includes(candidat.surveillantUid)) {
       conflits.push({
         type: 'surveillant',
         examenExistant: e,
-        message: `${candidat.surveillantNom ?? 'Le surveillant'} est déjà mobilisé sur l'examen de « ${e.matiereNom} » ${plage}.`,
+        message: `${candidat.surveillantNom ?? 'Le surveillant'} est déjà mobilisé${ailleurs} sur l'examen de « ${e.matiereNom} » ${plage}.`,
       })
     }
   }

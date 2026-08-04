@@ -167,6 +167,13 @@ export default function SchedulePage() {
   // plusieurs campus existent, sinon le campus unique de l'université.
   const effectiveCampusId = hasMultipleCampus ? campusId : (campusList[0]?.id ?? '')
 
+  // Nom d'affichage d'un campus par id — précise le message d'un conflit
+  // enseignant inter-campus (ex : « … a déjà un cours sur Campus Nord … »).
+  const campusNom = useMemo(() => {
+    const map = new Map(campusList.map((c) => [c.id, c.nom]))
+    return (id: string) => map.get(id) ?? 'un autre campus'
+  }, [campusList])
+
   // Réinitialise le niveau si on change de filière et qu'il n'existe plus.
   function handleFiliereChange(id: string) {
     setFiliereId(id)
@@ -239,7 +246,7 @@ export default function SchedulePage() {
     // salle, enseignant ou groupe (filière + niveau) qui se chevauchent, SUR LE
     // MÊME CAMPUS (cf. types/emploi-du-temps.ts).
     const candidat = { filiereId, niveau, semestreId, campusId: effectiveCampusId, ...form }
-    const found = findConflits(creneaux, candidat, editId ?? undefined)
+    const found = findConflits(creneaux, candidat, editId ?? undefined, campusNom)
     if (found.length > 0) {
       setConflits(found)
       setFormError(null)

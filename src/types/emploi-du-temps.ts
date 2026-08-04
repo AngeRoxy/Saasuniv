@@ -198,16 +198,23 @@ export function motifAnnulationLe(c: Creneau, dateISO: string): string | null {
 
 // ─── Détection de conflits (RÈGLE 3) ────────────────────────────────────────────
 // Deux créneaux entrent en conflit lorsqu'ils se chevauchent le même jour DANS LE
-// MÊME SEMESTRE ET SUR LE MÊME CAMPUS et partagent : la même salle, le même
-// enseignant, ou le même groupe (filière + niveau). Le semestre borne la
-// comparaison car deux semestres couvrent des périodes distinctes de l'année —
-// une salle réutilisée en S1 et S2 au même horaire n'est donc pas un vrai conflit.
-// Le campus borne la comparaison pour la même raison : une salle « Amphi A » sur
-// deux campus différents est une salle physiquement différente qui porte
-// simplement le même nom (pas un vrai conflit). Effet de bord assumé : un
-// enseignant multi-campus (cf. Member.campusIds) affecté à la même heure sur deux
-// campus différents n'est PAS signalé — c'est un choix délibéré de ce modèle
-// multi-campus en silos, laissé au jugement de l'administration.
+// MÊME SEMESTRE et partagent : la même salle, le même enseignant, ou le même
+// groupe (filière + niveau). Le semestre borne la comparaison car deux semestres
+// couvrent des périodes distinctes de l'année — une salle réutilisée en S1 et S2
+// au même horaire n'est donc pas un vrai conflit.
+//
+// Le campus ne borne PAS la comparaison de la même façon selon le type de
+// conflit — corrigé après un bug métier confirmé par test :
+// - SALLE et GROUPE (filière + niveau) : bornés PAR CAMPUS. Une salle « Amphi A »
+//   sur deux campus différents est une salle physiquement différente qui porte
+//   simplement le même nom (pas un vrai conflit). Le groupe est de toute façon
+//   déjà rattaché à un seul campus via sa filière (`Filiere.campusId`).
+// - ENSEIGNANT : jamais borné par campus. Un enseignant est une personne physique
+//   unique (cf. `Member.campusIds`, qui liste les campus où il PEUT intervenir,
+//   pas où il est simultanément) — il ne peut pas donner cours sur deux campus
+//   différents en même temps, même si les créneaux sont des entités séparées.
+//   Le message précise alors l'autre campus concerné pour que l'admin comprenne
+//   pourquoi ça bloque malgré des campus différents.
 
 export type ConflitType = 'salle' | 'enseignant' | 'groupe'
 
@@ -235,11 +242,18 @@ function seChevauchent(aDebut: string, aFin: string, bDebut: string, bFin: strin
  * Détection pure (sans I/O) : compare un créneau candidat à une liste déjà
  * chargée. Réutilisable côté UI (feedback instantané) et côté db.ts (garde
  * autoritaire avant écriture). `excludeId` ignore le créneau en cours d'édition.
+ *
+ * `campusNom` résout le nom d'affichage d'un campus à partir de son id —
+ * utilisé UNIQUEMENT pour préciser le message d'un conflit enseignant
+ * inter-campus (« … sur Campus Nord … »). Reste une fonction PURE : c'est
+ * l'appelant qui fournit ce lookup depuis une liste déjà chargée, jamais un
+ * accès Firebase ici. Repli sur « un autre campus » si omis.
  */
 export function findConflits(
   creneaux: Creneau[],
   candidat: CreneauCandidat,
-  excludeId?: string
+  excludeId?: string,
+  campusNom?: (campusId: string) => string
 ): ConflitInfo[] {
   const conflits: ConflitInfo[] = []
   const salle = candidat.salle.trim().toLowerCase()
@@ -249,26 +263,30 @@ export function findConflits(
     if (c.id === excludeId) continue
     if (c.jour !== candidat.jour) continue
     if (c.semestreId !== candidat.semestreId) continue
-    if (c.campusId !== candidat.campusId) continue
     if (!seChevauchent(candidat.heureDebut, candidat.heureFin, c.heureDebut, c.heureFin)) continue
 
+    const memeCampus = c.campusId === candidat.campusId
     const plage = `${JOUR_LABEL[c.jour]} ${c.heureDebut}–${c.heureFin}`
 
-    if (salle && c.salle.trim().toLowerCase() === salle) {
+    if (memeCampus && salle && c.salle.trim().toLowerCase() === salle) {
       conflits.push({
         type: 'salle',
         creneauExistant: c,
         message: `Salle « ${c.salle} » déjà occupée par « ${c.matiere} » (${plage}).`,
       })
     }
+    // Conflit enseignant : JAMAIS borné par campus — une personne physique ne
+    // peut pas être à deux endroits en même temps (cf. commentaire RÈGLE 3).
     if (enseignant && c.enseignant.trim().toLowerCase() === enseignant) {
       conflits.push({
         type: 'enseignant',
         creneauExistant: c,
-        message: `${c.enseignant} a déjà « ${c.matiere} » (${plage}).`,
+        message: memeCampus
+          ? `${c.enseignant} a déjà « ${c.matiere} » (${plage}).`
+          : `${c.enseignant} a déjà un cours sur ${campusNom ? campusNom(c.campusId) : 'un autre campus'} à cet horaire : « ${c.matiere} » (${plage}).`,
       })
     }
-    if (c.filiereId === candidat.filiereId && c.niveau === candidat.niveau) {
+    if (memeCampus && c.filiereId === candidat.filiereId && c.niveau === candidat.niveau) {
       conflits.push({
         type: 'groupe',
         creneauExistant: c,

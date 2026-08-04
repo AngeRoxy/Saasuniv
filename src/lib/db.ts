@@ -972,8 +972,12 @@ export async function detectConflits(
   candidat: CreneauCandidat,
   excludeId?: string
 ): Promise<ConflitInfo[]> {
-  const all = await getCreneaux(universityId)
-  return findConflits(all, candidat, excludeId)
+  const [all, campusList] = await Promise.all([
+    getCreneaux(universityId),
+    getCampusList(universityId),
+  ])
+  const campusNomMap = new Map(campusList.map((c) => [c.id, c.nom]))
+  return findConflits(all, candidat, excludeId, (id) => campusNomMap.get(id) ?? 'un autre campus')
 }
 
 export async function createCreneau(
@@ -1007,10 +1011,14 @@ export async function updateCreneau(
 ): Promise<void> {
   // Fusionne les champs modifiés avec l'existant pour tester le créneau complet,
   // en s'excluant lui-même de la comparaison.
-  const all = await getCreneaux(universityId)
+  const [all, campusList] = await Promise.all([
+    getCreneaux(universityId),
+    getCampusList(universityId),
+  ])
   const existing = all.find((c) => c.id === creneauId)
   if (existing) {
-    const conflits = findConflits(all, { ...existing, ...data }, creneauId)
+    const campusNomMap = new Map(campusList.map((c) => [c.id, c.nom]))
+    const conflits = findConflits(all, { ...existing, ...data }, creneauId, (id) => campusNomMap.get(id) ?? 'un autre campus')
     if (conflits.length > 0) throw new ConflitError(conflits)
   }
 
@@ -2147,20 +2155,26 @@ export async function detectConflitsExamen(
   examen: ExamenCandidat,
   excludeId?: string
 ): Promise<ConflitExamenInfo[]> {
-  const all = await getExamens(universityId)
-  return findConflitsExamen(all, examen, excludeId)
+  const [all, campusList] = await Promise.all([
+    getExamens(universityId),
+    getCampusList(universityId),
+  ])
+  const campusNomMap = new Map(campusList.map((c) => [c.id, c.nom]))
+  return findConflitsExamen(all, examen, excludeId, (id) => campusNomMap.get(id) ?? 'un autre campus')
 }
 
 export async function createExamen(
   universityId: string,
   data: ExamenFormData
 ): Promise<string> {
-  const [all, labels] = await Promise.all([
+  const [all, labels, campusList] = await Promise.all([
     getExamens(universityId),
     resolveExamenLabels(universityId, data),
+    getCampusList(universityId),
   ])
   // Garde autoritaire (RÈGLE 3 adaptée) : on bloque avant toute écriture.
-  const conflits = findConflitsExamen(all, { ...data, ...labels })
+  const campusNomMap = new Map(campusList.map((c) => [c.id, c.nom]))
+  const conflits = findConflitsExamen(all, { ...data, ...labels }, undefined, (id) => campusNomMap.get(id) ?? 'un autre campus')
   if (conflits.length > 0) throw new ConflitExamenError(conflits)
 
   const newRef = push(ref(db, `universities/${universityId}/examens`))
@@ -2174,12 +2188,16 @@ export async function updateExamen(
   examenId: string,
   data: Partial<ExamenFormData>
 ): Promise<void> {
-  const all = await getExamens(universityId)
+  const [all, campusList] = await Promise.all([
+    getExamens(universityId),
+    getCampusList(universityId),
+  ])
   const existing = all.find((e) => e.id === examenId)
   if (!existing) throw new Error('Examen introuvable.')
 
   const merged: Examen = { ...existing, ...data }
-  const conflits = findConflitsExamen(all, merged, examenId)
+  const campusNomMap = new Map(campusList.map((c) => [c.id, c.nom]))
+  const conflits = findConflitsExamen(all, merged, examenId, (id) => campusNomMap.get(id) ?? 'un autre campus')
   if (conflits.length > 0) throw new ConflitExamenError(conflits)
 
   // Ne re-résout les libellés que si un champ source a changé (évite deux lectures

@@ -247,6 +247,13 @@ export default function ExamensAdminPage() {
   // plusieurs campus existent, sinon le campus unique de l'université.
   const effectiveCampusId = hasMultipleCampus ? form.campusId : (campusList[0]?.id ?? '')
 
+  // Nom d'affichage d'un campus par id — précise le message d'un conflit
+  // enseignant/surveillant inter-campus.
+  const campusNom = useMemo(() => {
+    const map = new Map(campusList.map((c) => [c.id, c.nom]))
+    return (id: string) => map.get(id) ?? 'un autre campus'
+  }, [campusList])
+
   function handleFilterCampus(id: string) {
     setFCampusId(id)
     if (!id) return // « Tous » : la filière déjà choisie reste valide, rien à réinitialiser.
@@ -353,7 +360,7 @@ export default function ExamensAdminPage() {
       surveillantNom: form.surveillantUid ? teacherName(form.surveillantUid) : undefined,
       campusId: effectiveCampusId,
     }
-    const found = findConflitsExamen(examens, candidat, editId ?? undefined)
+    const found = findConflitsExamen(examens, candidat, editId ?? undefined, campusNom)
     if (found.length > 0) {
       setConflits(found)
       setFormError(null)
