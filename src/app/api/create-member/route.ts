@@ -4,6 +4,12 @@ import type { CreateMemberRequest, CreatableRole } from '@/types/member'
 
 const CREATABLE_ROLES: CreatableRole[] = ['teacher', 'student', 'parent']
 
+/** Clé de comparaison d'un nom de filière : insensible à la casse et aux accents
+ *  (même normalisation que admin/import/page.tsx côté client). */
+function cleFiliere(nom: string): string {
+  return nom.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase()
+}
+
 export async function POST(request: Request): Promise<Response> {
   // 1. Authentification de l'appelant via son idToken (header Bearer).
   const auth = await verifyFirebaseToken(request)
@@ -66,6 +72,15 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: 'Liste de filières invalide.' }, { status: 400 })
     }
     filiereIds = [...new Set(body.filiereIds.map((f) => f.trim()).filter(Boolean))]
+  }
+  // Filière de l'étudiant : nom unique (chaîne) si fourni. L'EXISTENCE réelle
+  // (résolue par nom, scopée au campus fourni) est vérifiée plus bas.
+  let filiereEtudiant: string | undefined
+  if (body.filiere !== undefined) {
+    if (typeof body.filiere !== 'string') {
+      return Response.json({ error: 'Filière invalide.' }, { status: 400 })
+    }
+    filiereEtudiant = body.filiere.trim() || undefined
   }
   // Campus de l'étudiant (unique) : chaîne non vide si fournie.
   if (body.campusId !== undefined && typeof body.campusId !== 'string') {
@@ -138,6 +153,46 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // 3-quater. Validation d'EXISTENCE de la filière ÉTUDIANT (nom unique, pas un
+  // id) : cohérent avec 3-bis (filiereIds enseignant). Résout par nom
+  // (insensible casse/accents), SCOPÉ au campus fourni s'il y en a un — une
+  // filière du même nom sur un AUTRE campus ne doit jamais être acceptée à sa
+  // place. Corrige le bug où un import CSV pouvait enregistrer un nom de
+  // filière ne correspondant à AUCUNE filière réelle (texte orphelin, jamais
+  // vérifié avant écriture).
+  let filiereResolue: string | undefined = filiereEtudiant
+  if (filiereEtudiant) {
+    let filieresData: Record<string, { nom?: unknown; campusId?: unknown }> | null
+    try {
+      const fRes = await fetch(
+        `${dbUrl}/universities/${body.universityId}/filieres.json?auth=${adminIdToken}`
+      )
+      if (!fRes.ok) throw new Error('read failed')
+      filieresData = (await fRes.json()) as typeof filieresData
+    } catch {
+      return Response.json({ error: 'Vérification de la filière impossible.' }, { status: 502 })
+    }
+    const liste = filieresData ? Object.values(filieresData) : []
+    const cle = cleFiliere(filiereEtudiant)
+    const trouvee = liste.find(
+      (f) =>
+        typeof f.nom === 'string' &&
+        cleFiliere(f.nom) === cle &&
+        (!body.campusId || f.campusId === body.campusId)
+    )
+    if (!trouvee) {
+      return Response.json(
+        {
+          error: `Filière inexistante${body.campusId ? ' sur ce campus' : ''} : « ${filiereEtudiant} ».`,
+        },
+        { status: 400 }
+      )
+    }
+    // Normalise vers le nom CANONIQUE enregistré (protège contre une casse/accent
+    // divergente entre la saisie et la filière réelle).
+    filiereResolue = trouvee.nom as string
+  }
+
   // 4. Récupération du nom de l'université (pour l'email) + URL de connexion.
   let nomUniversite = body.universityId
   try {
@@ -160,7 +215,7 @@ export async function POST(request: Request): Promise<Response> {
       email: body.email,
       displayName: body.displayName,
       role: body.role,
-      filiere: body.filiere,
+      filiere: filiereResolue,
       filiereIds,
       campusId: body.campusId,
       campusIds,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Upload, Download, FileSpreadsheet, CheckCircle, AlertTriangle, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getUniversityMembers, getFilieres, getCampusList, migrerVersMultiCampus } from '@/lib/db'
@@ -50,7 +50,17 @@ function cleFiliere(nom: string): string {
   return stripAccents(nom.trim().toLowerCase())
 }
 
-function parseCSV(text: string, tab: Tab, filieres: Filiere[]): ParsedRow[] {
+/**
+ * `campusId` : campus de destination choisi dans le formulaire d'import. La
+ * résolution nom → filière (étudiant comme enseignant) est SCOPÉE à ce seul
+ * campus — une filière du même nom sur un autre campus ne doit jamais être
+ * confondue avec celle-ci (même contrainte que le sélecteur manuel de
+ * admin/students/page.tsx, qui ne propose déjà que les filières du campus
+ * choisi). Sans quoi un étudiant/enseignant pourrait être lié à une filière
+ * d'un AUTRE campus, ou (pire, cas du bug corrigé) à aucune filière réelle du
+ * tout — un simple texte libre jamais vérifié.
+ */
+function parseCSV(text: string, tab: Tab, filieres: Filiere[], campusId: string): ParsedRow[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '')
   if (lines.length < 2) return []
   const headers = lines[0].split(',').map((h) => stripAccents(h.trim().toLowerCase()))
@@ -62,16 +72,24 @@ function parseCSV(text: string, tab: Tab, filieres: Filiere[]): ParsedRow[] {
   const iNiveau = idx('niveau')
   const iFilieres = idx('filieres')
 
-  // Résolution nom → id sur les filières RÉELLES de l'université.
-  const idParNom = new Map(filieres.map((f) => [cleFiliere(f.nom), f.id]))
+  // Résolution nom → filière RÉELLE, restreinte au campus de destination.
+  const filieresDuCampus = filieres.filter((f) => f.campusId === campusId)
+  const filiereParNom = new Map(filieresDuCampus.map((f) => [cleFiliere(f.nom), f]))
 
   return lines.slice(1).map((line) => {
     const cells = line.split(',').map((c) => c.trim())
     const prenom = iPrenom >= 0 ? cells[iPrenom] ?? '' : ''
     const nom = iNom >= 0 ? cells[iNom] ?? '' : ''
     const email = iEmail >= 0 ? cells[iEmail] ?? '' : ''
-    const filiere = iFiliere >= 0 ? cells[iFiliere] ?? '' : ''
+    const filiereBrute = iFiliere >= 0 ? cells[iFiliere] ?? '' : ''
     const niveau = iNiveau >= 0 ? cells[iNiveau] ?? '' : ''
+
+    // Étudiant : résout le nom saisi vers la VRAIE filière du campus de
+    // destination. `filiere` porte le nom CANONIQUE de la filière trouvée
+    // (pas le texte brut du CSV, qui peut diverger en casse/accents) — jamais
+    // stocké en texte libre non vérifié comme avant ce correctif.
+    const filiereTrouvee = filiereBrute ? filiereParNom.get(cleFiliere(filiereBrute)) : undefined
+    const filiere = filiereTrouvee?.nom ?? filiereBrute
 
     // Enseignant : « Informatique;Mathématiques » → ['Informatique', 'Mathématiques']
     const brut = iFilieres >= 0 ? cells[iFilieres] ?? '' : ''
@@ -83,8 +101,8 @@ function parseCSV(text: string, tab: Tab, filieres: Filiere[]): ParsedRow[] {
     const filiereIds: string[] = []
     const inconnues: string[] = []
     for (const n of filieresNoms) {
-      const id = idParNom.get(cleFiliere(n))
-      if (id) filiereIds.push(id)
+      const f = filiereParNom.get(cleFiliere(n))
+      if (f) filiereIds.push(f.id)
       else inconnues.push(n)
     }
 
@@ -92,13 +110,19 @@ function parseCSV(text: string, tab: Tab, filieres: Filiere[]): ParsedRow[] {
     let reason: string | undefined
     if (!email || !email.includes('@')) { valid = false; reason = 'Email manquant ou invalide' }
     else if (!prenom && !nom) { valid = false; reason = 'Nom manquant' }
-    else if (tab === 'etudiants' && (!filiere || !niveau)) { valid = false; reason = 'Filière ou niveau manquant' }
+    else if (tab === 'etudiants' && (!filiereBrute || !niveau)) { valid = false; reason = 'Filière ou niveau manquant' }
+    // Le nom saisi ne correspond à AUCUNE filière réelle du campus de
+    // destination : on rejette plutôt que d'enregistrer un texte orphelin.
+    else if (tab === 'etudiants' && !filiereTrouvee) {
+      valid = false
+      reason = `Filière inconnue sur ce campus : « ${filiereBrute} »`
+    }
     // La colonne `filieres` est FACULTATIVE (un enseignant peut n'être affecté à
-    // aucune filière), mais un nom saisi qui n'existe pas est une erreur : sans
-    // ça, l'affectation serait silencieusement perdue à l'import.
+    // aucune filière), mais un nom saisi qui n'existe pas sur CE campus est une
+    // erreur : sans ça, l'affectation serait silencieusement perdue à l'import.
     else if (tab === 'enseignants' && inconnues.length > 0) {
       valid = false
-      reason = `Filière inconnue : ${inconnues.map((n) => `« ${n} »`).join(', ')}`
+      reason = `Filière inconnue sur ce campus : ${inconnues.map((n) => `« ${n} »`).join(', ')}`
     }
 
     return { prenom, nom, email, filiere, niveau, filieresNoms, filiereIds, valid, reason }
@@ -129,7 +153,11 @@ export default function ImportPage() {
   const universityId = profile?.universityId
 
   const [tab, setTab] = useState<Tab>('etudiants')
-  const [rows, setRows] = useState<ParsedRow[]>([])
+  // Texte brut conservé (plutôt que les lignes déjà parsées) : la résolution
+  // filière→campus dépend de `campusId`, qui peut changer APRÈS le choix du
+  // fichier (sélecteur au-dessus de l'upload) — `rows` doit alors se
+  // recalculer, pas rester figé sur un campus obsolète.
+  const [rawText, setRawText] = useState('')
   const [fileName, setFileName] = useState('')
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
@@ -169,7 +197,7 @@ export default function ImportPage() {
   }, [universityId])
 
   function resetState() {
-    setRows([])
+    setRawText('')
     setFileName('')
     setResults(null)
     setProgress(null)
@@ -179,10 +207,17 @@ export default function ImportPage() {
     setResults(null)
     setFileName(file.name)
     const reader = new FileReader()
-    reader.onload = () => setRows(parseCSV(String(reader.result ?? ''), tab, filieres))
+    reader.onload = () => setRawText(String(reader.result ?? ''))
     reader.readAsText(file)
   }
 
+  // Dérivé de `rawText` + `campusId` : se recalcule si l'admin change le
+  // campus de destination APRÈS avoir choisi son fichier (cf. commentaire sur
+  // `rawText`), au lieu de rester figé sur la validation d'un ancien campus.
+  const rows = useMemo(
+    () => (rawText ? parseCSV(rawText, tab, filieres, campusId) : []),
+    [rawText, tab, filieres, campusId]
+  )
   const validRows = rows.filter((r) => r.valid)
 
   async function handleImport() {
@@ -284,11 +319,11 @@ export default function ImportPage() {
       )}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors">
+        <button onClick={() => inputRef.current?.click()} disabled={!campusId}
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2.5 font-semibold text-sm transition-colors">
           <Upload size={15} /> Choisir un fichier CSV
         </button>
-        <input ref={inputRef} type="file" accept=".csv" className="hidden"
+        <input ref={inputRef} type="file" accept=".csv" className="hidden" disabled={!campusId}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
         <button onClick={() => downloadTemplate(tab)}
           className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-blue-600 dark:text-orange-400 rounded-xl px-4 py-2.5 text-sm hover:bg-orange-500/20 transition-colors">
@@ -301,9 +336,14 @@ export default function ImportPage() {
           </span>
         )}
       </div>
+      {hasMultipleCampus && !campusId && (
+        <p className="text-blue-600 dark:text-orange-400 text-xs">
+          Choisissez d’abord un campus de destination pour pouvoir importer un fichier.
+        </p>
+      )}
       <p className="text-zinc-500 dark:text-orange-200/30 text-xs">
         Colonnes attendues : <code className="text-blue-600 dark:text-orange-400">{(tab === 'etudiants' ? HEADERS_ETU : HEADERS_ENS).join(', ')}</code>
-        {' '}(la filière et le niveau doivent correspondre à ceux déjà créés). Évitez les virgules dans les valeurs.
+        {' '}(la filière et le niveau doivent correspondre à ceux déjà créés, sur le campus de destination). Évitez les virgules dans les valeurs.
         {tab === 'enseignants' && (
           <>
             {' '}La colonne <code className="text-blue-600 dark:text-orange-400">filieres</code> est facultative et accepte
