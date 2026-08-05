@@ -130,12 +130,27 @@ export default function FilieresPage() {
   const totalActives = filieresDuCampus.filter(f => f.actif).length
   const totalInactives = filieresDuCampus.length - totalActives
 
+  // ─── Limite du plan ─────────────────────────────────────────────────────────
+  // La limite du plan (maxFilieres) s'applique PAR CAMPUS, pas globalement à
+  // l'université : chaque campus a son propre quota basé sur la limite du
+  // plan (un seul plan par université, mais un quota par campus).
+  function filieresCountForCampus(campusId: string): number {
+    return filieres.filter(f => f.campusId === campusId).length
+  }
+
+  function limitToastMessage(): string {
+    const max = getPlanConfig(plan ?? undefined).features.maxFilieres
+    return `Limite de ${max} filières atteinte pour ce campus (plan ${getPlanConfig(plan ?? undefined).nom}). Passez au plan supérieur pour en ajouter davantage.`
+  }
+
   // ─── Modal helpers ──────────────────────────────────────────────────────────
 
   function openAdd() {
-    if (!isWithinLimit('maxFilieres', filieres.length)) {
-      const max = getPlanConfig(plan ?? undefined).features.maxFilieres
-      setToast(`Limite de ${max} filières atteinte pour le plan ${getPlanConfig(plan ?? undefined).nom}. Passez au plan supérieur.`)
+    // Mono-campus : le campus cible est connu d'avance (aucun choix à faire
+    // dans le modal), on peut donc vérifier la limite dès l'ouverture — c'est
+    // strictement le même comportement qu'avant (le seul campus = l'université).
+    if (campusList.length === 1 && !isWithinLimit('maxFilieres', filieresCountForCampus(campusList[0].id))) {
+      setToast(limitToastMessage())
       return
     }
     setForm(emptyForm())
@@ -197,6 +212,13 @@ export default function FilieresPage() {
     const campusIdToUse = campusList.length === 1 ? campusList[0].id : modalCampusId
     if (!editId && !campusIdToUse) {
       setToast('Veuillez choisir un campus')
+      return
+    }
+    // Vérification finale (autoritaire) de la limite du plan pour CE campus —
+    // le cas mono-campus est déjà filtré à l'ouverture du modal, mais en
+    // multi-campus le campus n'est connu qu'ici, une fois choisi.
+    if (!editId && !isWithinLimit('maxFilieres', filieresCountForCampus(campusIdToUse))) {
+      setToast(limitToastMessage())
       return
     }
     setSaving(true)
@@ -449,6 +471,9 @@ export default function FilieresPage() {
                       <option key={c.id} value={c.id}>{c.nom}</option>
                     ))}
                   </select>
+                  {modalCampusId && !isWithinLimit('maxFilieres', filieresCountForCampus(modalCampusId)) && (
+                    <p className="text-red-500 text-xs mt-1.5">{limitToastMessage()}</p>
+                  )}
                 </div>
               )}
 
@@ -586,7 +611,8 @@ export default function FilieresPage() {
                   onClick={handleSave}
                   disabled={
                     saving || !form.nom.trim() || !form.code.trim() || form.niveaux.length === 0 ||
-                    (!editId && hasMultipleCampus && !modalCampusId)
+                    (!editId && hasMultipleCampus && !modalCampusId) ||
+                    (!editId && !!modalCampusId && !isWithinLimit('maxFilieres', filieresCountForCampus(modalCampusId)))
                   }
                   className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
                 >
