@@ -16,7 +16,7 @@ import {
 } from 'framer-motion'
 import { VideoDemoModal } from '@/components/ui/video-demo-modal'
 import { Toggle } from '@/components/ui/toggle'
-import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon, CORE_FEATURES } from '@/lib/plans'
 import type { PlanFeatures } from '@/types/plan'
 
 // Affichage d'une limite numérique (Infinity => "Illimité").
@@ -568,6 +568,21 @@ export default function LandingPage() {
               <span className={`text-sm ${billingAnnual ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-orange-200/40'}`}>
                 Annuel <span className="text-green-600 dark:text-green-400 text-xs font-semibold">-20%</span>
               </span>
+            </div>
+          </motion.div>
+
+          {/* Inclus dans tous les plans — modules cœur, non répétés par colonne. */}
+          <motion.div {...reveal} className="mb-10 rounded-2xl border border-zinc-200 dark:border-orange-500/10 bg-zinc-50 dark:bg-orange-500/5 px-6 py-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-orange-400/70 mb-4 text-center">
+              Inclus dans tous les plans
+            </p>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2.5">
+              {CORE_FEATURES.map((label) => (
+                <span key={label} className="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-orange-100/70">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                  {label}
+                </span>
+              ))}
             </div>
           </motion.div>
 

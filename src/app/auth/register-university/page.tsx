@@ -7,7 +7,7 @@ import { Check, Clock, ArrowLeft, Gift, Eye, EyeOff } from 'lucide-react'
 import { registerAdmin } from '@/lib/auth'
 import { createUniversity, initTrial } from '@/lib/db'
 import { syncSessionCookie } from '@/lib/session-client'
-import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon, CORE_FEATURES } from '@/lib/plans'
 import type { PlanFeatures } from '@/types/plan'
 
 interface Step1Data {
@@ -300,6 +300,20 @@ export default function RegisterUniversityPage() {
               Vous démarrez avec un <span className="font-semibold text-zinc-800 dark:text-orange-100">essai gratuit de 30 jours</span> incluant
               toutes les fonctionnalités Premium. Aucune carte bancaire requise.
             </p>
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 dark:border-orange-500/10 bg-zinc-50 dark:bg-black/40 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-orange-400/70 mb-2">
+              Inclus dans tous les plans
+            </p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {CORE_FEATURES.map((label) => (
+                <span key={label} className="flex items-center gap-1 text-xs text-zinc-700 dark:text-orange-200/70">
+                  <Check className="w-3 h-3 text-blue-600 dark:text-orange-400 shrink-0" strokeWidth={3} />
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">

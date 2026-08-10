@@ -114,6 +114,26 @@ export function isFeatureSoon(feature: keyof PlanFeatures): boolean {
   return SOON_FEATURES.has(feature)
 }
 
+/**
+ * Modules cœur construits et disponibles dans les 3 plans, sans restriction
+ * de code : rien ne les distingue par plan, donc ils n'apparaissent pas dans
+ * `PlanFeatures`/PLANS_CONFIG. Affichés une seule fois au-dessus du
+ * comparatif de plans plutôt que répétés dans chacune des 3 colonnes.
+ */
+export const CORE_FEATURES: readonly string[] = [
+  'Gestion des étudiants, enseignants et parents',
+  'Filières, matières et semestres',
+  'Emploi du temps avec détection des conflits',
+  'Examens',
+  'Notes et rattrapage',
+  'Absences',
+  'Redoublement',
+  'Réorientation',
+  'Abandon / désistement',
+  'Cours en ligne (visio intégrée)',
+  'Mode clair / sombre',
+]
+
 /** Valeurs les plus restrictives — fallback si plan inconnu. */
 export const DEFAULT_FEATURES: PlanFeatures = PLANS_CONFIG.standard.features
 

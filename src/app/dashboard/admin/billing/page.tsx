@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useTrial } from '@/hooks/useTrial'
 import { convertTrial } from '@/lib/db'
-import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon, CORE_FEATURES } from '@/lib/plans'
 import { Toggle } from '@/components/ui/toggle'
 import { PlanBadge } from '@/components/ui/plan-badge'
 import type { PlanFeatures, PlanId } from '@/types/plan'
@@ -173,6 +173,21 @@ export default function BillingPage() {
         <span className={`text-sm ${annual ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-500'}`}>
           Annuel <span className="text-blue-600 dark:text-orange-400">−20%</span>
         </span>
+      </div>
+
+      {/* ── Inclus dans tous les plans — modules cœur, non répétés par carte ── */}
+      <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 px-6 py-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-orange-400/70 mb-4 text-center">
+          Inclus dans tous les plans
+        </p>
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2.5">
+          {CORE_FEATURES.map((label) => (
+            <span key={label} className="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* ── Section 2 : grille des plans ──────────────────────────────────── */}
