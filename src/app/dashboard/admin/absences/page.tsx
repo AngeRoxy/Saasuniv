@@ -386,7 +386,7 @@ export default function AdminAbsencesPage() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <button type="button" onClick={() => setForm((f) => ({ ...f, justifiee: !f.justifiee }))}
                   className={`relative w-10 h-5 rounded-full transition-colors ${form.justifiee ? 'bg-green-500' : 'bg-zinc-200 dark:bg-zinc-700'}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.justifiee ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  <span className={`absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.justifiee ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
                 <span className="text-sm text-zinc-600 dark:text-orange-200/70">Absence justifiée</span>
               </label>
