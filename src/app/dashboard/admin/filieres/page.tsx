@@ -14,6 +14,7 @@ import {
 } from '@/lib/db'
 import type { Filiere, FiliereFormData } from '@/types/filiere'
 import type { Campus } from '@/types/campus'
+import { Toggle } from '@/components/ui/toggle'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -584,18 +585,11 @@ export default function FilieresPage() {
               </div>
 
               {/* Statut */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, actif: !f.actif }))}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${form.actif ? 'bg-orange-500' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-                >
-                  <span className={`absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.actif ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                </button>
-                <span className="text-sm text-zinc-600 dark:text-orange-200/60">
-                  {form.actif ? 'Active' : 'Inactive'}
-                </span>
-              </div>
+              <Toggle
+                checked={form.actif}
+                onChange={(actif) => setForm(f => ({ ...f, actif }))}
+                label={form.actif ? 'Active' : 'Inactive'}
+              />
 
               </div>
 

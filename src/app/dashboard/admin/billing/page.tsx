@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useTrial } from '@/hooks/useTrial'
 import { convertTrial } from '@/lib/db'
 import { PLANS_CONFIG, PLAN_ORDER } from '@/lib/plans'
+import { Toggle } from '@/components/ui/toggle'
 import { PlanBadge } from '@/components/ui/plan-badge'
 import type { PlanFeatures, PlanId } from '@/types/plan'
 import { TRIAL_DURATION_MS } from '@/types/trial'
@@ -159,17 +160,15 @@ export default function BillingPage() {
         <span className={`text-sm ${!annual ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-500'}`}>
           Mensuel
         </span>
-        <button
-          onClick={() => setAnnual((v) => !v)}
-          className="relative h-6 w-11 rounded-full bg-zinc-100 dark:bg-white/10 transition-colors"
-          aria-label="Basculer mensuel/annuel"
-        >
-          <span
-            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-orange-500 transition-transform ${
-              annual ? 'translate-x-5' : 'translate-x-0.5'
-            }`}
-          />
-        </button>
+        <Toggle
+          checked={annual}
+          onChange={setAnnual}
+          ariaLabel="Basculer mensuel/annuel"
+          size="md"
+          trackActiveClassName="bg-zinc-100 dark:bg-white/10"
+          trackInactiveClassName="bg-zinc-100 dark:bg-white/10"
+          knobClassName="bg-orange-500"
+        />
         <span className={`text-sm ${annual ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-500'}`}>
           Annuel <span className="text-blue-600 dark:text-orange-400">−20%</span>
         </span>

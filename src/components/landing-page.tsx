@@ -15,6 +15,7 @@ import {
   type Variants,
 } from 'framer-motion'
 import { VideoDemoModal } from '@/components/ui/video-demo-modal'
+import { Toggle } from '@/components/ui/toggle'
 import { PLANS_CONFIG, PLAN_ORDER } from '@/lib/plans'
 import type { PlanFeatures } from '@/types/plan'
 
@@ -558,12 +559,12 @@ export default function LandingPage() {
             {/* Toggle annuel */}
             <div className="flex items-center justify-center gap-3 mt-8">
               <span className={`text-sm ${!billingAnnual ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-orange-200/40'}`}>Mensuel</span>
-              <button
-                onClick={() => setBillingAnnual(!billingAnnual)}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${billingAnnual ? 'bg-orange-500' : 'bg-zinc-300 dark:bg-orange-900/60'}`}
-              >
-                <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${billingAnnual ? 'translate-x-6' : ''}`} />
-              </button>
+              <Toggle
+                checked={billingAnnual}
+                onChange={setBillingAnnual}
+                size="lg"
+                trackInactiveClassName="bg-zinc-300 dark:bg-orange-900/60"
+              />
               <span className={`text-sm ${billingAnnual ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-orange-200/40'}`}>
                 Annuel <span className="text-green-600 dark:text-green-400 text-xs font-semibold">-20%</span>
               </span>
