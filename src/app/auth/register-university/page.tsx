@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, ArrowLeft, Gift, Eye, EyeOff } from 'lucide-react'
+import { Check, Clock, ArrowLeft, Gift, Eye, EyeOff } from 'lucide-react'
 import { registerAdmin } from '@/lib/auth'
 import { createUniversity, initTrial } from '@/lib/db'
 import { syncSessionCookie } from '@/lib/session-client'
-import { PLANS_CONFIG, PLAN_ORDER } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
 import type { PlanFeatures } from '@/types/plan'
 
 interface Step1Data {
@@ -322,10 +322,15 @@ export default function RegisterUniversityPage() {
                   <ul className="grid grid-cols-2 gap-1">
                     {PLAN_HIGHLIGHTS.map(({ key, label }) => {
                       const on = Boolean(config.features[key])
+                      const soon = isFeatureSoon(key) && on
                       return (
-                        <li key={key} className={`text-xs flex items-center gap-1.5 ${on ? 'text-zinc-700 dark:text-orange-200/70' : 'text-zinc-600 dark:text-zinc-400 dark:text-orange-200/25 line-through'}`}>
-                          <Check className={`w-3 h-3 shrink-0 ${on ? 'text-blue-600 dark:text-orange-400' : 'text-zinc-600 dark:text-zinc-400 dark:text-orange-200/20'}`} strokeWidth={3} />
-                          {label}
+                        <li key={key} className={`text-xs flex items-center gap-1.5 ${!on ? 'text-zinc-600 dark:text-orange-200/25 line-through' : soon ? 'text-zinc-500 dark:text-orange-200/40' : 'text-zinc-700 dark:text-orange-200/70'}`}>
+                          {soon ? (
+                            <Clock className="w-3 h-3 shrink-0 text-blue-600 dark:text-blue-400" strokeWidth={3} />
+                          ) : (
+                            <Check className={`w-3 h-3 shrink-0 ${on ? 'text-blue-600 dark:text-orange-400' : 'text-zinc-600 dark:text-orange-200/20'}`} strokeWidth={3} />
+                          )}
+                          {label}{soon && <span className="ml-1">(bientôt)</span>}
                         </li>
                       )
                     })}

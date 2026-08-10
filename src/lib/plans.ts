@@ -93,6 +93,27 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
 /** Ordre croissant des plans (du moins au plus complet). */
 export const PLAN_ORDER: PlanId[] = ['standard', 'premium', 'enterprise']
 
+/**
+ * Fonctionnalités listées dans la grille tarifaire mais pas encore livrées
+ * en production (roadmap). PLANS_CONFIG peut leur donner `true` pour un plan
+ * (= à qui elles seront réservées une fois livrées) sans qu'elles existent
+ * déjà dans le code : dans ce cas, toute surface d'affichage doit montrer
+ * "Bientôt disponible" plutôt qu'un check plein, sous peine de tromper le
+ * client. Source de vérité unique — ne pas dupliquer cette liste ailleurs.
+ */
+export const SOON_FEATURES: ReadonlySet<keyof PlanFeatures> = new Set<keyof PlanFeatures>([
+  'exportPDF',
+  'bulletinsPDF',
+  'notificationsEmail',
+  'apiAccess',
+  'sousDomainePerso',
+])
+
+/** True si la fonctionnalité n'est pas encore livrée, indépendamment du plan. */
+export function isFeatureSoon(feature: keyof PlanFeatures): boolean {
+  return SOON_FEATURES.has(feature)
+}
+
 /** Valeurs les plus restrictives — fallback si plan inconnu. */
 export const DEFAULT_FEATURES: PlanFeatures = PLANS_CONFIG.standard.features
 

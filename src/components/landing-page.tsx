@@ -16,7 +16,7 @@ import {
 } from 'framer-motion'
 import { VideoDemoModal } from '@/components/ui/video-demo-modal'
 import { Toggle } from '@/components/ui/toggle'
-import { PLANS_CONFIG, PLAN_ORDER } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
 import type { PlanFeatures } from '@/types/plan'
 
 // Affichage d'une limite numérique (Infinity => "Illimité").
@@ -32,22 +32,22 @@ const limiteRows: { label: string; value: (f: PlanFeatures) => string }[] = [
 ]
 
 // Groupe "Fonctionnalités" : libellé + clé booléenne. `ia` => pill "IA".
-// `soon` => fonctionnalité prévue mais pas encore livrée : badge "Bientôt"
-// (roadmap assumée, cf. featureRow render). NE PAS marquer `soon` sur une
-// fonctionnalité réellement disponible sous peine de la dévaloriser.
-const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean; soon?: boolean }[] = [
+// Le statut "Bientôt disponible" n'est plus déclaré ligne par ligne ici : il
+// est dérivé de SOON_FEATURES (src/lib/plans.ts), la source de vérité unique
+// partagée avec billing/page.tsx et register-university/page.tsx.
+const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean }[] = [
   { label: 'Import depuis Excel', key: 'importCSV' },
-  { label: 'Export PDF', key: 'exportPDF', soon: true },
-  { label: 'Bulletins PDF', key: 'bulletinsPDF', soon: true },
+  { label: 'Export PDF', key: 'exportPDF' },
+  { label: 'Bulletins PDF', key: 'bulletinsPDF' },
   { label: 'Messagerie interne', key: 'messagerieInterne' },
-  { label: 'Notifications email', key: 'notificationsEmail', soon: true },
+  { label: 'Notifications email', key: 'notificationsEmail' },
   { label: 'Assistant virtuel intelligent', key: 'chatbotIA', ia: true },
   { label: 'Suggestions automatiques (intelligence artificielle)', key: 'recommandationsIA', ia: true },
   { label: 'Journal des activités', key: 'auditLogs' },
   { label: 'Support prioritaire', key: 'supportPrioritaire' },
   { label: 'Gestion de plusieurs campus/sites', key: 'multiCampus' },
-  { label: 'Connexion avec vos autres logiciels', key: 'apiAccess', soon: true },
-  { label: 'Adresse web à votre nom', key: 'sousDomainePerso', soon: true },
+  { label: 'Connexion avec vos autres logiciels', key: 'apiAccess' },
+  { label: 'Adresse web à votre nom', key: 'sousDomainePerso' },
 ]
 
 const features = [
@@ -637,7 +637,7 @@ export default function LandingPage() {
                       // "Bientôt" ne se montre que là où la fonctionnalité est
                       // vendue comme incluse : inutile de l'afficher sur un plan
                       // qui ne la propose de toute façon pas (croix barrée).
-                      const soon = Boolean(row.soon) && included
+                      const soon = isFeatureSoon(row.key) && included
                       return (
                         <li key={row.key} className="flex items-center gap-2 text-sm">
                           {included ? (

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   Check,
   X,
+  Clock,
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
@@ -12,7 +13,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useTrial } from '@/hooks/useTrial'
 import { convertTrial } from '@/lib/db'
-import { PLANS_CONFIG, PLAN_ORDER } from '@/lib/plans'
+import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon } from '@/lib/plans'
 import { Toggle } from '@/components/ui/toggle'
 import { PlanBadge } from '@/components/ui/plan-badge'
 import type { PlanFeatures, PlanId } from '@/types/plan'
@@ -225,19 +226,33 @@ export default function BillingPage() {
               <ul className="flex-1 space-y-2">
                 {FEATURE_ROWS.map(({ key, label }) => {
                   const on = Boolean(config.features[key])
+                  const soon = isFeatureSoon(key) && on
                   return (
                     <li
                       key={key}
                       className={`flex items-center gap-2 text-sm ${
-                        on ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-600 line-through'
+                        !on
+                          ? 'text-zinc-600 line-through'
+                          : soon
+                            ? 'text-zinc-500 dark:text-zinc-400'
+                            : 'text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       {on ? (
-                        <Check size={14} className="shrink-0 text-blue-600 dark:text-orange-400" />
+                        soon ? (
+                          <Clock size={14} className="shrink-0 text-blue-600 dark:text-blue-400" />
+                        ) : (
+                          <Check size={14} className="shrink-0 text-blue-600 dark:text-orange-400" />
+                        )
                       ) : (
                         <X size={14} className="shrink-0 text-zinc-700" />
                       )}
                       {label}
+                      {soon && (
+                        <span className="ml-auto shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          Bientôt
+                        </span>
+                      )}
                     </li>
                   )
                 })}
