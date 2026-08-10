@@ -40,7 +40,7 @@ const PLAN_HIGHLIGHTS: { key: keyof PlanFeatures; label: string }[] = [
   { key: 'chatbotIA', label: 'Assistant IA' },
   { key: 'exportPDF', label: 'Export PDF' },
   { key: 'bulletinsPDF', label: 'Bulletins PDF' },
-  { key: 'messagerieInterne', label: 'Messagerie interne' },
+  { key: 'messagerieInterne', label: 'Messagerie enseignant-parent' },
   { key: 'multiCampus', label: 'Multi-campus' },
   { key: 'apiAccess', label: 'Accès API' },
 ]

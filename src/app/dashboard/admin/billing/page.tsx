@@ -29,7 +29,7 @@ const FEATURE_ROWS: { key: keyof PlanFeatures; label: string }[] = [
   { key: 'importCSV', label: 'Import CSV / Excel' },
   { key: 'exportPDF', label: 'Export PDF' },
   { key: 'bulletinsPDF', label: 'Bulletins PDF' },
-  { key: 'messagerieInterne', label: 'Messagerie interne' },
+  { key: 'messagerieInterne', label: 'Messagerie enseignant-parent' },
   { key: 'notificationsEmail', label: 'Notifications email' },
   { key: 'multiCampus', label: 'Multi-campus' },
   { key: 'apiAccess', label: 'Accès API' },

@@ -39,7 +39,7 @@ const featureRows: { label: string; key: keyof PlanFeatures; ia?: boolean }[] = 
   { label: 'Import depuis Excel', key: 'importCSV' },
   { label: 'Export PDF', key: 'exportPDF' },
   { label: 'Bulletins PDF', key: 'bulletinsPDF' },
-  { label: 'Messagerie interne', key: 'messagerieInterne' },
+  { label: 'Messagerie enseignant-parent', key: 'messagerieInterne' },
   { label: 'Notifications email', key: 'notificationsEmail' },
   { label: 'Assistant virtuel intelligent', key: 'chatbotIA', ia: true },
   { label: 'Suggestions automatiques (intelligence artificielle)', key: 'recommandationsIA', ia: true },

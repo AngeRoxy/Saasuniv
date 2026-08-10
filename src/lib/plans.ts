@@ -16,7 +16,6 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
       maxEtudiants: 200,
       maxEnseignants: 20,
       maxFilieres: 3,
-      maxAdmins: 1,
       stockageGo: 2,
 
       chatbotIA: false,
@@ -44,7 +43,6 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
       maxEtudiants: 1_000,
       maxEnseignants: 100,
       maxFilieres: 15,
-      maxAdmins: 3,
       stockageGo: 20,
 
       chatbotIA: true,
@@ -71,7 +69,6 @@ export const PLANS_CONFIG: Record<PlanId, PlanConfig> = {
       maxEtudiants: Infinity,
       maxEnseignants: Infinity,
       maxFilieres: Infinity,
-      maxAdmins: Infinity,
       stockageGo: 100,
 
       chatbotIA: true,

@@ -9,7 +9,6 @@ export interface PlanFeatures {
   maxEtudiants: number
   maxEnseignants: number
   maxFilieres: number
-  maxAdmins: number
   stockageGo: number
 
   // ─── Fonctionnalités booléennes ──────────────────────────────────────────
@@ -32,7 +31,6 @@ export type PlanLimitKey =
   | 'maxEtudiants'
   | 'maxEnseignants'
   | 'maxFilieres'
-  | 'maxAdmins'
   | 'stockageGo'
 
 export interface PlanConfig {

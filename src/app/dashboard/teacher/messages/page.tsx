@@ -26,7 +26,7 @@ export default function TeacherMessagesPage() {
         fallback={
           <ComingSoon
             icon={Mail}
-            title="Messagerie interne"
+            title="Messagerie enseignant-parent"
             description="Cette fonctionnalité n'est pas incluse dans le plan souscrit par votre université. Contactez l'administration pour y avoir accès."
             badge="Non incluse dans le plan"
           />
