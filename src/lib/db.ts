@@ -423,13 +423,31 @@ export async function getManualStudents(universityId: string): Promise<(ManualSt
 // ─── Campus ───────────────────────────────────────────────────────────────────
 
 import type { Campus, CampusFormData } from '@/types/campus'
+import { hasFeature } from '@/lib/plans'
 
 export type { Campus, CampusFormData }
 
+/**
+ * Crée un campus. Le tout premier campus d'une université (créé par la
+ * migration `migrerVersMultiCampus`, quel que soit le plan) est toujours
+ * autorisé — seule la création d'un 2ème campus et au-delà exige le plan
+ * Enterprise. Vérifié ici (pas seulement dans l'UI) pour ne pas dépendre
+ * d'un état client potentiellement obsolète.
+ */
 export async function createCampus(
   universityId: string,
   data: CampusFormData
 ): Promise<string> {
+  const existants = await getCampusList(universityId)
+  if (existants.length > 0) {
+    const planSnapshot = await get(ref(db, `universities/${universityId}/plan`))
+    const plan = planSnapshot.val() as StoredPlan | undefined
+    if (!hasFeature(plan, 'multiCampus')) {
+      throw new Error(
+        'Le multi-campus est disponible à partir du plan Enterprise. Contactez-nous pour en savoir plus.'
+      )
+    }
+  }
   const newRef = push(ref(db, `universities/${universityId}/campus`))
   await set(newRef, stripUndefined({ ...data, universityId, createdAt: Date.now() }))
   return newRef.key!

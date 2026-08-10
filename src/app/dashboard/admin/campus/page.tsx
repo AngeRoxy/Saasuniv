@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, X, Pencil, Trash2, Building2, GraduationCap, Users, BookOpen, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { PlanGate } from '@/components/ui/plan-gate'
 import {
   getCampusList, createCampus, updateCampus, deleteCampus, migrerVersMultiCampus,
   getFilieres, getUniversityMembers,
@@ -15,6 +16,30 @@ import type { UniversityMember } from '@/lib/db'
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
 const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
+const CONTACT_EMAIL = 'contact@gestuniv.com'
+
+// ─── Upgrade fallback (page réservée au plan Enterprise) ───────────────────────
+
+function MultiCampusUpgradeFallback() {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 dark:border-white/20 bg-white/3 px-6 py-8 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-white/5 text-zinc-600 dark:text-zinc-400">
+        <Building2 className="h-5 w-5" />
+      </div>
+      <p className="max-w-sm text-sm text-zinc-600 dark:text-zinc-400">
+        Le multi-campus est disponible à partir du plan{' '}
+        <span className="font-medium text-zinc-800 dark:text-zinc-200">Enterprise</span>. Contactez-nous
+        pour en savoir plus.
+      </p>
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        className="rounded-lg border border-zinc-200 dark:border-white/10 bg-orange-500/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
+      >
+        Nous contacter
+      </a>
+    </div>
+  )
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +64,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function CampusPage() {
+function CampusPageContent() {
   const { profile } = useAuth()
   const uid = profile?.universityId
 
@@ -145,8 +170,8 @@ export default function CampusPage() {
         setToast('Campus créé avec succès')
       }
       closeModal()
-    } catch {
-      setToast('Erreur lors de la sauvegarde')
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -376,5 +401,20 @@ export default function CampusPage() {
       {/* Toast */}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
     </div>
+  )
+}
+
+export default function CampusPage() {
+  const { profile } = useAuth()
+  const universityId = profile?.universityId ?? ''
+  return (
+    <PlanGate
+      feature="multiCampus"
+      universityId={universityId}
+      showUpgradePrompt={false}
+      fallback={<MultiCampusUpgradeFallback />}
+    >
+      {universityId ? <CampusPageContent /> : null}
+    </PlanGate>
   )
 }
