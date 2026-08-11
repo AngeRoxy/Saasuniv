@@ -1,9 +1,10 @@
 // ⚠️ Module SERVEUR UNIQUEMENT — GENIUSPAY_API_SECRET et
 // GENIUSPAY_WEBHOOK_SECRET ne doivent jamais atteindre le client.
 //
-// Format d'API déduit de la documentation réelle (https://pay.genius.ci/doc,
-// consultée le 2026-08-11) — voir le résumé donné à l'utilisateur pour le
-// détail des hypothèses restant à valider en sandbox.
+// Format de création de paiement déduit de https://pay.genius.ci/doc
+// (2026-08-11) — non encore testé en sandbox réel. Format de webhook
+// (headers, formule HMAC) confirmé sur le dashboard GeniusPay
+// (geniuspay.ci/dashboard/integrations?tab=webhooks) le 2026-08-11.
 
 import { createHmac, timingSafeEqual } from 'crypto'
 
@@ -84,24 +85,32 @@ export async function createGeniusPayPayment(
   return body.data
 }
 
+export type WebhookVerificationResult =
+  | { ok: true }
+  | { ok: false; reason: 'secret_manquant' | 'headers_manquants' | 'timestamp_invalide' | 'timestamp_expire' | 'signature_invalide' }
+
 /**
- * Vérifie la signature d'un webhook GeniusPay : HMAC-SHA256(timestamp + "." +
- * corps_brut, secret_webhook), comparaison à temps constant, et rejet si le
- * timestamp date de plus de 5 minutes (anti-rejeu). Ne fait JAMAIS confiance
- * à un webhook dont la signature n'a pas pu être vérifiée.
+ * Vérifie la signature d'un webhook GeniusPay : hash_hmac('sha256',
+ * $timestamp . '.' . $payload, $secret) — formule confirmée sur le dashboard
+ * GeniusPay (geniuspay.ci/dashboard/integrations?tab=webhooks) — comparaison
+ * à temps constant, et rejet si le timestamp date de plus de 5 minutes
+ * (anti-rejeu). Ne fait JAMAIS confiance à un webhook dont la signature n'a
+ * pas pu être vérifiée. Retourne la raison du rejet (jamais les valeurs
+ * secrètes) pour un diagnostic clair dans les logs serveur.
  */
 export function verifyGeniusPayWebhookSignature(
   rawBody: string,
   timestampHeader: string | null,
   signatureHeader: string | null
-): boolean {
+): WebhookVerificationResult {
   const secret = process.env.GENIUSPAY_WEBHOOK_SECRET
-  if (!secret || !timestampHeader || !signatureHeader) return false
+  if (!secret) return { ok: false, reason: 'secret_manquant' }
+  if (!timestampHeader || !signatureHeader) return { ok: false, reason: 'headers_manquants' }
 
   const timestamp = Number(timestampHeader)
-  if (!Number.isFinite(timestamp)) return false
+  if (!Number.isFinite(timestamp)) return { ok: false, reason: 'timestamp_invalide' }
   const ageSeconds = Math.abs(Date.now() / 1000 - timestamp)
-  if (ageSeconds > 5 * 60) return false
+  if (ageSeconds > 5 * 60) return { ok: false, reason: 'timestamp_expire' }
 
   const expected = createHmac('sha256', secret)
     .update(`${timestampHeader}.${rawBody}`)
@@ -109,6 +118,8 @@ export function verifyGeniusPayWebhookSignature(
 
   const expectedBuf = Buffer.from(expected, 'utf8')
   const receivedBuf = Buffer.from(signatureHeader, 'utf8')
-  if (expectedBuf.length !== receivedBuf.length) return false
-  return timingSafeEqual(expectedBuf, receivedBuf)
+  const matches =
+    expectedBuf.length === receivedBuf.length && timingSafeEqual(expectedBuf, receivedBuf)
+
+  return matches ? { ok: true } : { ok: false, reason: 'signature_invalide' }
 }

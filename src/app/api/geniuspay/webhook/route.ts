@@ -4,6 +4,8 @@ import type { AbonnementPaiement, AbonnementPaiementStatut } from '@/types/abonn
 import type { PlanId } from '@/types/plan'
 
 interface GeniusPayWebhookPayload {
+  /** Identifiant unique de l'événement (livraisons en double possibles). */
+  id?: string
   event: string
   data: {
     reference: string
@@ -25,28 +27,45 @@ function isPlanId(value: string | undefined): value is PlanId {
   return value === 'standard' || value === 'premium' || value === 'enterprise'
 }
 
+const log = (msg: string, extra?: Record<string, unknown>) =>
+  console.log(`[geniuspay/webhook] ${msg}`, extra ?? '')
+const logError = (msg: string, extra?: Record<string, unknown>) =>
+  console.error(`[geniuspay/webhook] ${msg}`, extra ?? '')
+
 export async function POST(request: Request): Promise<Response> {
+  const startedAt = Date.now()
+
   // Le corps BRUT (avant tout parsing JSON) est requis pour la vérification
   // de signature — le HMAC porte sur les octets exacts envoyés par GeniusPay.
+  // Headers.get() est insensible à la casse (spec Fetch) : X-Webhook-Signature
+  // envoyé par GeniusPay est bien lu par 'x-webhook-signature'.
   const rawBody = await request.text()
   const signature = request.headers.get('x-webhook-signature')
   const timestamp = request.headers.get('x-webhook-timestamp')
+  const eventHeader = request.headers.get('x-webhook-event')
 
-  if (!verifyGeniusPayWebhookSignature(rawBody, timestamp, signature)) {
-    console.error('[geniuspay/webhook] Signature invalide ou absente — webhook rejeté.')
+  const verification = verifyGeniusPayWebhookSignature(rawBody, timestamp, signature)
+  if (!verification.ok) {
+    logError('Webhook rejeté — signature invalide', { reason: verification.reason, event: eventHeader })
     return Response.json({ error: 'Signature invalide.' }, { status: 401 })
   }
+  log('Signature vérifiée avec succès', { event: eventHeader })
 
   let payload: GeniusPayWebhookPayload
   try {
     payload = JSON.parse(rawBody) as GeniusPayWebhookPayload
   } catch {
+    logError('Corps JSON illisible malgré une signature valide')
     return Response.json({ error: 'Corps JSON invalide.' }, { status: 400 })
   }
 
   const { universityId, paiementId, plan } = payload.data.metadata ?? {}
   if (!universityId || !paiementId || !isPlanId(plan) || plan === 'enterprise') {
-    console.error('[geniuspay/webhook] metadata manquant ou invalide sur le paiement', payload.data.reference)
+    logError('Métadonnées manquantes ou invalides', {
+      eventId: payload.id,
+      reference: payload.data.reference,
+      metadata: payload.data.metadata,
+    })
     return Response.json({ error: 'Métadonnées de paiement invalides.' }, { status: 400 })
   }
 
@@ -54,6 +73,7 @@ export async function POST(request: Request): Promise<Response> {
   const isFailure = FAILURE_EVENTS.has(payload.event)
   if (!isSuccess && !isFailure) {
     // Événement reconnu mais sans action requise (ex. payment.initiated).
+    log('Événement sans action requise', { event: payload.event, eventId: payload.id, paiementId })
     return Response.json({ ok: true })
   }
 
@@ -61,14 +81,21 @@ export async function POST(request: Request): Promise<Response> {
   const paiementRef = adminDb.ref(`universities/${universityId}/abonnementPaiements/${paiementId}`)
   const snapshot = await paiementRef.get()
   if (!snapshot.exists()) {
-    console.error('[geniuspay/webhook] Paiement introuvable en base :', paiementId)
+    logError('Paiement introuvable en base', { paiementId, eventId: payload.id })
     return Response.json({ error: 'Paiement introuvable.' }, { status: 404 })
   }
   const existing = snapshot.val() as AbonnementPaiement
 
-  // Idempotence : un webhook déjà traité (livraison en double par GeniusPay)
-  // ne doit ni ré-écraser convertedAt ni redéclencher d'effet de bord.
+  // Idempotence : un événement déjà traité (livraison en double par
+  // GeniusPay — cf. champ `id` du payload) ne doit ni ré-écraser convertedAt
+  // ni redéclencher d'effet de bord. Le statut du paiement porte cette garde :
+  // une fois sorti de "en_attente", plus rien ne le fait bouger.
   if (existing.statut !== 'en_attente') {
+    log('Événement déjà traité — idempotence, aucune action', {
+      paiementId,
+      eventId: payload.id,
+      statutActuel: existing.statut,
+    })
     return Response.json({ ok: true })
   }
 
@@ -76,9 +103,11 @@ export async function POST(request: Request): Promise<Response> {
   // à celui calculé côté serveur lors de la création — sinon on ne fait
   // confiance à rien plutôt que de valider un montant trafiqué.
   if (isSuccess && payload.data.amount !== existing.montant) {
-    console.error(
-      `[geniuspay/webhook] Montant incohérent pour ${paiementId} : attendu ${existing.montant}, reçu ${payload.data.amount}`
-    )
+    logError('Montant incohérent — traitement refusé', {
+      paiementId,
+      attendu: existing.montant,
+      recu: payload.data.amount,
+    })
     return Response.json({ error: 'Montant incohérent.' }, { status: 400 })
   }
 
@@ -97,8 +126,10 @@ export async function POST(request: Request): Promise<Response> {
       [`universities/${universityId}/convertedAt`]: now,
       [`universities/${universityId}/convertedPlan`]: plan,
     })
+    log('Paiement confirmé — plan mis à jour', { universityId, paiementId, plan, ms: Date.now() - startedAt })
   } else {
     await paiementRef.update({ statut: nouveauStatut, updatedAt: now })
+    log('Paiement marqué échoué', { universityId, paiementId, event: payload.event, ms: Date.now() - startedAt })
   }
 
   return Response.json({ ok: true })
