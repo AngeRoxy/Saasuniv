@@ -98,7 +98,7 @@ export default function ParentDashboard() {
             <div className="h-6 w-48 animate-pulse rounded bg-white dark:bg-white/5 mt-1" />
           ) : selectedChild ? (
             <>
-              <div className="flex items-center gap-3 mb-1">
+              <div className="flex flex-wrap items-center gap-3 mb-1">
                 <h1 className="text-xl font-bold text-zinc-900 dark:text-white">{selectedChild.displayName}</h1>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/10 text-blue-600 dark:text-orange-400 border border-orange-500/20">
                   {selectedChild.statut ?? 'Actif'}

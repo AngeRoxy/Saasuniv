@@ -403,7 +403,7 @@ export default function LandingPage() {
               initial={reduce ? undefined : { opacity: 0, scale: 0.9 }}
               animate={reduce ? undefined : { opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.5, ease: 'easeOut' }}
-              className="absolute -bottom-6 -left-4 sm:-left-6 flex items-center gap-3 rounded-2xl px-5 py-4 bg-white border border-zinc-200 shadow-xl dark:bg-zinc-950 dark:border-orange-500/20 animate-float"
+              className="absolute -bottom-6 -left-2 sm:-left-6 flex items-center gap-3 rounded-2xl px-5 py-4 bg-white border border-zinc-200 shadow-xl dark:bg-zinc-950 dark:border-orange-500/20 animate-float"
             >
               <div className="p-2 rounded-xl bg-blue-50 dark:bg-orange-500/15">
                 <GraduationCap className="w-6 h-6 text-blue-600 dark:text-orange-400" />

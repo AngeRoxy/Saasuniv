@@ -419,7 +419,7 @@ export default function BillingPage() {
         ) : (
           <ul className="mt-4 divide-y divide-zinc-200 dark:divide-white/10">
             {paiements.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 py-3">
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-white">
                     {PLANS_CONFIG[p.plan].nom} — {p.periode === 'annuel' ? 'annuel' : 'mensuel'}
