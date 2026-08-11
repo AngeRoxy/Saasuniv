@@ -62,8 +62,12 @@ est toujours exempté (accès plateforme).
 
 - `config` (ex. `config/seuilAlerte`) : écriture admin (même université) ou super admin ; lecture héritée par tout membre → sert le **seuil d'alerte des absences injustifiées** (RÈGLE 3).
 
-### `absences` (marquage enseignant + admin)
-- `.write` : `admin_universite`/`teacher` (même université) ou super admin. L'enseignant peut **marquer** une absence pour ses cours ; **seul l'admin justifie** — ce dernier point est appliqué **côté application** (l'UI enseignant n'offre pas la justification), la règle RTDB restant au grain du rôle. **Risque résiduel assumé** cohérent avec la lecture intra-université déjà documentée. Voir `SECURITY_AUDIT.md`.
+### `absences/$absenceId` (marquage enseignant uniquement ; admin = lecture + suppression)
+- `.write` scindée par opération (grâce à `data.exists()`/`newData.exists()`, chaque absence ayant son propre `$absenceId`) :
+  - **Création** (`!data.exists() && newData.exists()`) : `teacher` (même université) uniquement. L'admin n'est **jamais** en classe et ne peut pas savoir qui est réellement présent — il n'a donc plus le droit de créer une absence (retiré de l'UI ET de la règle).
+  - **Suppression** (`data.exists() && !newData.exists()`) : `admin_universite` (même université) uniquement — conservé pour corriger une erreur grave.
+  - **Modification** (`data.exists() && newData.exists()`) : **interdite à tout le monde** sauf super admin. Conséquence assumée : la justification d'une absence (motif/référence) n'est plus possible via l'UI actuelle, ni pour l'enseignant (jamais eu ce droit), ni pour l'admin (retiré volontairement) — un futur mécanisme de justification devra rouvrir ce cas explicitement.
+  - `super_admin_plateforme` : toute opération, comme partout ailleurs.
 
 ### Notes & moyennes (saisie enseignant)
 - `notes` : écriture `teacher` (même université) ou super admin ; `$noteId/note` `.validate` = nombre **0–20** (checklist #7).

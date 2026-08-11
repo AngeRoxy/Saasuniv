@@ -70,7 +70,11 @@
 
         "config":          { ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },
 
-        "absences":        { ".write": "auth != null && ((root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher')) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },
+        "absences": {
+          "$absenceId": {
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('universityId').val() === $universityId && !data.exists() && newData.exists() && root.child('users').child(auth.uid).child('role').val() === 'teacher') || (root.child('users').child(auth.uid).child('universityId').val() === $universityId && data.exists() && !newData.exists() && root.child('users').child(auth.uid).child('role').val() === 'admin_universite') || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+          }
+        },
         "annonces":        { ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },
         "deliberations":   { ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },
         "parcours":        { ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },

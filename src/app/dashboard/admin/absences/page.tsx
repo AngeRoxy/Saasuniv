@@ -2,41 +2,25 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, X, Pencil, Trash2, Search, Check, AlertCircle, AlertTriangle, CalendarX, Save } from 'lucide-react'
+import { Trash2, Search, Check, AlertCircle, AlertTriangle, CalendarX, Save, Info } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
   getAbsences,
-  createAbsence,
-  updateAbsence,
   deleteAbsence,
   getUniversityMembers,
   getSeuilAlerteConfig,
   setSeuilAlerteConfig,
   type Absence,
-  type AbsenceFormData,
   type UniversityMember,
 } from '@/lib/db'
-import { MOTIFS, motifLabel, DEFAULT_SEUIL_ABSENCES, type MotifAbsence } from '@/types/absence'
-import { Toggle } from '@/components/ui/toggle'
-
-interface FormState {
-  studentUid: string
-  date: string
-  matiere: string
-  justifiee: boolean
-  motif: string
-  motifCategorie: MotifAbsence | ''
-  referenceJustificatif: string
-}
+import { motifLabel, DEFAULT_SEUIL_ABSENCES } from '@/types/absence'
 
 type StatutFilter = 'toutes' | 'justifiees' | 'injustifiees'
 
-const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
-const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
 const filterCls = 'bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-orange-500/60'
 
 export default function AdminAbsencesPage() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const universityId = profile?.universityId
 
   const [absences, setAbsences] = useState<Absence[]>([])
@@ -49,11 +33,6 @@ export default function AdminAbsencesPage() {
   const [filiereFilter, setFiliereFilter] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('')
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<FormState>({ studentUid: '', date: '', matiere: '', justifiee: false, motif: '', motifCategorie: '', referenceJustificatif: '' })
-  const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Absence | null>(null)
 
   // Configuration du seuil d'alerte.
@@ -142,68 +121,6 @@ export default function AdminAbsencesPage() {
     return result.sort((a, b) => b.count - a.count)
   }, [absences, seuil, studentById])
 
-  function openAdd() {
-    setEditId(null)
-    setForm({ studentUid: '', date: new Date().toISOString().slice(0, 10), matiere: '', justifiee: false, motif: '', motifCategorie: '', referenceJustificatif: '' })
-    setFormError(null)
-    setModalOpen(true)
-  }
-  function openEdit(a: Absence) {
-    setEditId(a.id)
-    setForm({
-      studentUid: a.studentUid,
-      date: a.date,
-      matiere: a.matiere,
-      justifiee: a.justifiee,
-      motif: a.motif,
-      motifCategorie: a.motifCategorie ?? '',
-      referenceJustificatif: a.referenceJustificatif ?? '',
-    })
-    setFormError(null)
-    setModalOpen(true)
-  }
-  function closeModal() { setModalOpen(false); setEditId(null); setFormError(null) }
-
-  async function handleSave() {
-    if (!universityId) return
-    const student = students.find((s) => s.uid === form.studentUid)
-    if (!student) { setFormError('Choisissez un étudiant.'); return }
-    if (!form.date) { setFormError('Renseignez la date.'); return }
-
-    setSaving(true)
-    setFormError(null)
-    try {
-      const base: AbsenceFormData = {
-        studentUid: student.uid,
-        studentNom: student.displayName,
-        matricule: student.matricule ?? '',
-        date: form.date,
-        matiere: form.matiere,
-        justifiee: form.justifiee,
-        motif: form.motif,
-        // Champs de justification : ne sont écrits que si l'absence est justifiée.
-        ...(form.justifiee && form.motifCategorie ? { motifCategorie: form.motifCategorie } : {}),
-        ...(form.justifiee && form.referenceJustificatif ? { referenceJustificatif: form.referenceJustificatif } : {}),
-      }
-      if (editId) {
-        await updateAbsence(universityId, editId, base)
-      } else {
-        // Traçabilité : on mémorise qui a marqué l'absence (uniquement à la création).
-        await createAbsence(universityId, {
-          ...base,
-          marqueParUid: user?.uid ?? '',
-          marqueParNom: profile?.displayName ?? user?.email ?? '',
-        })
-      }
-      await refresh()
-      closeModal()
-    } catch {
-      setFormError('Échec de l’enregistrement. Réessayez.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function handleDelete() {
     if (!universityId || !deleteTarget) return
     await deleteAbsence(universityId, deleteTarget.id)
@@ -256,17 +173,18 @@ export default function AdminAbsencesPage() {
         </div>
       )}
 
-      {/* Barre de filtres + action */}
+      {/* Note explicative + filtres */}
       <div className="flex flex-col gap-3">
+        <div className="flex items-start gap-2 bg-blue-500/5 dark:bg-orange-500/5 border border-blue-500/15 dark:border-orange-500/15 rounded-xl px-4 py-3">
+          <Info size={15} className="text-blue-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-zinc-600 dark:text-orange-200/60">Les absences sont enregistrées par les enseignants directement sur leurs créneaux.</p>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un étudiant…"
               className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/60" />
           </div>
-          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shrink-0 sm:ml-auto">
-            <Plus size={15} /> Marquer une absence
-          </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select value={statutFilter} onChange={(e) => setStatutFilter(e.target.value as StatutFilter)} className={filterCls}>
@@ -332,7 +250,6 @@ export default function AdminAbsencesPage() {
                 <td className="px-5 py-3.5 text-zinc-500 text-xs">{a.marqueParNom || '—'}</td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-1 justify-center">
-                    <button onClick={() => openEdit(a)} title={a.justifiee ? 'Modifier' : 'Justifier / modifier'} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-blue-800 dark:hover:text-orange-400 hover:bg-orange-500/10"><Pencil size={13} /></button>
                     <button onClick={() => setDeleteTarget(a)} title="Supprimer" className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
                   </div>
                 </td>
@@ -356,76 +273,6 @@ export default function AdminAbsencesPage() {
           {seuilMsg && <span className={`text-xs ${seuilMsg.includes('Échec') || seuilMsg.includes('entier') ? 'text-red-400' : 'text-green-400'}`}>{seuilMsg}</span>}
         </div>
       </div>
-
-      {/* Modal ajout / justification */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-orange-500/20 rounded-2xl p-7 w-full max-w-md max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between mb-6 shrink-0">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Modifier l’absence' : 'Marquer une absence'}</h2>
-              <button onClick={closeModal} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><X size={20} /></button>
-            </div>
-            <div className="flex flex-col flex-1 min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
-              <div>
-                <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Étudiant</label>
-                <select value={form.studentUid} onChange={(e) => setForm((f) => ({ ...f, studentUid: e.target.value }))} className={selectCls}>
-                  <option value="">{students.length ? 'Choisir…' : 'Aucun étudiant inscrit'}</option>
-                  {students.map((s) => <option key={s.uid} value={s.uid}>{s.displayName}{s.matricule ? ` (${s.matricule})` : ''}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Date</label>
-                  <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className={`${inputCls} scheme-dark`} />
-                </div>
-                <div>
-                  <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Matière (option.)</label>
-                  <input value={form.matiere} onChange={(e) => setForm((f) => ({ ...f, matiere: e.target.value }))} placeholder="Ex: Maths" className={inputCls} />
-                </div>
-              </div>
-              <Toggle
-                checked={form.justifiee}
-                onChange={(justifiee) => setForm((f) => ({ ...f, justifiee }))}
-                label="Absence justifiée"
-                trackActiveClassName="bg-green-500"
-              />
-
-              {/* Champs de justification (RÈGLE 2) — visibles seulement si justifiée */}
-              {form.justifiee && (
-                <div className="space-y-4 border-l-2 border-green-500/30 pl-4">
-                  <div>
-                    <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Motif</label>
-                    <select value={form.motifCategorie} onChange={(e) => setForm((f) => ({ ...f, motifCategorie: e.target.value as MotifAbsence | '' }))} className={selectCls}>
-                      <option value="">Choisir…</option>
-                      {MOTIFS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Référence du justificatif (option.)</label>
-                    <input value={form.referenceJustificatif} onChange={(e) => setForm((f) => ({ ...f, referenceJustificatif: e.target.value }))} placeholder="Ex: Certificat n°2024-118" className={inputCls} />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Commentaire (option.)</label>
-                <input value={form.motif} onChange={(e) => setForm((f) => ({ ...f, motif: e.target.value }))} placeholder="Précision libre" className={inputCls} />
-              </div>
-              {formError && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{formError}</p>}
-              </div>
-
-              <div className="flex gap-3 pt-6 shrink-0">
-                <button onClick={closeModal} disabled={saving} className="flex-1 border border-orange-500/20 text-zinc-600 dark:text-orange-200/60 rounded-xl py-2.5 text-sm hover:border-orange-500/40 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50">Annuler</button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors">
-                  {saving && <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />}
-                  {editId ? 'Enregistrer' : 'Ajouter'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Suppression */}
       {deleteTarget && (

@@ -1690,17 +1690,6 @@ export async function getAbsencesForStudent(
   return all.filter((a) => a.studentUid === studentUid)
 }
 
-export async function updateAbsence(
-  universityId: string,
-  absenceId: string,
-  data: Partial<AbsenceFormData>
-): Promise<void> {
-  await update(
-    ref(db, `universities/${universityId}/absences/${absenceId}`),
-    stripUndefined({ ...data, updatedAt: Date.now() })
-  )
-}
-
 export async function deleteAbsence(
   universityId: string,
   absenceId: string
