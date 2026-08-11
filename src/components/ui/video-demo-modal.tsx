@@ -95,29 +95,35 @@ export function VideoDemoModal({ open, onClose }: VideoDemoModalProps) {
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-[1100px]"
           >
-            {/* Barre supérieure : bouton Retour (gauche) + bouton fermer (droite) */}
-            <div className="absolute -top-12 left-0 right-0 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={requestClose}
-                aria-label="Retour à l'accueil"
-                className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white transition-colors hover:bg-white/20"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Retour
-              </button>
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/60">
+              {/* Dégradé de lisibilité derrière la barre — garantit le contraste des boutons quelle que soit l'image vidéo */}
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-linear-to-b from-black/70 to-transparent"
+                aria-hidden="true"
+              />
 
-              <button
-                type="button"
-                onClick={requestClose}
-                aria-label="Fermer la vidéo"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-zinc-900 dark:text-white transition-colors hover:bg-white/20"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+              {/* Barre supérieure : bouton Retour (gauche) + bouton fermer (droite) — ancrée en haut de la vidéo (toujours dans le viewport, y compris mobile paysage) */}
+              <div className="absolute inset-x-0 top-2 z-20 flex items-center justify-between px-2 sm:top-3 sm:px-3">
+                <button
+                  type="button"
+                  onClick={requestClose}
+                  aria-label="Retour à l'accueil"
+                  className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Retour
+                </button>
 
-            <div className="aspect-video w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/60">
+                <button
+                  type="button"
+                  onClick={requestClose}
+                  aria-label="Fermer la vidéo"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
               <video
                 ref={videoRef}
                 src="/videos/gestuniv-demo.mp4"

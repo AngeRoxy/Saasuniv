@@ -32,7 +32,7 @@ export function SelecteurSemaine({ lundi, onChange }: SelecteurSemaineProps) {
   const estSemaineCourante = lundi.getTime() === lundiCourant.getTime()
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       <button
         type="button"
         onClick={() => onChange(decaler(lundi, -7))}

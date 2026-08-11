@@ -75,7 +75,7 @@ export default function RevenuePage() {
         <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">MRR / ARR estimés à partir des abonnements actifs réels.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'MRR (abonnements actifs)', value: fmtFCFA(mrr), icon: DollarSign, sub: `${actives.length} université·s active·s` },
           { label: 'ARR projeté', value: fmtFCFA(arr), icon: TrendingUp, sub: 'MRR × 12 mois' },

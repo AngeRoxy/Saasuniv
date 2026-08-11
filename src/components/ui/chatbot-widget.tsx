@@ -141,7 +141,7 @@ export function ChatbotWidget({ universityId, enfantUid, className }: ChatbotWid
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'fixed bottom-6 right-6 z-50 flex h-130 w-95 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-900/95 text-zinc-800 dark:text-zinc-100 shadow-2xl backdrop-blur',
+              'fixed bottom-6 right-6 z-50 flex h-130 max-h-[calc(100vh-3rem)] w-95 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-900/95 text-zinc-800 dark:text-zinc-100 shadow-2xl backdrop-blur',
               className
             )}
           >

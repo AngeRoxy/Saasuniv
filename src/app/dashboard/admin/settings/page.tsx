@@ -345,10 +345,12 @@ export default function SettingsPage() {
         )}
         <div className="space-y-3">
           {frais.map((f, i) => (
-            <div key={i} className="flex items-center gap-4 bg-zinc-50 dark:bg-black/30 border border-orange-500/5 rounded-xl px-4 py-3">
-              <p className="text-zinc-800 dark:text-orange-100/80 text-sm flex-1">{f.filiere}</p>
-              <input type="number" value={f.montant} onChange={e => setFrais(prev => prev.map((x, j) => j === i ? { ...x, montant: +e.target.value } : x))} className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-3 py-2 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 w-36 text-right" />
-              <span className="text-zinc-500 dark:text-orange-200/40 text-sm">FCFA</span>
+            <div key={i} className="flex flex-wrap items-center gap-4 bg-zinc-50 dark:bg-black/30 border border-orange-500/5 rounded-xl px-4 py-3">
+              <p className="text-zinc-800 dark:text-orange-100/80 text-sm flex-1 min-w-30 truncate">{f.filiere}</p>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input type="number" value={f.montant} onChange={e => setFrais(prev => prev.map((x, j) => j === i ? { ...x, montant: +e.target.value } : x))} className="bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-3 py-2 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 w-full sm:w-36 text-right" />
+                <span className="text-zinc-500 dark:text-orange-200/40 text-sm shrink-0">FCFA</span>
+              </div>
             </div>
           ))}
         </div>
