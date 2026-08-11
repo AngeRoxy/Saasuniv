@@ -1,22 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Check,
   X,
   Clock,
   CheckCircle2,
+  XCircle,
+  Loader2,
   AlertTriangle,
   ShieldAlert,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTrial } from '@/hooks/useTrial'
-import { convertTrial } from '@/lib/db'
+import { auth } from '@/lib/firebase'
+import { getPaiementsAbonnement } from '@/lib/db'
 import { PLANS_CONFIG, PLAN_ORDER, isFeatureSoon, CORE_FEATURES } from '@/lib/plans'
 import { Toggle } from '@/components/ui/toggle'
 import { PlanBadge } from '@/components/ui/plan-badge'
 import type { PlanFeatures, PlanId } from '@/types/plan'
+import type { AbonnementPaiement, AbonnementPeriode } from '@/types/abonnement-paiement'
 import { TRIAL_DURATION_MS } from '@/types/trial'
 
 const CONTACT_EMAIL = 'contact@gestuniv.com'
@@ -66,9 +70,31 @@ export default function BillingPage() {
   const [pending, setPending] = useState<PlanId | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [redirecting, setRedirecting] = useState(false)
+
+  const [paiements, setPaiements] = useState<AbonnementPaiement[]>([])
+  const [paiementsLoading, setPaiementsLoading] = useState(true)
 
   const role = profile?.role
   const allowed = role === 'admin_universite' || role === 'super_admin_plateforme'
+
+  useEffect(() => {
+    if (!universityId) return
+    let active = true
+    getPaiementsAbonnement(universityId)
+      .then((list) => {
+        if (active) setPaiements(list)
+      })
+      .catch(() => {
+        if (active) setPaiements([])
+      })
+      .finally(() => {
+        if (active) setPaiementsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [universityId])
 
   // ── Garde d'accès ──────────────────────────────────────────────────────────
   if (!authLoading && profile && !allowed) {
@@ -86,13 +112,36 @@ export default function BillingPage() {
     if (!pending || !universityId) return
     setSubmitting(true)
     try {
-      await convertTrial(universityId, pending)
-      setToast('Plan mis à jour avec succès')
-      setPending(null)
-      // Recharger pour refléter le nouveau plan partout (sidebar, gates…).
-      setTimeout(() => window.location.reload(), 900)
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) {
+        setToast('Vous devez être connecté.')
+        setSubmitting(false)
+        return
+      }
+
+      const periode: AbonnementPeriode = annual ? 'annuel' : 'mensuel'
+      const res = await fetch('/api/geniuspay/create-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ universityId, plan: pending, periode }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.checkoutUrl) {
+        setToast(data?.error ?? "Échec de l'initialisation du paiement. Réessayez.")
+        setSubmitting(false)
+        return
+      }
+
+      // Redirection vers la page de paiement hébergée GeniusPay — le plan ne
+      // change qu'après confirmation réelle du paiement (webhook), jamais ici.
+      setRedirecting(true)
+      window.location.href = data.checkoutUrl
     } catch {
-      setToast('Échec de la mise à jour. Réessayez.')
+      setToast('Échec de la connexion au service de paiement. Réessayez.')
       setSubmitting(false)
     }
   }
@@ -331,8 +380,8 @@ export default function BillingPage() {
               . Confirmez-vous votre choix ?
             </p>
             <p className="mt-2 text-xs text-zinc-600">
-              Le paiement réel sera intégré ultérieurement — la conversion est
-              ici simulée.
+              Vous serez redirigé vers la page de paiement sécurisée GeniusPay.
+              Le plan ne change qu'après confirmation réelle du paiement.
             </p>
             </div>
 
@@ -352,12 +401,52 @@ export default function BillingPage() {
                 {submitting && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
                 )}
-                Confirmer
+                {redirecting ? 'Redirection…' : 'Payer avec GeniusPay'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ── Section 3 : historique des paiements ──────────────────────────── */}
+      <section className="rounded-xl border border-zinc-200 dark:border-orange-500/10 bg-white dark:bg-zinc-950 p-6">
+        <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Historique des paiements</h2>
+
+        {paiementsLoading ? (
+          <p className="mt-4 text-sm text-zinc-500">Chargement…</p>
+        ) : paiements.length === 0 ? (
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Aucun paiement pour le moment.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-zinc-200 dark:divide-white/10">
+            {paiements.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 py-3">
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                    {PLANS_CONFIG[p.plan].nom} — {p.periode === 'annuel' ? 'annuel' : 'mensuel'}
+                  </p>
+                  <p className="text-xs text-zinc-500">{formatDate(p.createdAt)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{formatPrice(p.montant)} FCFA</span>
+                  {p.statut === 'reussi' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+                      <CheckCircle2 size={12} /> Réussi
+                    </span>
+                  ) : p.statut === 'echoue' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-400">
+                      <XCircle size={12} /> Échoué
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      <Loader2 size={12} className="animate-spin" /> En attente
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* ── Toast ─────────────────────────────────────────────────────────── */}
       {toast && (
