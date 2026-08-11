@@ -62,11 +62,11 @@ est toujours exempté (accès plateforme).
 
 - `config` (ex. `config/seuilAlerte`) : écriture admin (même université) ou super admin ; lecture héritée par tout membre → sert le **seuil d'alerte des absences injustifiées** (RÈGLE 3).
 
-### `absences/$absenceId` (marquage enseignant uniquement ; admin = lecture + suppression)
+### `absences/$absenceId` (marquage + justification par le créateur enseignant ; admin = lecture + suppression)
 - `.write` scindée par opération (grâce à `data.exists()`/`newData.exists()`, chaque absence ayant son propre `$absenceId`) :
   - **Création** (`!data.exists() && newData.exists()`) : `teacher` (même université) uniquement. L'admin n'est **jamais** en classe et ne peut pas savoir qui est réellement présent — il n'a donc plus le droit de créer une absence (retiré de l'UI ET de la règle).
-  - **Suppression** (`data.exists() && !newData.exists()`) : `admin_universite` (même université) uniquement — conservé pour corriger une erreur grave.
-  - **Modification** (`data.exists() && newData.exists()`) : **interdite à tout le monde** sauf super admin. Conséquence assumée : la justification d'une absence (motif/référence) n'est plus possible via l'UI actuelle, ni pour l'enseignant (jamais eu ce droit), ni pour l'admin (retiré volontairement) — un futur mécanisme de justification devra rouvrir ce cas explicitement.
+  - **Modification / justification** (`data.exists() && newData.exists()`) : `teacher` **et** `data.child('marqueParUid').val() === auth.uid` — seul l'enseignant qui a lui-même marqué l'absence peut la justifier (motif/référence). L'admin ne peut plus modifier une absence, y compris pour la justifier. Les absences héritées sans `marqueParUid` (créées avant ce champ) ne sont modifiables par personne d'autre que le super admin — échec fermé assumé.
+  - **Suppression** (`data.exists() && !newData.exists()`) : `admin_universite` (même université) **ou** `teacher` créateur (`data.child('marqueParUid').val() === auth.uid`) — l'admin corrige une erreur grave, l'enseignant peut retirer une absence qu'il a lui-même mal saisie.
   - `super_admin_plateforme` : toute opération, comme partout ailleurs.
 
 ### Notes & moyennes (saisie enseignant)
