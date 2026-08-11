@@ -227,3 +227,105 @@ export async function sendEmailChangeNotification(
     return { success: false }
   }
 }
+
+// ─── Formulaire de contact (landing page) ──────────────────────────────────
+
+export interface ContactMessage {
+  name: string
+  email: string
+  subject: string
+  message: string
+}
+
+function buildContactHtml(p: ContactMessage): string {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nouveau message — Contact GestUniv</title>
+</head>
+<body style="margin:0;padding:0;background-color:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#09090b;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#18181b;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 32px 0;">
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Gest<span style="color:#2563eb;">Univ</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 32px 8px;">
+              <p style="margin:0;font-size:14px;line-height:1.6;color:#a1a1aa;">Nouveau message reçu via le formulaire de contact du site.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(37,99,235,0.10);border:1px solid rgba(37,99,235,0.30);border-radius:12px;">
+                <tr><td style="padding:18px 20px;">
+                  <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Nom : <strong style="color:#ffffff;">${p.name}</strong></p>
+                  <p style="margin:0 0 6px;font-size:14px;color:#e4e4e7;">Email : <strong style="color:#ffffff;">${p.email}</strong></p>
+                  <p style="margin:0 0 12px;font-size:14px;color:#e4e4e7;">Sujet : <strong style="color:#ffffff;">${p.subject}</strong></p>
+                  <p style="margin:0;font-size:14px;line-height:1.6;color:#e4e4e7;white-space:pre-wrap;">${p.message}</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06);">
+              <p style="margin:0;font-size:12px;color:#52525b;">Répondre directement à cet email contactera ${p.email}.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+/**
+ * Envoie un message du formulaire de contact public vers l'adresse de contact
+ * GestUniv (CONTACT_EMAIL, ou l'adresse par défaut si non configurée).
+ * `reply_to` pointe vers l'expéditeur pour permettre une réponse directe.
+ */
+export async function sendContactEmail(
+  params: ContactMessage
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      console.error('[sendContactEmail] RESEND_API_KEY manquante — email non envoyé.')
+      return { success: false, error: 'Service email indisponible.' }
+    }
+
+    const contactEmail = process.env.CONTACT_EMAIL || 'kouadioroxanne70@gmail.com'
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: 'GestUniv <noreply@gestuniv.online>',
+        to: contactEmail,
+        reply_to: params.email,
+        subject: `[Contact GestUniv] ${params.subject}`,
+        html: buildContactHtml(params),
+      }),
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      console.error(`[sendContactEmail] Resend a répondu ${res.status}: ${detail}`)
+      return { success: false, error: "L'envoi a échoué. Réessayez plus tard." }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('[sendContactEmail] Erreur inattendue:', err)
+    return { success: false, error: "L'envoi a échoué. Réessayez plus tard." }
+  }
+}
