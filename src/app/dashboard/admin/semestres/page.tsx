@@ -223,7 +223,7 @@ export default function SemestresPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Semestres</h1>
           <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">
