@@ -160,7 +160,7 @@ export default function SuperAdminPage() {
         <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Tableau de bord de la plateforme GestUniv</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {kpis.map(({ label, value, icon: Icon, sub }) => (
           <div key={label} className="bg-orange-950/30 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6">
             <div className="flex items-center justify-between mb-3">

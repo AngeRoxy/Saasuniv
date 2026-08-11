@@ -130,7 +130,7 @@ export default function ParentDashboard() {
           honnête est conservé UNIQUEMENT quand aucun enfant n'est rattaché : ce
           n'est alors pas un module manquant, c'est une donnée manquante. */}
       {selectedChild ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             label="Moyenne générale"
             value={moyenne !== null ? `${moyenne.toFixed(2)}/20` : null}
