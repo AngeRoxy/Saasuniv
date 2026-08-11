@@ -68,7 +68,7 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
     return (
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/15 px-4 py-3',
+          'flex flex-wrap items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/15 px-4 py-3',
           className
         )}
       >
@@ -103,7 +103,7 @@ export function TrialBanner({ universityId, className }: TrialBannerProps) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3',
+        'flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3',
         className
       )}
     >
