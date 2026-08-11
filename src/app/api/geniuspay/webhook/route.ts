@@ -9,7 +9,10 @@ interface GeniusPayWebhookPayload {
   event: string
   data: {
     reference: string
-    amount: number
+    // GeniusPay renvoie parfois ce champ en chaîne avec décimales (ex.
+    // "15000.00") plutôt qu'en nombre — jamais faire confiance au type
+    // déclaré, toujours convertir avant de comparer (cf. montantRecu ci-dessous).
+    amount: number | string
     status: string
     metadata?: {
       universityId?: string
@@ -101,8 +104,13 @@ export async function POST(request: Request): Promise<Response> {
 
   // Défense en profondeur : le montant confirmé par GeniusPay doit correspondre
   // à celui calculé côté serveur lors de la création — sinon on ne fait
-  // confiance à rien plutôt que de valider un montant trafiqué.
-  if (isSuccess && payload.data.amount !== existing.montant) {
+  // confiance à rien plutôt que de valider un montant trafiqué. GeniusPay
+  // renvoie parfois ce champ en chaîne décimale (ex. "15000.00") : on convertit
+  // avant de comparer, avec une tolérance d'un centime pour l'arrondi flottant
+  // — jamais une égalité stricte entre un nombre et une chaîne (toujours fausse).
+  const montantRecu = Number(payload.data.amount)
+  const montantValide = Number.isFinite(montantRecu) && Math.abs(montantRecu - existing.montant) < 0.01
+  if (isSuccess && !montantValide) {
     logError('Montant incohérent — traitement refusé', {
       paiementId,
       attendu: existing.montant,
