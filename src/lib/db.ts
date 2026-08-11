@@ -22,8 +22,10 @@ export interface University {
   type?: string
   annee?: string
   // Champs d'essai — présents uniquement si l'université est passée par un essai
-  // gratuit (écrits par initTrial / convertTrial / checkTrialExpired). Le
-  // super-admin les lit pour le MRR, le taux de conversion et les alertes.
+  // gratuit (trialEndsAt/trialStatus écrits par initTrial/checkTrialExpired ;
+  // convertedAt/convertedPlan écrits par le webhook GeniusPay via le SDK Admin,
+  // cf. src/app/api/geniuspay/webhook/route.ts). Le super-admin les lit pour le
+  // MRR, le taux de conversion et les alertes.
   trialEndsAt?: number
   trialStatus?: TrialStatus
   convertedAt?: number
@@ -946,6 +948,7 @@ export async function getUniversityStudentCount(universityId: string): Promise<n
 // ─── Essai gratuit (trial 30 jours) ────────────────────────────────────────────
 
 import type { PlanId } from '@/types/plan'
+import type { AbonnementPaiement } from '@/types/abonnement-paiement'
 import {
   TRIAL_DURATION_MS,
   type StoredPlan,
@@ -1004,19 +1007,18 @@ export async function checkTrialExpired(universityId: string): Promise<boolean> 
 }
 
 /**
- * Convertit l'essai en plan payant : `plan` prend la valeur choisie,
- * trialStatus passe à "converted" et la date/plan de conversion sont mémorisés.
+ * Historique des paiements d'abonnement (GeniusPay) de l'université, du plus
+ * récent au plus ancien. Écrit uniquement par les routes serveur
+ * `/api/geniuspay/*` (SDK Admin) ; lu ici avec l'idToken de l'appelant, la
+ * règle RTDB héritant la lecture de `/universities/{id}`.
  */
-export async function convertTrial(
-  universityId: string,
-  newPlan: PlanId
-): Promise<void> {
-  await update(ref(db, `universities/${universityId}`), {
-    plan: newPlan,
-    trialStatus: 'converted',
-    convertedAt: Date.now(),
-    convertedPlan: newPlan,
-  })
+export async function getPaiementsAbonnement(
+  universityId: string
+): Promise<AbonnementPaiement[]> {
+  const snapshot = await get(ref(db, `universities/${universityId}/abonnementPaiements`))
+  if (!snapshot.exists()) return []
+  const data = snapshot.val() as Record<string, AbonnementPaiement>
+  return Object.values(data).sort((a, b) => b.createdAt - a.createdAt)
 }
 
 /**
