@@ -1497,7 +1497,7 @@ export default function StudentsPage() {
     <div className="space-y-6">
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
         {/* Search */}
         <div className="relative flex-1 w-full">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />

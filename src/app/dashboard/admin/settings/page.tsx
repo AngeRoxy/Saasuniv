@@ -224,7 +224,7 @@ export default function SettingsPage() {
               <input value={info.pays} onChange={e => setInfo(i => ({ ...i, pays: e.target.value }))} className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Type</label>
               <select value={info.type} onChange={e => setInfo(i => ({ ...i, type: e.target.value }))} className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60">

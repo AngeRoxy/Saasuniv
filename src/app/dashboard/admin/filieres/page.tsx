@@ -293,7 +293,7 @@ export default function FilieresPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Total filières', value: filieres.length, color: 'text-blue-600 dark:text-orange-400' },
           { label: 'Actives', value: totalActives, color: 'text-emerald-400' },
