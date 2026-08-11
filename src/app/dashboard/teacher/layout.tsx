@@ -109,7 +109,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         <nav className="flex-1 py-4 overflow-y-auto">
           <p className="px-6 py-2 text-[10px] uppercase tracking-widest text-zinc-500 dark:text-orange-300/30 mb-1">Enseignant</p>
           {navLinks.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href
+            const isActive = href === '/dashboard/teacher'
+              ? pathname === href
+              : pathname === href || pathname.startsWith(href + '/')
             return (
               <Link key={href} href={href}
                 onClick={() => setIsSidebarOpen(false)}

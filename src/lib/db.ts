@@ -1641,11 +1641,13 @@ export async function deletePaiement(
 
 import {
   DEFAULT_SEUIL_ABSENCES,
+  appelKey,
   type Absence,
   type AbsenceFormData,
+  type Appel,
 } from '@/types/absence'
 
-export type { Absence, AbsenceFormData }
+export type { Absence, AbsenceFormData, Appel }
 export { DEFAULT_SEUIL_ABSENCES }
 
 /**
@@ -1706,6 +1708,33 @@ export async function deleteAbsence(
   absenceId: string
 ): Promise<void> {
   await remove(ref(db, `universities/${universityId}/absences/${absenceId}`))
+}
+
+// ─── Appel de classe (indicateur, cf. types/absence.ts:Appel) ──────────────────
+
+export async function getAppels(universityId: string): Promise<Appel[]> {
+  const snapshot = await get(ref(db, `universities/${universityId}/appels`))
+  if (!snapshot.exists()) return []
+  const result: Appel[] = []
+  snapshot.forEach((child) => {
+    result.push({ id: child.key!, ...child.val() } as Appel)
+  })
+  return result
+}
+
+export async function saveAppel(
+  universityId: string,
+  creneauId: string,
+  date: string,
+  data: { faitParUid: string; faitParNom: string; presents: number; absents: number }
+): Promise<void> {
+  const key = appelKey(creneauId, date)
+  await set(ref(db, `universities/${universityId}/appels/${key}`), {
+    creneauId,
+    date,
+    ...data,
+    updatedAt: Date.now(),
+  })
 }
 
 // ─── Seuil d'alerte des absences injustifiées (RÈGLE 3) ─────────────────────────

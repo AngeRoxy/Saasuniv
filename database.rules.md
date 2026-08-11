@@ -69,6 +69,10 @@ est toujours exempté (accès plateforme).
   - **Suppression** (`data.exists() && !newData.exists()`) : `admin_universite` (même université) **ou** `teacher` créateur (`data.child('marqueParUid').val() === auth.uid`) — l'admin corrige une erreur grave, l'enseignant peut retirer une absence qu'il a lui-même mal saisie.
   - `super_admin_plateforme` : toute opération, comme partout ailleurs.
 
+### `appels/$appelId`  ← **nœud ajouté (appel de classe)**
+- `$appelId` = `${creneauId}__${date}` (une seule entrée par créneau + date). Trace purement indicative de qui a fait l'appel et quand, distincte des `absences` elles-mêmes (un appel à 0 absent ne crée aucune `Absence` — sans ce nœud, impossible de distinguer « appel pas encore fait » de « fait, tout le monde présent »).
+- `.write` : `teacher` (même université) ou super admin — **pas de vérification que le créneau appartient bien à CET enseignant** : comme pour `sessions_direct` et l'ancienne conception de `absences`, l'association enseignant↔créneau se fait par **nom** (`Creneau.enseignant`), pas par uid, donc la règle RTDB ne peut pas le vérifier nativement. Risque résiduel assumé, cohérent avec le reste du module emploi du temps. L'UI ne propose que les créneaux de l'enseignant connecté (`c.enseignant === teacherName`).
+
 ### Notes & moyennes (saisie enseignant)
 - `notes` : écriture `teacher` (même université) ou super admin ; `$noteId/note` `.validate` = nombre **0–20** (checklist #7).
 - `moyennes` : idem ; `$semestreId/$studentUid` `.validate` = nombre **0–20**.
