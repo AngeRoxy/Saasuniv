@@ -333,7 +333,7 @@ export default function RegisterUniversityPage() {
                       {config.badge && <span className="ml-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{config.badge}</span>}
                     </div>
                   </div>
-                  <ul className="grid grid-cols-2 gap-1">
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                     {PLAN_HIGHLIGHTS.map(({ key, label }) => {
                       const on = Boolean(config.features[key])
                       const soon = isFeatureSoon(key) && on

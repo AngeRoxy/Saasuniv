@@ -308,7 +308,7 @@ export default function TeacherResourcesPage() {
                 <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Description (option.)</label>
                 <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} placeholder="Contenu…" className={`${inputCls} resize-none`} />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Filière</label>
                   <select value={form.filiereId} onChange={(e) => setForm((f) => ({ ...f, filiereId: e.target.value, niveau: '' }))} className={selectCls}>

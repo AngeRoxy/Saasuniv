@@ -214,7 +214,7 @@ export default function SettingsPage() {
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Informations générales</h2>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5">Nom de l&apos;université</label>
               <input value={info.nom} onChange={e => setInfo(i => ({ ...i, nom: e.target.value }))} className="w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-3 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60" />
@@ -321,7 +321,7 @@ export default function SettingsPage() {
       {/* Calendrier */}
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Calendrier académique</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             ['Rentrée', 'rentree'], ['Examens S1', 'examsS1'], ['Vacances intersemestrielles', 'vacances'],
             ['Examens S2', 'examsS2'], ['Clôture de l\'année', 'cloture'],

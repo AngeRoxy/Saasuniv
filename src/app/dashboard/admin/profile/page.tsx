@@ -253,7 +253,7 @@ export default function AdminProfilePage() {
         {/* Account details */}
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-orange-500/10 rounded-2xl p-6 space-y-5">
           <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Détails du compte</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-zinc-50 dark:bg-black/40 rounded-xl p-4">
               <p className="text-xs text-zinc-500 mb-1">Rôle</p>
               <p className="text-zinc-900 dark:text-white text-sm font-medium">Admin université</p>
@@ -395,7 +395,7 @@ export default function AdminProfilePage() {
             {/* Fields */}
             <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs text-zinc-600 dark:text-zinc-400">Prénom</label>
                   <input

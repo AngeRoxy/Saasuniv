@@ -479,7 +479,7 @@ export default function FilieresPage() {
               )}
 
               {/* Nom + Code */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Nom de la filière *</label>
                   <input
@@ -563,7 +563,7 @@ export default function FilieresPage() {
               </div>
 
               {/* Durée + Crédits */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Durée (années)</label>
                   <input

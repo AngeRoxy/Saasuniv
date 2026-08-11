@@ -315,7 +315,7 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, camp
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
           {/* Prénom / Nom */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldInput label="Prénom" value={form.prenom} onChange={set('prenom')} placeholder="Yves" required />
             <FieldInput label="Nom" value={form.nom} onChange={set('nom')} placeholder="Konan" required />
           </div>
@@ -366,7 +366,7 @@ function StudentModal({ mode, initial, matriculePreview, parents, filieres, camp
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FieldSelect label="Filière" value={form.filiere} onChange={handleFiliereChange} options={filiereOptions.map((f) => f.nom)} required />
                 <FieldSelect
                   label="Niveau"
@@ -907,7 +907,7 @@ function MergeModal({
             L&apos;autre sera <span className="text-red-500 font-medium">supprimé définitivement</span> (avec le nettoyage en cascade habituel).
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {candidates.map(({ key, student }) => (
               <button
                 key={key}

@@ -371,7 +371,7 @@ export default function SemestresPage() {
               </div>
 
               {/* Année + Numéro */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Année académique *</label>
                   <input
@@ -396,7 +396,7 @@ export default function SemestresPage() {
               </div>
 
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Date de début</label>
                   <input

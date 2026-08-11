@@ -276,7 +276,7 @@ export default function CoursesPage() {
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
               {/* Row 1: Intitulé + Code */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Intitulé du cours</label>
                   <input
@@ -320,7 +320,7 @@ export default function CoursesPage() {
                   .
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Filière</label>
                     <select
@@ -348,7 +348,7 @@ export default function CoursesPage() {
               )}
 
               {/* Row 4: Crédits ECTS + Semestre */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Crédits ECTS</label>
                   <input

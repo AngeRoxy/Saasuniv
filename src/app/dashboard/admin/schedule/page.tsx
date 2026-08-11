@@ -608,7 +608,7 @@ export default function SchedulePage() {
 
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className={labelCls}>Jour</label>
                   <select value={form.jour} onChange={(e) => setForm((f) => ({ ...f, jour: e.target.value as JourSemaine }))} className={selectCls}>

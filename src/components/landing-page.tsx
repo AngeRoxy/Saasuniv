@@ -764,7 +764,7 @@ export default function LandingPage() {
             Vos données sont totalement sécurisées et privées.
             Conforme RGPD, journal des activités inviolable et chiffrement de bout en bout.
           </p>
-          <motion.div {...stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <motion.div {...stagger} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: <Shield className="w-5 h-5" />, label: 'Données privées et sécurisées' },
               { icon: <Lock className="w-5 h-5" />, label: 'Données chiffrées (standard bancaire)' },
