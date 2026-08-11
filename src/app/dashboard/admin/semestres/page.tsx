@@ -325,14 +325,14 @@ export default function SemestresPage() {
                   </button>
                   <button
                     onClick={() => openEdit(s)}
-                    className="p-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                     title="Modifier"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => setDeleteId(s.id)}
-                    className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/25 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/25 transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                     title="Supprimer"
                   >
                     <Trash2 size={14} />

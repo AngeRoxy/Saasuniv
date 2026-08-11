@@ -274,8 +274,8 @@ function CampusPageContent() {
                 </div>
               </div>
 
-              {/* Actions (hover) */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              {/* Actions (toujours visibles sur mobile/tablette — pas de hover tactile ; hover-to-reveal dès lg) */}
+              <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shrink-0">
                 <button
                   onClick={() => openEdit(c)}
                   className="p-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 transition-colors"

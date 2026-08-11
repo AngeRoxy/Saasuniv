@@ -406,8 +406,8 @@ export default function FilieresPage() {
                 {f.actif ? 'Active' : 'Inactive'}
               </span>
 
-              {/* Actions (hover) */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              {/* Actions (toujours visibles sur mobile/tablette — pas de hover tactile ; hover-to-reveal dès lg) */}
+              <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shrink-0">
                 <button
                   onClick={() => router.push(`/dashboard/admin/filieres/${f.id}`)}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500/10 text-blue-600 dark:text-orange-400 hover:bg-orange-500/25 text-xs font-medium transition-colors"
