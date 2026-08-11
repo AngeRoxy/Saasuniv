@@ -33,8 +33,14 @@ est toujours exempté (accès plateforme).
 - `.write` (nœud lui-même) : uniquement à la **création** (`!data.exists()`) par l'admin de cette université ou le super admin → inscription libre-service.
 
 ### Champs commerciaux / abonnement
-- `plan` : écriture admin (même université) ou super admin ; `.validate` enum `trial|standard|premium|enterprise`. ⚠️ **Volontairement laissé écrivable par l'admin** pour préserver le tunnel d'essai libre-service (`initTrial`/`convertTrial`). Risque résiduel documenté dans `SECURITY_AUDIT.md`.
-- `trialEndsAt`, `trialStatus`, `convertedAt`, `convertedPlan` : idem (écrits côté client par le flux d'essai).
+- `plan` : écriture admin (même université) **UNIQUEMENT si `newData.val() === 'trial'`** — préserve le tunnel d'essai libre-service (`initTrial`), mais un admin ne peut plus s'auto-attribuer `standard`/`premium`/`enterprise`. Super admin : toute valeur. `.validate` enum `trial|standard|premium|enterprise`. **Correctif** (risque résiduel #3 de `SECURITY_AUDIT.md`, « facturation auto-déclarative ») : le passage à un plan payant n'est plus possible que via le webhook GeniusPay (SDK Admin, contourne les règles) après confirmation réelle du paiement — voir `/universities/$universityId/abonnementPaiements`.
+- `trialEndsAt`, `trialStatus` : écriture admin (même université) ou super admin — toujours écrits côté client par le flux d'essai (`initTrial`/`checkTrialExpired`).
+- `convertedAt`, `convertedPlan` : **super admin uniquement** désormais (plus d'écriture admin) — ces champs ne sont plus posés que par le webhook GeniusPay via le SDK Admin (contourne cette règle) au moment d'une conversion payante réelle.
+
+### `/universities/$universityId/abonnementPaiements/$paiementId`  ← **nœud ajouté (paiement GeniusPay)**
+- Historique des paiements d'abonnement (à distinguer de `paiements`, qui sont les échéances de scolarité PAR ÉTUDIANT — schéma totalement différent, ne pas confondre).
+- **Aucune règle `.write` explicite → écriture refusée par défaut pour tout client authentifié** (admin comme super admin). Volontaire : seules les routes serveur `/api/geniuspay/create-payment` et `/api/geniuspay/webhook` écrivent ce nœud, via le SDK Admin (`src/lib/server/firebase-admin.ts`) qui contourne les règles — un admin ne peut donc jamais forger une entrée « réussi » directement en base.
+- `.read` : hérité de `$universityId` (membre de cette université ou super admin) → l'admin peut lire l'historique de sa propre université sans route dédiée.
 - `status` (`active|inactive|suspended`) : **super admin uniquement** + `.validate` enum. **Correction** : empêche l'admin d'une université suspendue de se réactiver lui-même.
 - `name`, `slug`, `adminUid`, `createdAt` : admin (même université) ou super admin.
 
