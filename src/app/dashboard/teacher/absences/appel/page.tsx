@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, X, Info, ClipboardCheck } from 'lucide-react'
+import { ArrowLeft, Check, X, Info, ClipboardCheck, Plus, Minus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
   getCreneaux,
@@ -11,21 +11,46 @@ import {
   getAbsences,
   getAppels,
   createAbsence,
+  updateAbsence,
   deleteAbsence,
   saveAppel,
   type Absence,
+  type AbsenceFormData,
   type Appel,
   type UniversityMember,
   type Filiere,
 } from '@/lib/db'
 import { type Creneau, JOUR_LABEL, toDateISO, verifierDateOccurrence } from '@/types/emploi-du-temps'
-import { appelKey } from '@/types/absence'
+import { MOTIFS, appelKey, type MotifAbsence } from '@/types/absence'
+import { Toggle } from '@/components/ui/toggle'
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
 const selectCls = 'w-full bg-white dark:bg-zinc-900 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
 
 interface PresenceState {
   [studentUid: string]: boolean
+}
+
+/** Brouillon de justification saisi en marge de l'appel, pour UN étudiant. */
+interface JustifyDraft {
+  open: boolean
+  justifiee: boolean
+  motifCategorie: MotifAbsence | ''
+  referenceJustificatif: string
+  motif: string
+}
+
+const EMPTY_DRAFT: JustifyDraft = { open: true, justifiee: false, motifCategorie: '', referenceJustificatif: '', motif: '' }
+
+/** Traduit un brouillon ouvert en champs prêts pour createAbsence/updateAbsence, ou `null` si le panneau n'a pas été ouvert (aucun changement à apporter à la justification). */
+function justificationPatch(draft: JustifyDraft | undefined): Partial<AbsenceFormData> | null {
+  if (!draft?.open) return null
+  return {
+    justifiee: draft.justifiee,
+    motif: draft.motif,
+    ...(draft.justifiee && draft.motifCategorie ? { motifCategorie: draft.motifCategorie } : {}),
+    ...(draft.justifiee && draft.referenceJustificatif ? { referenceJustificatif: draft.referenceJustificatif } : {}),
+  }
 }
 
 export default function FaireAppelPage() {
@@ -128,6 +153,7 @@ export default function FaireAppelPage() {
   // « information from previous renders » (comparaison pendant le render, pas
   // dans un useEffect : évite react-hooks/set-state-in-effect, cf. mémoire projet).
   const [presence, setPresence] = useState<PresenceState>({})
+  const [justifyDrafts, setJustifyDrafts] = useState<Record<string, JustifyDraft>>({})
   const resetKey = `${effectiveCreneauId}|${date}`
   const [prevResetKey, setPrevResetKey] = useState(resetKey)
   if (resetKey !== prevResetKey) {
@@ -135,6 +161,7 @@ export default function FaireAppelPage() {
     const next: PresenceState = {}
     for (const s of groupeStudents) next[s.uid] = !existingByStudent.has(s.uid)
     setPresence(next)
+    setJustifyDrafts({})
     setResultMsg(null)
     setError(null)
   }
@@ -147,6 +174,30 @@ export default function FaireAppelPage() {
   function togglePresence(uid: string, present: boolean) {
     setPresence((prev) => ({ ...prev, [uid]: present }))
     setResultMsg(null)
+    // Redevenu présent : le brouillon de justification n'a plus lieu d'être.
+    if (present) {
+      setJustifyDrafts((prev) => {
+        if (!(uid in prev)) return prev
+        const next = { ...prev }
+        delete next[uid]
+        return next
+      })
+    }
+  }
+
+  function toggleJustifyPanel(uid: string) {
+    setJustifyDrafts((prev) => {
+      if (prev[uid]?.open) {
+        const next = { ...prev }
+        delete next[uid]
+        return next
+      }
+      return { ...prev, [uid]: { ...EMPTY_DRAFT } }
+    })
+  }
+
+  function updateDraft(uid: string, patch: Partial<JustifyDraft>) {
+    setJustifyDrafts((prev) => ({ ...prev, [uid]: { ...(prev[uid] ?? EMPTY_DRAFT), ...patch } }))
   }
 
   async function handleSubmit() {
@@ -166,6 +217,11 @@ export default function FaireAppelPage() {
         if (existing) ops.push(deleteAbsence(universityId, existing.id))
       } else {
         absents++
+        // Justification saisie en marge de l'appel (panneau « + Ajouter un
+        // motif ») : incluse directement à la création, ou appliquée par
+        // updateAbsence si l'absence existait déjà (appel corrigé) et n'était
+        // pas encore justifiée.
+        const patch = justificationPatch(justifyDrafts[s.uid])
         if (!existing) {
           ops.push(createAbsence(universityId, {
             studentUid: s.uid,
@@ -173,12 +229,16 @@ export default function FaireAppelPage() {
             matricule: s.matricule ?? '',
             date,
             matiere: creneau.matiere,
-            justifiee: false,
-            motif: '',
+            justifiee: patch?.justifiee ?? false,
+            motif: patch?.motif ?? '',
+            motifCategorie: patch?.motifCategorie,
+            referenceJustificatif: patch?.referenceJustificatif,
             creneauId: creneau.id,
             marqueParUid: user?.uid ?? '',
             marqueParNom: teacherName || user?.email || '',
           }))
+        } else if (patch) {
+          ops.push(updateAbsence(universityId, existing.id, patch))
         }
       }
     }
@@ -214,7 +274,7 @@ export default function FaireAppelPage() {
           <ClipboardCheck size={22} className="text-blue-600 dark:text-orange-400" />
           Faire l’appel
         </h1>
-        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Cochez les absents ; tous les étudiants sont présents par défaut.</p>
+        <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Cochez les absents ; tous les étudiants sont présents par défaut. Vous pouvez justifier une absence directement si vous savez déjà qu’elle l’est.</p>
       </div>
 
       {mesCreneaux.length === 0 ? (
@@ -268,30 +328,69 @@ export default function FaireAppelPage() {
               <ul className="divide-y divide-orange-500/5">
                 {groupeStudents.map((s) => {
                   const estPresent = presence[s.uid] !== false
+                  const existing = existingByStudent.get(s.uid)
+                  const dejaJustifiee = existing?.justifiee ?? false
+                  const draft = justifyDrafts[s.uid]
                   return (
-                    <li key={s.uid} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-3">
-                      <div>
-                        <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{s.displayName}</p>
-                        {s.matricule && <p className="text-zinc-500 text-xs font-mono mt-1">{s.matricule}</p>}
+                    <li key={s.uid} className="px-5 py-3 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                          <p className="text-zinc-900 dark:text-white text-sm font-medium leading-none">{s.displayName}</p>
+                          {s.matricule && <p className="text-zinc-500 text-xs font-mono mt-1">{s.matricule}</p>}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <button type="button" onClick={() => togglePresence(s.uid, true)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              estPresent
+                                ? 'bg-green-500/15 text-green-400 border-green-500/25'
+                                : 'text-zinc-500 border-orange-500/10 hover:border-orange-500/30'
+                            }`}>
+                            <Check size={13} /> Présent
+                          </button>
+                          <button type="button" onClick={() => togglePresence(s.uid, false)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              !estPresent
+                                ? 'bg-red-500/15 text-red-400 border-red-500/25'
+                                : 'text-zinc-500 border-orange-500/10 hover:border-orange-500/30'
+                            }`}>
+                            <X size={13} /> Absent
+                          </button>
+                          {!estPresent && (
+                            dejaJustifiee ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                                <Check size={11} /> Justifiée
+                              </span>
+                            ) : (
+                              <button type="button" onClick={() => toggleJustifyPanel(s.uid)}
+                                className="flex items-center gap-1 text-xs text-blue-700 dark:text-orange-300 hover:underline">
+                                {draft?.open ? <><Minus size={12} /> Masquer le motif</> : <><Plus size={12} /> Ajouter un motif</>}
+                              </button>
+                            )
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => togglePresence(s.uid, true)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            estPresent
-                              ? 'bg-green-500/15 text-green-400 border-green-500/25'
-                              : 'text-zinc-500 border-orange-500/10 hover:border-orange-500/30'
-                          }`}>
-                          <Check size={13} /> Présent
-                        </button>
-                        <button type="button" onClick={() => togglePresence(s.uid, false)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            !estPresent
-                              ? 'bg-red-500/15 text-red-400 border-red-500/25'
-                              : 'text-zinc-500 border-orange-500/10 hover:border-orange-500/30'
-                          }`}>
-                          <X size={13} /> Absent
-                        </button>
-                      </div>
+
+                      {!estPresent && !dejaJustifiee && draft?.open && (
+                        <div className="border-l-2 border-orange-500/30 pl-4 space-y-3">
+                          <Toggle
+                            checked={draft.justifiee}
+                            onChange={(justifiee) => updateDraft(s.uid, { justifiee })}
+                            label="Justifier directement"
+                            size="sm"
+                            trackActiveClassName="bg-green-500"
+                          />
+                          {draft.justifiee && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <select value={draft.motifCategorie} onChange={(e) => updateDraft(s.uid, { motifCategorie: e.target.value as MotifAbsence | '' })} className={selectCls}>
+                                <option value="">Motif…</option>
+                                {MOTIFS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                              </select>
+                              <input value={draft.referenceJustificatif} onChange={(e) => updateDraft(s.uid, { referenceJustificatif: e.target.value })} placeholder="Réf. justificatif (option.)" className={inputCls} />
+                            </div>
+                          )}
+                          <input value={draft.motif} onChange={(e) => updateDraft(s.uid, { motif: e.target.value })} placeholder="Commentaire (option.)" className={inputCls} />
+                        </div>
+                      )}
                     </li>
                   )
                 })}
