@@ -1637,6 +1637,50 @@ export async function deletePaiement(
   await remove(ref(db, `universities/${universityId}/paiements/${paiementId}`))
 }
 
+export interface EcheancierTrancheInput {
+  montant: number
+  /** 'YYYY-MM-DD' */
+  echeance: string
+}
+
+/**
+ * Crée un échéancier : plusieurs tranches (`Paiement`, type 'Scolarité',
+ * statut 'En attente') liées par un `echeancierId` commun. Écriture multi-
+ * chemins en une seule opération : soit toutes les tranches sont créées, soit
+ * aucune (jamais d'échéancier à moitié écrit).
+ */
+export async function createEcheancier(
+  universityId: string,
+  data: {
+    studentUid: string
+    studentNom: string
+    matricule: string
+    tranches: EcheancierTrancheInput[]
+  }
+): Promise<string> {
+  const paiementsRef = ref(db, `universities/${universityId}/paiements`)
+  const echeancierId = push(paiementsRef).key!
+  const now = Date.now()
+  const updates: Record<string, Omit<Paiement, 'id'>> = {}
+  for (const tranche of data.tranches) {
+    const paiementId = push(paiementsRef).key!
+    updates[`universities/${universityId}/paiements/${paiementId}`] = {
+      studentUid: data.studentUid,
+      studentNom: data.studentNom,
+      matricule: data.matricule,
+      type: 'Scolarité',
+      montant: tranche.montant,
+      echeance: tranche.echeance,
+      statut: 'En attente',
+      echeancierId,
+      createdAt: now,
+      updatedAt: now,
+    }
+  }
+  await update(ref(db), updates)
+  return echeancierId
+}
+
 // ─── Absences ──────────────────────────────────────────────────────────────────
 
 import {
