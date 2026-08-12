@@ -26,6 +26,7 @@ export default function StudentDashboard() {
     prochainCours,
     soldeDu,
     paiementsEnRetard,
+    prochaineEcheance,
     scolariteIncomplete,
     loading,
   } = useStudentSummary(universityId, user?.uid)
@@ -103,9 +104,11 @@ export default function StudentDashboard() {
           hint={
             paiementsEnRetard > 0
               ? `${paiementsEnRetard} échéance${paiementsEnRetard > 1 ? 's' : ''} en retard`
-              : soldeDu > 0
-                ? 'Aucune échéance dépassée'
-                : 'Vous êtes à jour'
+              : prochaineEcheance
+                ? `Prochaine échéance : ${formatFCFA(prochaineEcheance.montant)} le ${new Date(prochaineEcheance.echeance).toLocaleDateString('fr-FR')}`
+                : soldeDu > 0
+                  ? 'Aucune échéance dépassée'
+                  : 'Vous êtes à jour'
           }
           href="/dashboard/student/payments"
           loading={loading}

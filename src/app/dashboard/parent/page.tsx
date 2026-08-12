@@ -59,6 +59,7 @@ export default function ParentDashboard() {
     prochainCours,
     soldeDu,
     paiementsEnRetard,
+    prochaineEcheance,
     scolariteIncomplete,
     loading: loadingSummary,
   } = useStudentSummary(universityId, selectedChild?.uid)
@@ -181,9 +182,11 @@ export default function ParentDashboard() {
             hint={
               paiementsEnRetard > 0
                 ? `${paiementsEnRetard} échéance${paiementsEnRetard > 1 ? 's' : ''} en retard`
-                : soldeDu > 0
-                  ? 'Aucune échéance dépassée'
-                  : 'Vous êtes à jour'
+                : prochaineEcheance
+                  ? `Prochaine échéance : ${formatFCFA(prochaineEcheance.montant)} le ${new Date(prochaineEcheance.echeance).toLocaleDateString('fr-FR')}`
+                  : soldeDu > 0
+                    ? 'Aucune échéance dépassée'
+                    : 'Vous êtes à jour'
             }
             href="/dashboard/parent/payments"
             loading={loadingSummary}

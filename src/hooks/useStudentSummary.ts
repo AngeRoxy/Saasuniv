@@ -13,7 +13,7 @@ import {
   getSeuilAlerteConfig,
 } from '@/lib/db'
 import { getNoteRetenue } from '@/types/note'
-import { statutAffiche } from '@/types/paiement'
+import { statutAffiche, prochaineEcheanceNonPayee, type Paiement } from '@/types/paiement'
 import { trouverProchainCours, type Creneau } from '@/types/emploi-du-temps'
 
 // Réexport : `trouverProchainCours` vit désormais dans types/emploi-du-temps.ts
@@ -33,10 +33,12 @@ export interface StudentSummary {
   seuilAbsences: number
   /** Prochain cours à venir dans la semaine type, ou null. */
   prochainCours: Creneau | null
-  /** Somme des échéances non payées (FCFA). */
+  /** Somme des échéances non payées (FCFA), échéancier structuré et paiements libres confondus. */
   soldeDu: number
   /** Nombre d'échéances dépassées et non payées. */
   paiementsEnRetard: number
+  /** Prochaine échéance non payée (la plus proche), tous types confondus, ou null si aucune. */
+  prochaineEcheance: Paiement | null
   /** Filière/niveau non renseignés → l'emploi du temps ne peut pas être résolu. */
   scolariteIncomplete: boolean
   loading: boolean
@@ -52,6 +54,7 @@ const EMPTY: StudentSummary = {
   prochainCours: null,
   soldeDu: 0,
   paiementsEnRetard: 0,
+  prochaineEcheance: null,
   scolariteIncomplete: false,
   loading: true,
 }
@@ -147,6 +150,7 @@ export function useStudentSummary(
           prochainCours: trouverProchainCours(mesCreneaux, now),
           soldeDu: impayes.reduce((a, p) => a + p.montant, 0),
           paiementsEnRetard: paiements.filter((p) => statutAffiche(p, today) === 'En retard').length,
+          prochaineEcheance: prochaineEcheanceNonPayee(paiements),
           scolariteIncomplete: !filiere || !niveau,
           loading: false,
         })
