@@ -1645,9 +1645,10 @@ import {
   type Absence,
   type AbsenceFormData,
   type Appel,
+  type AppelEtudiant,
 } from '@/types/absence'
 
-export type { Absence, AbsenceFormData, Appel }
+export type { Absence, AbsenceFormData, Appel, AppelEtudiant }
 export { DEFAULT_SEUIL_ABSENCES }
 
 /**
@@ -1710,7 +1711,7 @@ export async function deleteAbsence(
   await remove(ref(db, `universities/${universityId}/absences/${absenceId}`))
 }
 
-// ─── Appel de classe (indicateur, cf. types/absence.ts:Appel) ──────────────────
+// ─── Appel de classe (indicateur + historique, cf. types/absence.ts:Appel) ──────
 
 export async function getAppels(universityId: string): Promise<Appel[]> {
   const snapshot = await get(ref(db, `universities/${universityId}/appels`))
@@ -1726,7 +1727,7 @@ export async function saveAppel(
   universityId: string,
   creneauId: string,
   date: string,
-  data: { faitParUid: string; faitParNom: string; presents: number; absents: number }
+  data: { faitParUid: string; faitParNom: string; etudiants: AppelEtudiant[] }
 ): Promise<void> {
   const key = appelKey(creneauId, date)
   await set(ref(db, `universities/${universityId}/appels/${key}`), {

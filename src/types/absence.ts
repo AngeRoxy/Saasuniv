@@ -55,13 +55,29 @@ export interface SeuilAlerteConfig {
   updatedAt: number
 }
 
+export type StatutPresence = 'present' | 'absent'
+
+/** Statut d'un étudiant pour UNE session d'appel (dénormalisé, snapshot figé au moment de l'appel). */
+export interface AppelEtudiant {
+  uid: string
+  displayName: string
+  statut: StatutPresence
+  /** Uniquement pertinent si `statut === 'absent'`. */
+  justifie?: boolean
+}
+
 /**
- * Trace d'un appel de classe (nœud appels/{creneauId}__{date}), purement
- * indicative : sert à afficher « appel déjà fait » sur le sélecteur enseignant.
+ * Trace d'un appel de classe (nœud appels/{creneauId}__{date}) : sert à la
+ * fois d'indicateur « appel déjà fait » sur le sélecteur enseignant ET
+ * d'historique consultable (liste de présence complète par session).
  * Ne remplace pas les `Absence` elles-mêmes, qui restent la source de vérité
  * de qui est présent/absent — un appel à 0 absent ne crée aucune `Absence`,
  * d'où ce nœud séparé pour distinguer « pas encore fait » de « fait, personne
  * d'absent ».
+ *
+ * Pas de `presents`/`absents` stockés : dérivés de `etudiants` via
+ * `compterPresences` pour éviter deux sources de vérité qui pourraient
+ * diverger (cf. feedback « pas de faux succès / pas de duplication »).
  */
 export interface Appel {
   id: string
@@ -69,12 +85,22 @@ export interface Appel {
   date: string
   faitParUid: string
   faitParNom: string
-  presents: number
-  absents: number
+  etudiants: AppelEtudiant[]
   updatedAt: number
 }
 
 /** Clé déterministe d'un appel : un seul par créneau + date. */
 export function appelKey(creneauId: string, date: string): string {
   return `${creneauId}__${date}`
+}
+
+/** Compteurs présents/absents dérivés de la liste — jamais stockés séparément. */
+export function compterPresences(etudiants: AppelEtudiant[] | undefined): { presents: number; absents: number } {
+  let presents = 0
+  let absents = 0
+  for (const e of etudiants ?? []) {
+    if (e.statut === 'present') presents++
+    else absents++
+  }
+  return { presents, absents }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { X, Pencil, Trash2, Check, AlertCircle, CalendarX, ClipboardCheck } from 'lucide-react'
+import { X, Pencil, Trash2, Check, AlertCircle, CalendarX, ClipboardCheck, History } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
   getAbsences,
@@ -148,9 +148,14 @@ export default function TeacherAbsencesPage() {
           <p className="text-zinc-500 dark:text-orange-200/40 text-sm mt-1">Consultation des absences de vos cours, créées via l’appel. Vous pouvez justifier ou supprimer celles que vous avez vous-même marquées.</p>
         </div>
         {mesCreneaux.length > 0 && (
-          <Link href="/dashboard/teacher/absences/appel" className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shrink-0">
-            <ClipboardCheck size={15} /> Faire l’appel
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Link href="/dashboard/teacher/absences/historique" className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-orange-500/30 text-blue-700 dark:text-orange-300 hover:bg-orange-500/10 text-sm font-semibold transition-colors">
+              <History size={15} /> Historique des appels
+            </Link>
+            <Link href="/dashboard/teacher/absences/appel" className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors">
+              <ClipboardCheck size={15} /> Faire l’appel
+            </Link>
+          </div>
         )}
       </div>
 

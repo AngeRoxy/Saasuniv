@@ -17,11 +17,12 @@ import {
   type Absence,
   type AbsenceFormData,
   type Appel,
+  type AppelEtudiant,
   type UniversityMember,
   type Filiere,
 } from '@/lib/db'
 import { type Creneau, JOUR_LABEL, toDateISO, verifierDateOccurrence } from '@/types/emploi-du-temps'
-import { MOTIFS, appelKey, type MotifAbsence } from '@/types/absence'
+import { MOTIFS, appelKey, compterPresences, type MotifAbsence } from '@/types/absence'
 import { Toggle } from '@/components/ui/toggle'
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60'
@@ -147,6 +148,7 @@ export default function FaireAppelPage() {
     if (!creneau) return null
     return appels.find((a) => a.id === appelKey(creneau.id, date)) ?? null
   }, [appels, creneau, date])
+  const appelExistantCompte = useMemo(() => compterPresences(appelExistant?.etudiants), [appelExistant])
 
   // Cases à cocher : présent par défaut, sauf étudiant déjà marqué absent pour
   // cette séance précise. Réinitialisées quand créneau OU date change — pattern
@@ -207,21 +209,21 @@ export default function FaireAppelPage() {
     setResultMsg(null)
 
     const ops: Promise<unknown>[] = []
-    let presents = 0
-    let absents = 0
+    const etudiants: AppelEtudiant[] = []
     for (const s of groupeStudents) {
       const estPresent = presence[s.uid] !== false
       const existing = existingByStudent.get(s.uid)
       if (estPresent) {
-        presents++
+        etudiants.push({ uid: s.uid, displayName: s.displayName, statut: 'present' })
         if (existing) ops.push(deleteAbsence(universityId, existing.id))
       } else {
-        absents++
         // Justification saisie en marge de l'appel (panneau « + Ajouter un
         // motif ») : incluse directement à la création, ou appliquée par
         // updateAbsence si l'absence existait déjà (appel corrigé) et n'était
         // pas encore justifiée.
         const patch = justificationPatch(justifyDrafts[s.uid])
+        const justifie = patch?.justifiee ?? existing?.justifiee ?? false
+        etudiants.push({ uid: s.uid, displayName: s.displayName, statut: 'absent', justifie })
         if (!existing) {
           ops.push(createAbsence(universityId, {
             studentUid: s.uid,
@@ -248,9 +250,9 @@ export default function FaireAppelPage() {
       await saveAppel(universityId, creneau.id, date, {
         faitParUid: user?.uid ?? '',
         faitParNom: teacherName || user?.email || '',
-        presents,
-        absents,
+        etudiants,
       })
+      const { presents, absents } = compterPresences(etudiants)
       setResultMsg(`Appel enregistré : ${presents} présent${presents > 1 ? 's' : ''}, ${absents} absent${absents > 1 ? 's' : ''}.`)
     } catch {
       setError('Échec de l’enregistrement de l’appel. Réessayez — vérifiez la liste ci-dessous avant de recommencer.')
@@ -310,7 +312,7 @@ export default function FaireAppelPage() {
             {appelExistant && (
               <p className="flex items-start gap-2 text-xs text-blue-700 dark:text-orange-300/70 bg-blue-500/5 dark:bg-orange-500/5 border border-blue-500/15 dark:border-orange-500/15 rounded-lg px-3 py-2">
                 <Info size={13} className="shrink-0 mt-0.5" />
-                Appel déjà fait par {appelExistant.faitParNom} le {new Date(appelExistant.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} ({appelExistant.presents} présent{appelExistant.presents > 1 ? 's' : ''}, {appelExistant.absents} absent{appelExistant.absents > 1 ? 's' : ''}). Vous pouvez le corriger ci-dessous.
+                Appel déjà fait par {appelExistant.faitParNom} le {new Date(appelExistant.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} ({appelExistantCompte.presents} présent{appelExistantCompte.presents > 1 ? 's' : ''}, {appelExistantCompte.absents} absent{appelExistantCompte.absents > 1 ? 's' : ''}). Vous pouvez le corriger ci-dessous.
               </p>
             )}
           </div>
