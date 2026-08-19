@@ -16,7 +16,7 @@ import type { UniversityMember } from '@/lib/db'
 
 const inputCls = 'w-full bg-zinc-50 dark:bg-black/40 border border-orange-500/20 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white text-sm focus:outline-none focus:border-orange-400/60 placeholder:text-zinc-500 dark:placeholder:text-orange-200/25'
 const labelCls = 'text-zinc-600 dark:text-orange-200/60 text-xs font-medium block mb-1.5'
-const CONTACT_EMAIL = 'contact@gestuniv.com'
+const CONTACT_EMAIL = 'kouadioroxanne70@gmail.com'
 
 // ─── Upgrade fallback (page réservée au plan Enterprise) ───────────────────────
 
@@ -32,7 +32,7 @@ function MultiCampusUpgradeFallback() {
         pour en savoir plus.
       </p>
       <a
-        href={`mailto:${CONTACT_EMAIL}`}
+        href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Demande d\'informations Multi-campus - GestUniv')}`}
         className="rounded-lg border border-zinc-200 dark:border-white/10 bg-orange-500/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500"
       >
         Nous contacter

@@ -23,7 +23,7 @@ import type { PlanFeatures, PlanId } from '@/types/plan'
 import type { AbonnementPaiement, AbonnementPeriode } from '@/types/abonnement-paiement'
 import { TRIAL_DURATION_MS } from '@/types/trial'
 
-const CONTACT_EMAIL = 'contact@gestuniv.com'
+const CONTACT_EMAIL = 'kouadioroxanne70@gmail.com'
 const TRIAL_DAYS = Math.round(TRIAL_DURATION_MS / (24 * 60 * 60 * 1000))
 
 /** Fonctionnalités affichées dans les cartes (libellé + clé). */
@@ -332,7 +332,7 @@ export default function BillingPage() {
                   </button>
                 ) : isEnterprise ? (
                   <Link
-                    href={`mailto:${CONTACT_EMAIL}`}
+                    href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Demande de devis Enterprise - GestUniv')}`}
                     className="block w-full rounded-xl border border-violet-500/30 bg-violet-500/10 py-2.5 text-center text-sm font-semibold text-blue-700 dark:text-violet-300 transition-colors hover:bg-violet-500/20"
                   >
                     Nous contacter
