@@ -1,24 +1,36 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 /*
- * Proxy Next.js 16 (ex-"middleware", renommé en v16) — garde d'authentification
- * et de rôle CÔTÉ SERVEUR pour /dashboard/*, exécutée AVANT le rendu de la page.
+ * Proxy Next.js 16 (ex-"middleware", renommé en v16) — exécuté AVANT le rendu
+ * de CHAQUE route (cf. matcher en bas de fichier, audit sécurité 2026-08-19).
+ * Deux responsabilités bien distinctes selon le chemin :
  *
- * CHOIX D'IMPLÉMENTATION — Approche A du cahier des charges :
- * ce projet n'utilise PAS firebase-admin (indisponible dans cet environnement,
- * cf. src/lib/verify-token.ts). On ne peut donc pas vérifier cryptographiquement
- * le token ici. On applique une "optimistic check" — usage explicitement
- * recommandé par la doc Next.js pour le proxy — basée sur un cookie httpOnly
- * posé par /api/session :
- *   - gestuniv_session : idToken Firebase (présence + format JWT vérifiés) ;
- *   - gestuniv_role    : rôle authentifié CÔTÉ SERVEUR (lu depuis /users/{uid}
- *                        par /api/session, jamais depuis le client).
+ * 1. TOUTES les routes (sauf assets statiques) : pose un nonce CSP par
+ *    requête et l'en-tête Content-Security-Policy (voir buildCsp ci-dessous).
  *
- * La sécurité réelle repose sur DEUX autres couches, non remplacées par le proxy :
- *   1. les Route Handlers (verifyFirebaseToken via Identity Toolkit REST) ;
- *   2. les règles Realtime Database (isolation stricte par universityId).
- * Le proxy sert à éliminer le flash de contenu protégé et à bloquer les accès
- * de rôle croisés par URL directe — pas à faire autorité sur les données.
+ * 2. UNIQUEMENT /dashboard/* : garde d'authentification et de rôle CÔTÉ
+ *    SERVEUR, en plus de la CSP.
+ *
+ *    CHOIX D'IMPLÉMENTATION — Approche A du cahier des charges :
+ *    ce projet n'utilise PAS firebase-admin pour cette garde (indisponible
+ *    dans l'environnement d'origine, cf. src/lib/verify-token.ts — il existe
+ *    désormais mais scopé au webhook GeniusPay, voir SECURITY_AUDIT.md). On
+ *    ne peut donc pas vérifier cryptographiquement le token ici. On applique
+ *    une "optimistic check" — usage explicitement recommandé par la doc
+ *    Next.js pour le proxy — basée sur un cookie httpOnly posé par
+ *    /api/session :
+ *      - gestuniv_session : idToken Firebase (présence + format JWT vérifiés) ;
+ *      - gestuniv_role    : rôle authentifié CÔTÉ SERVEUR (lu depuis
+ *                           /users/{uid} par /api/session, jamais depuis le
+ *                           client).
+ *
+ *    La sécurité réelle repose sur DEUX autres couches, non remplacées par le
+ *    proxy :
+ *      1. les Route Handlers (verifyFirebaseToken via Identity Toolkit REST) ;
+ *      2. les règles Realtime Database (isolation stricte par universityId).
+ *    Le proxy sert à éliminer le flash de contenu protégé et à bloquer les
+ *    accès de rôle croisés par URL directe — pas à faire autorité sur les
+ *    données.
  */
 
 const SESSION_COOKIE = 'gestuniv_session'
@@ -50,18 +62,100 @@ function looksLikeJwt(value: string | undefined): value is string {
   return parts.length === 3 && parts.every((p) => p.length > 0)
 }
 
+// ─── Content-Security-Policy (posée ICI, pas dans next.config.ts) ───────────
+//
+// next.config.ts `headers()` ne peut renvoyer que des valeurs STATIQUES,
+// figées au build. Or Next.js App Router injecte à CHAQUE requête ses propres
+// <script> inline (streaming RSC, hydratation) dont le contenu change à
+// chaque fois : impossible de les autoriser par hash statique, et les
+// autoriser via 'unsafe-inline' annulerait l'intérêt de script-src. La
+// solution officielle Next.js est un NONCE généré PAR REQUÊTE ici (seul
+// endroit qui s'exécute avant le rendu) :
+//   - posé sur l'en-tête de réponse Content-Security-Policy (script-src
+//     'nonce-xxx') ;
+//   - transmis via l'en-tête de requête `x-nonce`, relu par
+//     src/app/layout.tsx (next/headers) pour l'appliquer à SON propre script
+//     inline (anti-flash de thème).
+// Next.js applique automatiquement ce même nonce à ses propres scripts dès
+// qu'il détecte un CSP avec 'nonce-' dans script-src — aucune autre config.
+//
+// 'strict-dynamic' : un script de confiance (nonce/hash) peut charger
+// dynamiquement d'autres scripts, qui héritent automatiquement de la
+// confiance. C'est ce qui permet à
+// src/components/ui/jitsi-video-call.tsx d'injecter
+// https://meet.jit.si/external_api.js via document.createElement sans nonce
+// propre. https://meet.jit.si reste listé en repli pour les navigateurs sans
+// support de 'strict-dynamic' (celui-ci l'ignore quand il est supporté).
+//
+// style-src garde 'unsafe-inline' (seul assouplissement volontaire de cette
+// CSP) : l'app utilise des attributs `style={{...}}` React dynamiques un peu
+// partout (ex. src/components/ui/member-avatar.tsx, tailles calculées) —
+// aucun mécanisme de nonce/hash ne s'applique à un attribut `style=""`
+// arbitraire par élément. Risque résiduel largement inférieur à
+// script-src 'unsafe-inline' (pas d'exécution de code).
+
+const FIREBASE_AUTH = 'https://saasuniv.firebaseapp.com'
+const FIREBASE_IDENTITY = 'https://identitytoolkit.googleapis.com'
+const FIREBASE_SECURE_TOKEN = 'https://securetoken.googleapis.com'
+const FIREBASE_RTDB = 'https://saasuniv-default-rtdb.europe-west1.firebasedatabase.app'
+const FIREBASE_RTDB_WSS = 'wss://saasuniv-default-rtdb.europe-west1.firebasedatabase.app'
+// Storage est désactivé (STORAGE_ENABLED=false, cf. src/lib/storage.ts) mais
+// déjà référencé par src/components/ui/member-avatar.tsx (photoUrl) : inclus
+// par anticipation pour ne pas casser silencieusement les avatars le jour où
+// il est réactivé.
+const FIREBASE_STORAGE = 'https://firebasestorage.googleapis.com'
+const JITSI = 'https://meet.jit.si'
+const JITSI_WSS = 'wss://meet.jit.si'
+
+function buildCsp(nonce: string): string {
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${JITSI}`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' data: ${FIREBASE_STORAGE} ${JITSI}`,
+    `font-src 'self' data:`,
+    `connect-src 'self' ${FIREBASE_AUTH} ${FIREBASE_IDENTITY} ${FIREBASE_SECURE_TOKEN} ${FIREBASE_RTDB} ${FIREBASE_RTDB_WSS} ${FIREBASE_STORAGE} ${JITSI} ${JITSI_WSS}`,
+    `frame-src ${JITSI}`,
+    `media-src 'self'`,
+    `worker-src 'self'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'none'`,
+    `upgrade-insecure-requests`,
+  ].join('; ')
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Seules les routes /dashboard/* atteignent ce proxy (cf. matcher). Les routes
-  // publiques (/, /auth/*, /api/*) ne sont jamais gardées ici.
+  // Nonce frais à chaque requête (voir commentaire ci-dessus) — posé pour
+  // TOUTE route couverte par le matcher, pas seulement /dashboard/*.
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const csp = buildCsp(nonce)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+
+  // Seules les routes /dashboard/* sont gardées par le cookie de session. Pour
+  // tout le reste (/, /auth/*, /api/*, /contact...), le proxy ne fait QUE
+  // poser la CSP/le nonce et laisse passer : les routes API ont leur propre
+  // authentification par Bearer token (verifyFirebaseToken), indépendante de
+  // ce cookie — les y soumettre casserait tous les appels API.
+  if (!pathname.startsWith('/dashboard')) {
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    response.headers.set('Content-Security-Policy', csp)
+    return response
+  }
+
   const session = request.cookies.get(SESSION_COOKIE)?.value
 
   // 1. Aucune session valide → redirection vers /auth/login avant tout rendu.
   if (!looksLikeJwt(session)) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
+    const response = NextResponse.redirect(loginUrl)
+    response.headers.set('Content-Security-Policy', csp)
+    return response
   }
 
   // 2. Garde de rôle : un étudiant ne doit pas accéder à /dashboard/admin/*, etc.
@@ -70,13 +164,19 @@ export function proxy(request: NextRequest) {
   if (role) {
     const section = SECTION_ROLES.find((s) => pathname.startsWith(s.prefix))
     if (section && !section.allowed.includes(role)) {
-      return NextResponse.redirect(new URL(ROLE_HOME[role] ?? '/auth/login', request.url))
+      const response = NextResponse.redirect(new URL(ROLE_HOME[role] ?? '/auth/login', request.url))
+      response.headers.set('Content-Security-Policy', csp)
+      return response
     }
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  response.headers.set('Content-Security-Policy', csp)
+  return response
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  // Toutes les routes SAUF les assets statiques Next.js (jamais de document
+  // HTML à protéger par CSP, et un nonce y serait sans effet).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
