@@ -130,11 +130,11 @@
     "loginAttempts": {
       "$emailHash": {
         ".read": true,
-        ".write": true,
+        ".write": "!newData.exists() ? (!data.exists() || data.child('lockedUntil').val() == null || data.child('lockedUntil').val() <= now) : true",
         ".validate": "newData.hasChildren(['attemptsCount', 'lastAttemptAt'])",
-        "attemptsCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "lastAttemptAt": { ".validate": "newData.isNumber()" },
-        "lockedUntil":   { ".validate": "newData.isNumber() || newData.val() === null" },
+        "attemptsCount": { ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.exists() && data.child('lockedUntil').val() == null && newData.val() === data.child('attemptsCount').val() + 1) || (data.exists() && data.child('lockedUntil').val() != null && data.child('lockedUntil').val() <= now && newData.val() === 1))" },
+        "lastAttemptAt": { ".validate": "newData.isNumber() && newData.val() <= now + 300000 && newData.val() >= now - 600000" },
+        "lockedUntil":   { ".validate": "newData.val() === null || (newData.isNumber() && newData.val() > now && newData.val() <= now + 86400000 && newData.parent().child('attemptsCount').val() >= 5)" },
         "email":         { ".validate": "newData.isString()" },
         "$other":        { ".validate": false }
       }

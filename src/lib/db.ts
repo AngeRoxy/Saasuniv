@@ -2106,10 +2106,14 @@ export async function getDeliberation(
 //
 // Ce suivi est GLOBAL et volontairement HORS de /universities : au moment d'une
 // tentative de connexion, l'utilisateur n'est pas encore authentifié et on ne
-// connaît pas son université. Le nœud /loginAttempts est donc accessible sans
-// authentification (cf. database.rules.json) — c'est un compromis assumé : les
-// données y sont sans valeur (juste des compteurs) et la vraie protection reste
-// Firebase Auth + les règles RTDB par université.
+// connaît pas son université. Le nœud /loginAttempts est donc accessible en
+// LECTURE sans authentification (cf. database.rules.json). L'ÉCRITURE reste elle
+// aussi possible sans authentification (impossible de faire autrement avant
+// connexion), mais chaque transition de valeur est bornée côté règles : incrément
+// de +1 par écriture uniquement (jamais une valeur arbitraire), `lockedUntil`
+// plafonné à 24h dans le futur et posable seulement une fois MAX_LOGIN_ATTEMPTS
+// atteint, suppression interdite tant qu'un verrou actif existe. Voir le détail
+// (et la faille corrigée le 2026-08-19) dans database.rules.md.
 
 import {
   LOGIN_LOCK_DURATION_MS,
