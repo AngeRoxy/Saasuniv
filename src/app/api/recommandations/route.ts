@@ -1,6 +1,11 @@
 import { verifyFirebaseToken } from '@/lib/verify-token'
 import { fetchCallerProfile } from '@/lib/server/caller'
+import { checkRateLimit, rateLimitMessage } from '@/lib/server/rate-limit'
 import type { RecommandationIA, RecommandationType } from '@/types/chatbot'
+
+/** Appel Anthropic payant : 20 requêtes par utilisateur et par heure. */
+const RATE_LIMIT = 20
+const RATE_WINDOW_MS = 60 * 60 * 1000
 
 interface NoteInput {
   matiere: string
@@ -31,6 +36,15 @@ export async function POST(request: Request): Promise<Response> {
     const auth = await verifyFirebaseToken(request)
     if (!auth) {
       return Response.json({ error: 'Non authentifié.' }, { status: 401 })
+    }
+
+    // a-bis. Rate limiting par utilisateur (appel Anthropic payant).
+    const rate = await checkRateLimit('recommandations', auth.uid, RATE_LIMIT, RATE_WINDOW_MS)
+    if (!rate.allowed) {
+      return Response.json(
+        { error: rateLimitMessage(rate.retryAfterSeconds ?? 60) },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds ?? 60) } }
+      )
     }
     // L'idToken vérifié sert à authentifier l'écriture RTDB côté serveur :
     // le SDK client n'a pas de session ici, on écrit donc via l'API REST en

@@ -1,7 +1,20 @@
 import { sendContactEmail } from '@/lib/server/email'
 import type { ContactMessage } from '@/lib/server/email'
+import { checkRateLimit, getClientIp, rateLimitMessage } from '@/lib/server/rate-limit'
+
+/** Route publique non authentifiée : 5 requêtes par IP et par heure. */
+const RATE_LIMIT = 5
+const RATE_WINDOW_MS = 60 * 60 * 1000
 
 export async function POST(request: Request): Promise<Response> {
+  const rate = await checkRateLimit('contact', getClientIp(request), RATE_LIMIT, RATE_WINDOW_MS)
+  if (!rate.allowed) {
+    return Response.json(
+      { success: false, error: rateLimitMessage(rate.retryAfterSeconds ?? 60) },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds ?? 60) } }
+    )
+  }
+
   let body: Partial<ContactMessage>
   try {
     body = (await request.json()) as Partial<ContactMessage>

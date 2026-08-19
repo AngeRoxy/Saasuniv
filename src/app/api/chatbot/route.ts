@@ -1,7 +1,12 @@
 import { verifyFirebaseToken } from '@/lib/verify-token'
 import { fetchCallerProfile, bearerToken } from '@/lib/server/caller'
 import { buildUserDataSummary } from '@/lib/server/chatbot-context'
+import { checkRateLimit, rateLimitMessage } from '@/lib/server/rate-limit'
 import type { ChatMessage, ChatContext } from '@/types/chatbot'
+
+/** Appel Anthropic payant : 20 requêtes par utilisateur et par heure. */
+const RATE_LIMIT = 20
+const RATE_WINDOW_MS = 60 * 60 * 1000
 
 interface ChatbotRequestBody {
   messages: ChatMessage[]
@@ -18,6 +23,15 @@ export async function POST(request: Request): Promise<Response> {
     const auth = await verifyFirebaseToken(request)
     if (!auth) {
       return Response.json({ error: 'Non authentifié.' }, { status: 401 })
+    }
+
+    // a-bis. Rate limiting par utilisateur (appel Anthropic payant).
+    const rate = await checkRateLimit('chatbot', auth.uid, RATE_LIMIT, RATE_WINDOW_MS)
+    if (!rate.allowed) {
+      return Response.json(
+        { error: rateLimitMessage(rate.retryAfterSeconds ?? 60) },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds ?? 60) } }
+      )
     }
 
     // b. Vérifier la présence de la clé API (serveur-only).

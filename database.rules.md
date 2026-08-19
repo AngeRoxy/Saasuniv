@@ -90,6 +90,9 @@ est toujours exempté (accès plateforme).
 ## `/super_admin`
 - `.read` / `.write` : `super_admin_plateforme` exclusivement (checklist #5).
 
+## `/rateLimits/$scope/$key`  ← **nœud ajouté (rate limiting, audit du 2026-08-19)**
+- `.read` / `.write` : **`false`** pour tout client — ce nœud n'est écrit/lu que par `src/lib/server/rate-limit.ts` via le SDK Admin (`firebase-admin`, contourne les règles). Compteurs internes (`/api/chatbot`, `/api/recommandations` par uid ; `/api/contact` par IP) : aucune valeur ne doit être lisible ou falsifiable par un client, contrairement à `/loginAttempts` qui doit rester accessible avant connexion.
+
 ## `/loginAttempts/$emailHash`  ← **nœud ajouté (anti brute-force)**
 - `.read` : **`true` (public, non authentifié)** — inchangé. Ces compteurs sont lus AVANT toute connexion, quand `auth == null` : impossible de conditionner par un rôle. `$emailHash` = email rendu Firebase-safe (`hashEmailForKey`, cf. `src/lib/db.ts`). Aucune règle au niveau du **parent** `loginAttempts` → on ne peut PAS lister/énumérer l'ensemble des tentatives ; on accède seulement à un hash déjà connu. Donnée sans valeur en lecture (juste un compteur associé à un email déjà connu de l'appelant).
 - `.write` : **corrigé (audit du 2026-08-19)** — n'est plus `true` sans condition. Toujours sans `auth` (impossible avant connexion), mais chaque transition de valeur est désormais bornée :
