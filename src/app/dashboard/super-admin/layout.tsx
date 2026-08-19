@@ -62,10 +62,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       >
         <div className="px-6 py-6 border-b border-zinc-200 dark:border-orange-500/10 flex items-start justify-between">
           <div>
-            <span className="text-xl font-bold tracking-tight">
+            <Link href="/dashboard/super-admin" className="text-xl font-bold tracking-tight">
               <span className="text-orange-500">Gest</span>
               <span className="text-zinc-900 dark:text-white">Univ</span>
-            </span>
+            </Link>
             <div className="mt-2">
               <span className="text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30 rounded-full px-2.5 py-1">
                 Super Admin
@@ -124,10 +124,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           >
             <Menu size={22} />
           </button>
-          <span className="text-lg font-bold tracking-tight">
+          <Link href="/dashboard/super-admin" className="text-lg font-bold tracking-tight">
             <span className="text-orange-500">Gest</span>
             <span className="text-zinc-900 dark:text-white">Univ</span>
-          </span>
+          </Link>
           <span className="text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-500/30 rounded-full px-2 py-1">
             Super Admin
           </span>

@@ -81,10 +81,10 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         }`}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 dark:border-orange-500/10">
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard/parent" className="flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-orange-500" />
             <span className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">GestUniv</span>
-          </div>
+          </Link>
           {/* Bouton fermer (mobile uniquement) */}
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -142,10 +142,10 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard/parent" className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-orange-500" />
             <span className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">GestUniv</span>
-          </div>
+          </Link>
           <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center shrink-0">
             <User className="h-4 w-4 text-blue-600 dark:text-orange-400" />
           </div>

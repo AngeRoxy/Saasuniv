@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { GraduationCap, Menu, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -14,6 +15,7 @@ const navLinks = [
 
 export function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -28,6 +30,15 @@ export function Navbar() {
     document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Sur la landing elle-même, un simple scroll en haut suffit (pas de
+  // rechargement de page) ; ailleurs, Link href="/" gère la navigation.
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
     <>
       <nav
@@ -39,8 +50,9 @@ export function Navbar() {
       >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          <Link
+            href="/"
+            onClick={handleLogoClick}
             className="flex items-center gap-2 group"
           >
             <div className="p-1.5 rounded-lg bg-orange-500 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all duration-300">
@@ -49,7 +61,7 @@ export function Navbar() {
             <span className="font-bold text-zinc-900 dark:text-white text-lg tracking-tight">
               Gest<span className="text-blue-600 dark:text-orange-400">Univ</span>
             </span>
-          </button>
+          </Link>
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">

@@ -143,10 +143,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Logo */}
         <div className="px-6 py-6 border-b border-zinc-200 dark:border-orange-500/10 flex items-start justify-between">
           <div>
-            <span className="text-xl font-bold tracking-tight">
+            <Link href="/dashboard/admin" className="text-xl font-bold tracking-tight">
               <span className="text-orange-500">Gest</span>
               <span className="text-zinc-900 dark:text-white">Univ</span>
-            </span>
+            </Link>
             <p className="text-xs text-zinc-500 mt-1">Panneau administrateur</p>
           </div>
           {/* Bouton fermer (mobile uniquement) */}
@@ -221,10 +221,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Menu size={22} />
           </button>
-          <span className="text-lg font-bold tracking-tight">
+          <Link href="/dashboard/admin" className="text-lg font-bold tracking-tight">
             <span className="text-orange-500">Gest</span>
             <span className="text-zinc-900 dark:text-white">Univ</span>
-          </span>
+          </Link>
           <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
             <User size={15} className="text-blue-600 dark:text-orange-400" />
           </div>

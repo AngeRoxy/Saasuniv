@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -11,14 +12,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       />
 
       <div className="relative z-10 w-full max-w-lg">
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="p-2 rounded-xl bg-orange-500/15 border border-orange-500/30">
             <GraduationCap className="h-7 w-7 text-blue-600 dark:text-orange-400" />
           </div>
           <span className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
             Gest<span className="text-blue-600 dark:text-orange-400">Univ</span>
           </span>
-        </div>
+        </Link>
         {children}
       </div>
     </div>

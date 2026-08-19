@@ -92,10 +92,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         }`}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 dark:border-orange-500/10">
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard/teacher" className="flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-orange-500" />
             <span className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">GestUniv</span>
-          </div>
+          </Link>
           {/* Bouton fermer (mobile uniquement) */}
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -153,10 +153,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard/teacher" className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-orange-500" />
             <span className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">GestUniv</span>
-          </div>
+          </Link>
           <MemberAvatar photoUrl={photoUrl} name={displayName} size={32} />
         </header>
 
