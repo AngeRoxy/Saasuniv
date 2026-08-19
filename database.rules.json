@@ -107,7 +107,12 @@
 
         "ressources": { ".write": "auth != null && ((root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" },
 
-        "messages": { ".write": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')" }
+        "messages": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+          "$messageId": {
+            "fromUid": { ".validate": "newData.val() === auth.uid" }
+          }
+        }
       }
     },
     "super_admin": {
