@@ -94,18 +94,53 @@ function looksLikeJwt(value: string | undefined): value is string {
 // arbitraire par élément. Risque résiduel largement inférieur à
 // script-src 'unsafe-inline' (pas d'exécution de code).
 
+// ⚠️ CORRECTIF URGENT (2026-08-19, casse confirmée en prod par capture
+// console) : le databaseURL du projet (saasuniv-default-rtdb.europe-
+// west1.firebasedatabase.app) n'est PAS le domaine réellement utilisé pour la
+// connexion temps réel. Le SDK RTDB se connecte à un hôte TECHNIQUE assigné
+// par le load balancer régional GKE de Google (observé en prod :
+// s-gke-euw1-nssi2-5.europe-west1.firebasedatabase.app), différent du
+// databaseURL et potentiellement variable dans le temps/selon le shard —
+// impossible à figer en dur. Remplacé par un wildcard multi-niveaux
+// (`*.firebasedatabase.app` couvre un nombre ARBITRAIRE de sous-domaines en
+// CSP — contrairement aux wildcards de certificat TLS, limités à un seul
+// niveau — donc `s-gke-euw1-nssi2-5.europe-west1.firebasedatabase.app`
+// correspond bien à `*.firebasedatabase.app`).
+//
+// Le même hôte RTDB dynamique doit AUSSI être autorisé en frame-src : quand
+// la connexion WebSocket échoue (ex. bloquée par connect-src, comme ici), le
+// SDK RTDB retombe automatiquement sur un transport de repli en long-polling
+// via un iframe caché pointant vers ce même hôte — c'est ce qui expliquait le
+// message d'erreur "Framing '<hôte RTDB>' violates frame-src" observé en
+// prod : rien à voir avec Jitsi malgré l'apparence, c'est Firebase RTDB
+// lui-même qui tentait ce repli après l'échec du WebSocket.
+//
+// Par précaution, l'iframe d'assistance interne de Firebase Auth
+// (<authDomain>/__/auth/iframe, utilisée par le SDK même en email/mot de
+// passe pour la synchronisation d'état entre onglets) est aussi ajoutée à
+// frame-src — non confirmée cassée, mais même famille de risque que le
+// domaine RTDB : mieux vaut l'anticiper que revivre cette panne pour l'auth.
 const FIREBASE_AUTH = 'https://saasuniv.firebaseapp.com'
 const FIREBASE_IDENTITY = 'https://identitytoolkit.googleapis.com'
 const FIREBASE_SECURE_TOKEN = 'https://securetoken.googleapis.com'
-const FIREBASE_RTDB = 'https://saasuniv-default-rtdb.europe-west1.firebasedatabase.app'
-const FIREBASE_RTDB_WSS = 'wss://saasuniv-default-rtdb.europe-west1.firebasedatabase.app'
+const FIREBASE_RTDB_WILDCARD = 'https://*.firebasedatabase.app'
+const FIREBASE_RTDB_WILDCARD_WSS = 'wss://*.firebasedatabase.app'
 // Storage est désactivé (STORAGE_ENABLED=false, cf. src/lib/storage.ts) mais
 // déjà référencé par src/components/ui/member-avatar.tsx (photoUrl) : inclus
 // par anticipation pour ne pas casser silencieusement les avatars le jour où
-// il est réactivé.
+// il est réactivé. Domaine Google partagé (pas de sous-domaine dynamique par
+// projet comme RTDB) : pas besoin de wildcard.
 const FIREBASE_STORAGE = 'https://firebasestorage.googleapis.com'
 const JITSI = 'https://meet.jit.si'
 const JITSI_WSS = 'wss://meet.jit.si'
+
+// Volontairement PAS de wildcard `*.googleapis.com` : ce domaine héberge des
+// centaines d'API Google sans rapport avec l'app (Maps, Ads, Cloud...). Un tel
+// wildcard viderait la CSP de son intérêt contre l'exfiltration en cas de XSS.
+// Seul firebasedatabase.app a un besoin DÉMONTRÉ de wildcard (hôte dynamique
+// par shard) ; identitytoolkit/securetoken.googleapis.com et
+// firebasestorage.googleapis.com sont des points d'entrée Google stables et
+// documentés, pas des domaines générés par un load balancer régional.
 
 function buildCsp(nonce: string): string {
   return [
@@ -114,8 +149,8 @@ function buildCsp(nonce: string): string {
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: ${FIREBASE_STORAGE} ${JITSI}`,
     `font-src 'self' data:`,
-    `connect-src 'self' ${FIREBASE_AUTH} ${FIREBASE_IDENTITY} ${FIREBASE_SECURE_TOKEN} ${FIREBASE_RTDB} ${FIREBASE_RTDB_WSS} ${FIREBASE_STORAGE} ${JITSI} ${JITSI_WSS}`,
-    `frame-src ${JITSI}`,
+    `connect-src 'self' ${FIREBASE_AUTH} ${FIREBASE_IDENTITY} ${FIREBASE_SECURE_TOKEN} ${FIREBASE_RTDB_WILDCARD} ${FIREBASE_RTDB_WILDCARD_WSS} ${FIREBASE_STORAGE} ${JITSI} ${JITSI_WSS}`,
+    `frame-src ${JITSI} ${FIREBASE_AUTH} ${FIREBASE_RTDB_WILDCARD}`,
     `media-src 'self'`,
     `worker-src 'self'`,
     `object-src 'none'`,
